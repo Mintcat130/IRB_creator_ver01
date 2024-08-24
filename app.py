@@ -4,6 +4,7 @@ import anthropic
 def reset_session():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
+    st.session_state.clear()  # 추가적인 안전장치로 세션 상태를 완전히 비웁니다.
 
 def start_writing(item):
     if 'messages' not in st.session_state:
@@ -56,7 +57,7 @@ def chat_interface():
     # 사이드바에 "🏠홈으로" 버튼 추가
     if st.sidebar.button("🏠홈으로"):
         reset_session()
-        st.experimental_rerun()
+        st.rerun()  # st.experimental_rerun() 대신 st.rerun() 사용
 
     # 사이드바에 "작성 원하는 항목 선택하기" 버튼 추가
     if st.sidebar.button("작성 원하는 항목 선택하기"):
@@ -68,7 +69,7 @@ def chat_interface():
         if st.button("API 키 확인"):
             st.session_state.api_key = api_key
             st.success("API 키가 설정되었습니다!")
-            st.experimental_rerun()
+            st.rerun()  # 여기도 st.rerun() 사용
 
     # API 키가 설정된 후 채팅 인터페이스 표시
     if 'api_key' in st.session_state and st.session_state.api_key:
