@@ -78,10 +78,10 @@ def generate_ai_response(prompt, current_item):
         try:
             system_prompt = SYSTEM_PROMPTS.get(current_item, "당신은 병리과 연구자들을 위한 IRB 문서 작성을 돕는 AI 어시스턴트입니다.")
             response = st.session_state.anthropic_client.messages.create(
-                model="claude-3-sonnet-20240229",
+                model="claude-3-5-sonnet-20240620",
                 max_tokens=1000,
+                system=system_prompt,  # 'system' 프롬프트를 별도의 파라미터로 전달
                 messages=[
-                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ]
             )
