@@ -36,6 +36,10 @@ def main():
                 else:
                     st.error("먼저 API 키를 입력해주세요.")
 
+def reset_session():
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    
     # 채팅 인터페이스
     if st.session_state.chat_started:
         chat_interface()
@@ -46,6 +50,11 @@ import streamlit as st
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
 
+    # 사이드바에 "🏠홈으로" 버튼 추가
+    if st.sidebar.button("🏠홈으로"):
+        reset_session()
+        st.experimental_rerun()
+    
     # 사이드바에 "작성 원하는 항목 선택하기" 버튼 추가
     if st.sidebar.button("작성 원하는 항목 선택하기"):
         st.session_state.show_item_selection = True
