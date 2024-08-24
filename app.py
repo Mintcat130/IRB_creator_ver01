@@ -48,14 +48,14 @@ def chat_interface():
     if not st.session_state.messages:
         instruction = """
         KBSMC IRB 연구계획서 작성하기를 시작합니다.
-        작성은 "1.연구과제명" 항목부터 시작해서 "18.자료수집항목 (평가 항목)" 까지 순차적으로 진행됩니다.
+        작성은 "(1) 연구과제명" 항목부터 시작해서 "(18) 자료수집항목 (평가 항목)" 까지 순차적으로 진행됩니다.
         """
         st.info(instruction)
         
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("1. 연구과제명 부터 작성시작"):
-                start_writing("1. 연구과제명")
+            if st.button("(1) 연구과제명 부터 작성시작"):
+                start_writing("(1) 연구과제명")
         with col2:
             if st.button("작성 원하는 항목 선택하기"):
                 st.session_state.show_item_selection = True
@@ -63,11 +63,11 @@ def chat_interface():
     if st.session_state.get('show_item_selection', False):
         st.write("작성할 항목을 선택하세요:")
         items = [
-            "1. 연구과제명", "2. 연구 관련자", "3. 실시기관", "4. 의뢰자(CRO)기관", "5. 연구 목적",
-            "6. 연구 배경", "7. 연구 방법", "8. 자료 수집 및 피싱별 조치", "9. 선정기준", "10. 제외기준",
-            "11. 대상자 수 및 산출 근거", "12. 자료분석과 통계적 방법", "13. 연구에 활용되는 자료의 기간",
-            "14. 연구예정기간", "15. 자료 보관 기간 및 폐기 방법", "16. 연구결과 보고와 출판 방법",
-            "17. 참고 문헌", "18. 자료 수집 항목 (평가 항목)"
+            "(1) 연구과제명", "(2) 연구 관련자", "(3) 실시기관", "(4) 의뢰자(CRO)기관", "(5) 연구 목적",
+            "(6) 연구 배경", "(7) 연구 방법", "(8) 자료 수집 및 피싱별 조치", "(9) 선정기준", "(10) 제외기준",
+            "(11) 대상자 수 및 산출 근거", "(12) 자료분석과 통계적 방법", "(13) 연구에 활용되는 자료의 기간",
+            "(14) 연구예정기간", "(15) 자료 보관 기간 및 폐기 방법", "(16) 연구결과 보고와 출판 방법",
+            "(17) 참고 문헌", "(18) 자료 수집 항목 (평가 항목)"
         ]
         
         # CSS를 사용하여 버튼 스타일 지정
@@ -79,7 +79,6 @@ def chat_interface():
             white-space: normal;
             word-wrap: break-word;
             text-align: center;
-            text-transform: none !important;
         }
         </style>
         """, unsafe_allow_html=True)
