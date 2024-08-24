@@ -52,21 +52,35 @@ def chat_interface():
     if st.sidebar.button("🏠홈으로"):
         reset_session()
         st.experimental_rerun()
-    
+
     # 사이드바에 "작성 원하는 항목 선택하기" 버튼 추가
     if st.sidebar.button("작성 원하는 항목 선택하기"):
         st.session_state.show_item_selection = True
 
-    # 채팅 시작 시 지시사항 표시
-    if not st.session_state.messages:
+    # API 키 입력 섹션
+    if 'api_key' not in st.session_state or not st.session_state.api_key:
+        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
+        if st.button("API 키 확인"):
+            st.session_state.api_key = api_key
+            st.success("API 키가 설정되었습니다!")
+            st.experimental_rerun()
+
+    # API 키가 설정된 후 채팅 인터페이스 표시
+    elif not st.session_state.get('chat_started', False):
         instruction = """
         KBSMC IRB 연구계획서 작성하기를 시작합니다.
         작성은 "(1) 연구과제명" 항목부터 시작해서 "(18) 자료수집항목 (평가 항목)" 까지 순차적으로 진행됩니다.
         """
         st.info(instruction)
         
-        if st.button("(1) 연구과제명 부터 작성시작"):
-            start_writing("(1) 연구과제명")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("(1) 연구과제명 부터 작성시작"):
+                st.session_state.chat_started = True
+                start_writing("(1) 연구과제명")
+        with col2:
+            if st.button("작성 원하는 항목 선택하기"):
+                st.session_state.show_item_selection = True
 
     if st.session_state.get('show_item_selection', False):
         st.write("작성할 항목을 선택하세요:")
@@ -98,41 +112,28 @@ def chat_interface():
                 if st.button(item, key=item):
                     start_writing(item)
 
-
-
     # 채팅 메시지 표시
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    if st.session_state.get('chat_started', False):
+        for message in st.session_state.get('messages', []):
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-    # 사용자 입력
-    if prompt := st.chat_input("메시지를 입력하세요."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        # 사용자 입력
+        if prompt := st.chat_input("메시지를 입력하세요."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-        # AI 응답 생성
-        with st.spinner('AI가 응답을 생성 중입니다...'):
-            response = st.session_state.client.messages.create(
-                model="claude-3-5-sonnet-20240620",
-                max_tokens=1000,
-                messages=[
-                    {"role": "system", "content": "당신은 병리과 연구자들을 위한 IRB 문서 작성을 돕는 AI 어시스턴트입니다."},
-                    *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
-                ]
-            )
-            ai_response = response.content[0].text
-
-        st.session_state.messages.append({"role": "assistant", "content": ai_response})
-        with st.chat_message("assistant"):
-            st.markdown(ai_response)
-
-if __name__ == "__main__":
-    main()
+            # 여기에 AI 응답 생성 로직을 추가합니다.
+            # 예: response = generate_ai_response(prompt)
+            response = f"AI 응답: {prompt}에 대한 답변입니다."
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            with st.chat_message("assistant"):
+                st.markdown(response)
 
 def start_writing(item):
+    if 'messages' not in st.session_state:
+        st.session_state.messages = []
     st.session_state.messages.append({
         "role": "assistant", 
-        "content": f"{item} 항목에 대한 작성을 시작하겠습니다. 어떤 내용을 작성하시겠습니까?"
-    })
-    st.session_state.show_item_selection = False  # 항목 선택 UI 숨기기
+        "content": f"{item} 항목에 대한 작성을 시작하겠습니다.
