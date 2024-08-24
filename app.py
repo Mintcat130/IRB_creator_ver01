@@ -39,8 +39,8 @@ def show_item_selection():
 def generate_ai_response(prompt):
     if 'anthropic_client' in st.session_state:
         response = st.session_state.anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens=1000,
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=1500,
             messages=[
                 {"role": "user", "content": prompt}
             ]
