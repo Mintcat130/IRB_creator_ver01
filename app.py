@@ -55,10 +55,7 @@ def start_writing(item):
         instruction = SYSTEM_PROMPTS.get(item, "이 항목에 대해 어떤 내용을 작성하고 싶으신가요?")
         st.session_state.completed_items.append(item)
     
-    st.session_state.messages.append({
-        "role": "assistant", 
-        "content": f"{item} 항목에 대한 작성을 시작하겠습니다.\n\n{instruction}"
-    })
+    # 메시지를 세션 상태에 추가하지 않고, 현재 항목만 설정합니다.
     st.session_state.current_item = item
     st.session_state.chat_started = True
     st.session_state.show_item_selection = False
@@ -107,6 +104,13 @@ def generate_ai_response(prompt, current_item):
 
 
 def show_chat_interface():
+    # 현재 항목에 대한 지시사항 표시
+    current_item = st.session_state.get('current_item', '')
+    if current_item:
+        instruction = SYSTEM_PROMPTS.get(current_item, "이 항목에 대해 어떤 내용을 작성하고 싶으신가요?")
+        st.markdown(f"**{current_item}**")
+        st.markdown(instruction)
+
     for message in st.session_state.get('messages', []):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -116,8 +120,7 @@ def show_chat_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        current_item = st.session_state.get('current_item', "")
-        response = generate_ai_response(prompt, current_item)  # current_item 추가
+        response = generate_ai_response(prompt, current_item)
         st.session_state.messages.append({"role": "assistant", "content": response})
         with st.chat_message("assistant"):
             st.markdown(response)
