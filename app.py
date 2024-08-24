@@ -37,6 +37,17 @@ def main():
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
 
+    # 채팅 시작 시 지시사항 표시
+    if not st.session_state.messages:
+        instruction = """
+        KBSMC IRB 연구계획서 작성하기를 시작합니다.
+        작성은 "1.연구과제명" 항목부터 시작해서 "18.자료수집항목 (평가 항목)" 까지 순차적으로 진행됩니다.
+        """
+        st.info(instruction)
+        
+        # 지시사항을 AI 메시지로 추가
+        st.session_state.messages.append({"role": "assistant", "content": instruction})
+
     # 채팅 메시지 표시
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
