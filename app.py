@@ -16,12 +16,12 @@ def start_writing(item):
     
     if item == "(1) 연구과제명":
         instruction = """
-연구 주제나 키워드에 대해 자유롭게 기술해주세요. 
-예시)
-   - 이 연구를 통해 무엇을 알아내고자 하십니까?
-   - 어떤 문제를 해결하거나 어떤 가설을 검증하고자 하십니까?
-   - 이 연구가 왜 중요하다고 생각하십니까?
-   - 이 연구의 키워드들은 무엇입니까?
+        연구 주제나 키워드에 대해 자유롭게 기술해주세요. 
+        예시)
+           - 이 연구를 통해 무엇을 알아내고자 하십니까?
+           - 어떤 문제를 해결하거나 어떤 가설을 검증하고자 하십니까?
+           - 이 연구가 왜 중요하다고 생각하십니까?
+           - 이 연구의 키워드들은 무엇입니까?
         """
         st.session_state.messages.append({
             "role": "assistant", 
@@ -79,10 +79,10 @@ def show_chat_interface():
         st.session_state.messages.append({"role": "assistant", "content": response})
         with st.chat_message("assistant"):
             st.markdown(response)
-
-    # 새로운 메시지가 추가되면 화면을 다시 그립니다.
-    if st.session_state.messages:
+        
+        # 새 메시지가 추가되었을 때만 화면을 갱신합니다.
         st.rerun()
+
 
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
@@ -91,7 +91,7 @@ def chat_interface():
         api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
         if st.button("API 키 확인"):
             st.session_state.api_key = api_key
-            st.session_state.anthropic_client = initialize_anthropic_client(api_key)  # API 클라이언트 초기화
+            st.session_state.anthropic_client = initialize_anthropic_client(api_key)
             st.success("API 키가 설정되었습니다!")
             st.rerun()
         
@@ -115,7 +115,6 @@ def chat_interface():
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("(1) 연구과제명 부터 작성시작", key="start_writing"):
-                    st.session_state.chat_started = True
                     start_writing("(1) 연구과제명")
             with col2:
                 if st.button("작성 원하는 항목 선택하기", key="select_item"):
