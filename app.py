@@ -12,11 +12,14 @@ def main():
         st.session_state.chat_started = False
     if 'messages' not in st.session_state:
         st.session_state.messages = []
+    if 'client' not in st.session_state:
+        st.session_state.client = None
 
     # API 키 입력 섹션
     api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password", value=st.session_state.api_key)
     if st.button("API 키 확인"):
         st.session_state.api_key = api_key
+        st.session_state.client = anthropic.Client(api_key=api_key)
         st.success("API 키가 설정되었습니다!")
 
     # 연구계획서 작성 버튼
@@ -45,11 +48,21 @@ def chat_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # AI 응답 (여기서는 간단한 예시 응답을 사용)
-        response = f"AI 응답: {prompt}에 대한 답변입니다."
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        # AI 응답 생성
+        with st.spinner('AI가 응답을 생성 중입니다...'):
+            response = st.session_state.client.messages.create(
+                model="claude-3-5-sonnet-20240620",
+                max_tokens=1000,
+                messages=[
+                    {"role": "system", "content": "당신은 병리과 연구자들을 위한 IRB 문서 작성을 돕는 AI 어시스턴트입니다."},
+                    *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+                ]
+            )
+            ai_response = response.content[0].text
+
+        st.session_state.messages.append({"role": "assistant", "content": ai_response})
         with st.chat_message("assistant"):
-            st.markdown(response)
+            st.markdown(ai_response)
 
 if __name__ == "__main__":
     main()
