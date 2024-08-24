@@ -13,10 +13,26 @@ def reset_session():
 def start_writing(item):
     if 'messages' not in st.session_state:
         st.session_state.messages = []
-    st.session_state.messages.append({
-        "role": "assistant", 
-        "content": f"{item} 항목에 대한 작성을 시작하겠습니다. 어떤 내용을 작성하시겠습니까?"
-    })
+    
+    if item == "(1) 연구과제명":
+        instruction = """
+연구 주제나 키워드에 대해 자유롭게 기술해주세요. 
+예시)
+   - 이 연구를 통해 무엇을 알아내고자 하십니까?
+   - 어떤 문제를 해결하거나 어떤 가설을 검증하고자 하십니까?
+   - 이 연구가 왜 중요하다고 생각하십니까?
+   - 이 연구의 키워드들은 무엇입니까?
+        """
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": f"{item} 항목에 대한 작성을 시작하겠습니다.\n\n{instruction}"
+        })
+    else:
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": f"{item} 항목에 대한 작성을 시작하겠습니다. 어떤 내용을 작성하시겠습니까?"
+        })
+    
     st.session_state.chat_started = True
     st.session_state.show_item_selection = False
 
@@ -64,15 +80,9 @@ def show_chat_interface():
         with st.chat_message("assistant"):
             st.markdown(response)
 
-    if prompt := st.chat_input("메시지를 입력하세요."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        response = f"AI 응답: {prompt}에 대한 답변입니다."
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        with st.chat_message("assistant"):
-            st.markdown(response)
+    # 새로운 메시지가 추가되면 화면을 다시 그립니다.
+    if st.session_state.messages:
+        st.rerun()
 
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
