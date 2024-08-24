@@ -79,6 +79,7 @@ def chat_interface():
             white-space: normal;
             word-wrap: break-word;
             text-align: center;
+            text-transform: none !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -89,6 +90,7 @@ def chat_interface():
             with cols[i % 6]:
                 if st.button(item, key=item):
                     start_writing(item)
+
 
     # 채팅 메시지 표시
     for message in st.session_state.messages:
