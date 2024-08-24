@@ -69,8 +69,6 @@ def show_item_selection():
         "(1) 연구과제명"
     ]
     
-    # 나머지 코드는 그대로 유지
-    ]
     
     cols = st.columns(6)
     for i, item in enumerate(items):
