@@ -124,8 +124,27 @@ def chat_interface():
     st.subheader("연구계획서 작성 채팅")
 
     if 'api_key' not in st.session_state or not st.session_state.api_key:
-        # API 키 입력 로직 (이전과 동일)
-        pass
+        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("API 키 확인"):
+                client = initialize_anthropic_client(api_key)
+                if client:
+                    st.session_state.api_key = api_key
+                    st.session_state.anthropic_client = client
+                    st.success("API 키가 설정되었습니다!")
+                    st.rerun()
+                else:
+                    st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
+        with col2:
+            if st.button("연구계획서 작성하기✏️"):
+                if api_key:
+                    st.session_state.api_key = api_key
+                    st.session_state.anthropic_client = initialize_anthropic_client(api_key)
+                    st.success("API 키가 설정되었습니다!")
+                    st.rerun()
+                else:
+                    st.warning("API 키를 먼저 입력해주세요.")
     else:
         st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
         
@@ -135,6 +154,7 @@ def chat_interface():
 
         if st.sidebar.button("작성 원하는 항목 선택하기"):
             st.session_state.show_item_selection = True
+    
 
         if not st.session_state.get('chat_started', False):
             instruction = """
