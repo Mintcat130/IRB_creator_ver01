@@ -1,6 +1,18 @@
 import streamlit as st
 import anthropic  # Anthropic API 추가
 
+# 시스템 프롬프트 딕셔너리
+SYSTEM_PROMPTS = {
+    "(1) 연구과제명": "사용자가 연구 주제에 대해 자유롭게 기술한 내용을 바탕으로, 연구의 목적과 주제를 명확히 나타내는 연구과제명을 작성하세요. 국문과 영문으로 작성하십시오.",
+    "(5) 연구 목적": "사용자가 제공한 연구 목적에 대한 설명을 바탕으로, 연구의 가설을 명확히 하고, 이를 입증하기 위한 구체적인 설명을 작성하세요.",
+    "(6) 연구 배경": "사용자가 제공한 연구 배경 자료와 관련된 이론적 배경, 근거, 선행 연구 등을 바탕으로 연구의 정당성을 설명하세요. 국내외 연구 현황을 반영하세요.",
+    "(7) 연구 방법": "사용자가 제시한 연구 방법에 대한 기본 정보를 토대로, 연구 절차와 방법론을 상세히 설명하세요. 병리학적 연구에 적합한 연구 방법을 제안하고 기술하세요.",
+    "(9) 선정기준": "연구 대상자 선정 기준을 명확히 기술하세요. 연구의 목표에 부합하는 대상자 조건을 설정하세요.",
+    "(10) 제외기준": "연구 대상에서 제외될 기준을 명확히 기술하세요. 연구의 신뢰성을 유지하기 위한 제외 조건을 설정하세요.",
+    "(11) 대상자 수 및 산출 근거": "예상 연구 대상자의 수와 그 산출 근거를 작성하세요. 필요 시 선행 연구의 통계학적 방법을 참고하여 설명하세요.",
+    "(12) 자료분석과 통계적 방법": "수집된 자료를 분석하는 방법과 사용할 통계적 방법을 기술하세요. 분석 계획, 혼란변수 통제 방법 등을 명확히 하세요."
+}
+
 # Anthropic API 클라이언트 초기화 함수
 def initialize_anthropic_client(api_key):
     return anthropic.Client(api_key=api_key)
@@ -23,16 +35,14 @@ def start_writing(item):
            - 이 연구가 왜 중요하다고 생각하십니까?
            - 이 연구의 키워드들은 무엇입니까?
         """
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": f"{item} 항목에 대한 작성을 시작하겠습니다.\n\n{instruction}"
-        })
     else:
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": f"{item} 항목에 대한 작성을 시작하겠습니다. 어떤 내용을 작성하시겠습니까?"
-        })
-    
+        instruction = "이 항목에 대해 어떤 내용을 작성하고 싶으신가요?"
+
+    st.session_state.messages.append({
+        "role": "assistant", 
+        "content": f"{item} 항목에 대한 작성을 시작하겠습니다.\n\n{instruction}"
+    })
+    st.session_state.current_item = item
     st.session_state.chat_started = True
     st.session_state.show_item_selection = False
 
@@ -52,18 +62,21 @@ def show_item_selection():
             if st.button(item, key=f"item_{i}"):
                 start_writing(item)
 
-def generate_ai_response(prompt):
+def generate_ai_response(prompt, current_item):
     if 'anthropic_client' in st.session_state:
+        system_prompt = SYSTEM_PROMPTS.get(current_item, "당신은 병리과 연구자들을 위한 IRB 문서 작성을 돕는 AI 어시스턴트입니다.")
         response = st.session_state.anthropic_client.messages.create(
-            model="claude-3-5-sonnet-20240620",
-            max_tokens=1500,
+            model="claude-3-sonnet-20240229",
+            max_tokens=1000,
             messages=[
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ]
         )
         return response.content[0].text
     else:
         return "API 클라이언트가 초기화되지 않았습니다. API 키를 다시 확인해주세요."
+
 
 def show_chat_interface():
     for message in st.session_state.get('messages', []):
@@ -75,7 +88,8 @@ def show_chat_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        response = generate_ai_response(prompt)  # AI 응답 생성
+        current_item = st.session_state.get('current_item', "")
+        response = generate_ai_response(prompt, current_item)  # current_item 추가
         st.session_state.messages.append({"role": "assistant", "content": response})
         with st.chat_message("assistant"):
             st.markdown(response)
