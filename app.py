@@ -41,8 +41,14 @@ def main():
         chat_interface()
 
 
+import streamlit as st
+
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
+
+    # 사이드바에 "작성 원하는 항목 선택하기" 버튼 추가
+    if st.sidebar.button("작성 원하는 항목 선택하기"):
+        st.session_state.show_item_selection = True
 
     # 채팅 시작 시 지시사항 표시
     if not st.session_state.messages:
@@ -52,13 +58,8 @@ def chat_interface():
         """
         st.info(instruction)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("(1) 연구과제명 부터 작성시작"):
-                start_writing("(1) 연구과제명")
-        with col2:
-            if st.button("작성 원하는 항목 선택하기"):
-                st.session_state.show_item_selection = True
+        if st.button("(1) 연구과제명 부터 작성시작"):
+            start_writing("(1) 연구과제명")
 
     if st.session_state.get('show_item_selection', False):
         st.write("작성할 항목을 선택하세요:")
@@ -89,6 +90,7 @@ def chat_interface():
             with cols[i % 6]:
                 if st.button(item, key=item):
                     start_writing(item)
+
 
 
     # 채팅 메시지 표시
