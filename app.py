@@ -19,8 +19,8 @@ def initialize_anthropic_client(api_key):
         client = anthropic.Client(api_key=api_key)
         # 간단한 API 호출로 키 유효성 검사
         client.messages.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens=10,
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=1000,
             messages=[{"role": "user", "content": "Hello"}]
         )
         return client
@@ -116,23 +116,26 @@ def show_chat_interface():
         st.rerun()
 
 
-if 'api_key' not in st.session_state or not st.session_state.api_key:
-    api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
-    if st.button("API 키 확인"):
-        client = initialize_anthropic_client(api_key)
-        if client:
-            st.session_state.api_key = api_key
-            st.session_state.anthropic_client = client
-            st.success("API 키가 설정되었습니다!")
-            st.rerun()
-        else:
-            st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
-else:
-    st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
+def chat_interface():
+    st.subheader("연구계획서 작성 채팅")
+
+    if 'api_key' not in st.session_state or not st.session_state.api_key:
+        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
+        if st.button("API 키 확인"):
+            client = initialize_anthropic_client(api_key)
+            if client:
+                st.session_state.api_key = api_key
+                st.session_state.anthropic_client = client
+                st.success("API 키가 설정되었습니다!")
+                st.rerun()
+            else:
+                st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
         
         if st.button("연구계획서 작성하기✏️"):
             st.warning("API 키를 먼저 입력해주세요.")
     else:
+        st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
+        
         if st.sidebar.button("🏠홈으로"):
             reset_session()
             st.rerun()
