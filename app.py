@@ -118,15 +118,15 @@ def chat_interface():
 
     if 'api_key' not in st.session_state or not st.session_state.api_key:
         api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
-          if st.button("API 키 확인"):
+        if st.button("API 키 확인"):
             client = initialize_anthropic_client(api_key)
-                if client:
-                    st.session_state.api_key = api_key
-                    st.session_state.anthropic_client = client
-                    st.success("API 키가 설정되었습니다!")
-                    st.rerun()
-                else:
-                    st.error("올바르지 않은 API 키입니다. 다시 확인해 주세요.")
+            if client:
+                st.session_state.api_key = api_key
+                st.session_state.anthropic_client = client
+                st.success("API 키가 설정되었습니다!")
+                st.rerun()
+            else:
+                st.error("올바르지 않은 API 키입니다. 다시 확인해 주세요.")
         
         if st.button("연구계획서 작성하기✏️"):
             st.warning("API 키를 먼저 입력해주세요.")
@@ -158,6 +158,8 @@ def chat_interface():
 
         if st.session_state.get('chat_started', False):
             show_chat_interface()
+
+    #Css style
 
     st.markdown("""
     <style>
