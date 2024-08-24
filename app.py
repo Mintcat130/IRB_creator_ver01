@@ -15,24 +15,32 @@ def main():
     if 'client' not in st.session_state:
         st.session_state.client = None
 
-    # API 키 입력 섹션
-    api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password", value=st.session_state.api_key)
-    if st.button("API 키 확인"):
-        st.session_state.api_key = api_key
-        st.session_state.client = anthropic.Client(api_key=api_key)
-        st.success("API 키가 설정되었습니다!")
+    # API 키 입력 섹션과 연구계획서 작성 버튼을 위한 컨테이너
+    input_container = st.empty()
 
-    # 연구계획서 작성 버튼
-    if st.button("연구계획서 작성하기✏️"):
-        if st.session_state.api_key:
-            st.session_state.chat_started = True
-            st.session_state.messages = []  # 채팅 시작 시 메시지 초기화
-        else:
-            st.error("먼저 API 키를 입력해주세요.")
+    with input_container.container():
+        if not st.session_state.chat_started:
+            # API 키 입력 섹션
+            api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password", value=st.session_state.api_key)
+            if st.button("API 키 확인"):
+                st.session_state.api_key = api_key
+                st.session_state.client = anthropic.Client(api_key=api_key)
+                st.success("API 키가 설정되었습니다!")
+
+            # 연구계획서 작성 버튼
+            if st.button("연구계획서 작성하기✏️"):
+                if st.session_state.api_key:
+                    st.session_state.chat_started = True
+                    st.session_state.messages = []  # 채팅 시작 시 메시지 초기화
+                    input_container.empty()  # API 키 입력 섹션 숨기기
+                else:
+                    st.error("먼저 API 키를 입력해주세요.")
 
     # 채팅 인터페이스
     if st.session_state.chat_started:
         chat_interface()
+
+# chat_interface() 함수는 이전과 동일하게 유지
 
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
