@@ -40,6 +40,7 @@ def main():
     if st.session_state.chat_started:
         chat_interface()
 
+
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
 
@@ -69,11 +70,24 @@ def chat_interface():
             "17. 참고 문헌", "18. 자료 수집 항목 (평가 항목)"
         ]
         
+        # CSS를 사용하여 버튼 스타일 지정
+        st.markdown("""
+        <style>
+        .stButton>button {
+            width: 100%;
+            height: 60px;
+            white-space: normal;
+            word-wrap: break-word;
+            text-align: center;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
         # 버튼을 6열로 배치
         cols = st.columns(6)
         for i, item in enumerate(items):
             with cols[i % 6]:
-                if st.button(item, key=item):  # 번호를 포함한 전체 항목 이름을 버튼에 표시
+                if st.button(item, key=item):
                     start_writing(item)
 
     # 채팅 메시지 표시
