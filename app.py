@@ -36,16 +36,14 @@ def main():
                 else:
                     st.error("먼저 API 키를 입력해주세요.")
 
-def reset_session():
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
     
     # 채팅 인터페이스
     if st.session_state.chat_started:
         chat_interface()
 
-
-import streamlit as st
+def reset_session():
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
 
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
