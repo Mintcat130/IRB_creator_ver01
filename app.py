@@ -1,10 +1,14 @@
 import streamlit as st
-import anthropic
+import anthropic  # Anthropic API 추가
+
+# Anthropic API 클라이언트 초기화 함수
+def initialize_anthropic_client(api_key):
+    return anthropic.Client(api_key=api_key)
 
 def reset_session():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    st.session_state.clear()  # 추가적인 안전장치로 세션 상태를 완전히 비웁니다.
+    st.session_state.clear()
 
 def start_writing(item):
     if 'messages' not in st.session_state:
@@ -26,26 +30,45 @@ def show_item_selection():
         "(17) 참고 문헌", "(18) 자료 수집 항목 (평가 항목)"
     ]
     
-    # 버튼을 6열로 배치
     cols = st.columns(6)
     for i, item in enumerate(items):
         with cols[i % 6]:
-            if st.button(item, key=item):
+            if st.button(item, key=f"item_{i}"):
                 start_writing(item)
+
+def generate_ai_response(prompt):
+    if 'anthropic_client' in st.session_state:
+        response = st.session_state.anthropic_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=1000,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.content[0].text
+    else:
+        return "API 클라이언트가 초기화되지 않았습니다. API 키를 다시 확인해주세요."
 
 def show_chat_interface():
     for message in st.session_state.get('messages', []):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # 사용자 입력
     if prompt := st.chat_input("메시지를 입력하세요."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # 여기에 AI 응답 생성 로직을 추가합니다.
-        # 예: response = generate_ai_response(prompt)
+        response = generate_ai_response(prompt)  # AI 응답 생성
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        with st.chat_message("assistant"):
+            st.markdown(response)
+
+    if prompt := st.chat_input("메시지를 입력하세요."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
         response = f"AI 응답: {prompt}에 대한 답변입니다."
         st.session_state.messages.append({"role": "assistant", "content": response})
         with st.chat_message("assistant"):
@@ -54,25 +77,24 @@ def show_chat_interface():
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
 
-    # 사이드바에 "🏠홈으로" 버튼 추가
-    if st.sidebar.button("🏠홈으로"):
-        reset_session()
-        st.rerun()  # st.experimental_rerun() 대신 st.rerun() 사용
-
-    # 사이드바에 "작성 원하는 항목 선택하기" 버튼 추가
-    if st.sidebar.button("작성 원하는 항목 선택하기"):
-        st.session_state.show_item_selection = True
-
-    # API 키 입력 섹션
     if 'api_key' not in st.session_state or not st.session_state.api_key:
         api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
         if st.button("API 키 확인"):
             st.session_state.api_key = api_key
+            st.session_state.anthropic_client = initialize_anthropic_client(api_key)  # API 클라이언트 초기화
             st.success("API 키가 설정되었습니다!")
-            st.rerun()  # 여기도 st.rerun() 사용
+            st.rerun()
+        
+        if st.button("연구계획서 작성하기✏️"):
+            st.warning("API 키를 먼저 입력해주세요.")
+    else:
+        if st.sidebar.button("🏠홈으로"):
+            reset_session()
+            st.rerun()
 
-    # API 키가 설정된 후 채팅 인터페이스 표시
-    if 'api_key' in st.session_state and st.session_state.api_key:
+        if st.sidebar.button("작성 원하는 항목 선택하기"):
+            st.session_state.show_item_selection = True
+
         if not st.session_state.get('chat_started', False):
             instruction = """
             KBSMC IRB 연구계획서 작성하기를 시작합니다.
@@ -82,11 +104,11 @@ def chat_interface():
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("(1) 연구과제명 부터 작성시작"):
+                if st.button("(1) 연구과제명 부터 작성시작", key="start_writing"):
                     st.session_state.chat_started = True
                     start_writing("(1) 연구과제명")
             with col2:
-                if st.button("작성 원하는 항목 선택하기"):
+                if st.button("작성 원하는 항목 선택하기", key="select_item"):
                     st.session_state.show_item_selection = True
 
         if st.session_state.get('show_item_selection', False):
@@ -95,7 +117,6 @@ def chat_interface():
         if st.session_state.get('chat_started', False):
             show_chat_interface()
 
-# CSS를 사용하여 버튼 스타일 지정
     st.markdown("""
     <style>
     .stButton>button {
