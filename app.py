@@ -67,10 +67,6 @@ def start_writing(item):
     if 'completed_items' not in st.session_state:
         st.session_state.completed_items = []
     
-    instruction = SYSTEM_PROMPTS['prompts'].get(item, "이 항목에 대해 어떤 내용을 작성하고 싶으신가요?")
-    st.markdown(f"**{item}**")
-    st.markdown(instruction)
-    
     st.session_state.current_item = item
     st.session_state.chat_started = True
     st.session_state.show_item_selection = False
@@ -82,13 +78,17 @@ def show_item_selection():
     cols = st.columns(3)
     for i, item in enumerate(items):
         with cols[i % 3]:
-            if st.button(item, key=f"item_{i}"):
+            button_color = "primary" if item == st.session_state.get('current_item', '') else "secondary"
+            if item in st.session_state.get('completed_items', []):
+                button_label = f"✅ {item}"
+            else:
+                button_label = item
+            if st.button(button_label, key=f"item_{i}", type=button_color):
                 start_writing(item)
-
 def generate_ai_response(prompt, current_item):
     if 'anthropic_client' in st.session_state and st.session_state.anthropic_client:
         try:
-            system_prompt = f"{SYSTEM_PROMPTS['system_role']}\n\n{SYSTEM_PROMPTS['scope_of_work']}"
+            system_prompt = f"{SYSTEM_PROMPTS['system_role']}\n\n{SYSTEM_PROMPTS['scope_of_work']}\n\n추가 지시사항: 답변을 작성할 때 번호나 불렛 포인트를 사용하지 말고, 서술형으로 작성해주세요. 문단을 나누어 가독성 있게 작성하되, 전체적으로 하나의 연결된 글이 되도록 해주세요."
             item_prompt = SYSTEM_PROMPTS['prompts'].get(current_item, "이 항목에 대해 작성해주세요.")
             
             response = st.session_state.anthropic_client.messages.create(
@@ -111,12 +111,11 @@ def generate_ai_response(prompt, current_item):
 
 
 def show_chat_interface():
-    # 현재 항목에 대한 지시사항 표시
     current_item = st.session_state.get('current_item', '')
     if current_item:
-        instruction = SYSTEM_PROMPTS.get(current_item, "이 항목에 대해 어떤 내용을 작성하고 싶으신가요?")
-        st.markdown(f"**{current_item}**")
-        st.markdown(instruction)
+        st.markdown(f"**현재 작성 중인 항목: {current_item}**")
+        instruction = SYSTEM_PROMPTS['prompts'].get(current_item, "이 항목에 대해 어떤 내용을 작성하고 싶으신가요?")
+        st.info(instruction)
 
     for message in st.session_state.get('messages', []):
         with st.chat_message(message["role"]):
@@ -132,7 +131,20 @@ def show_chat_interface():
         with st.chat_message("assistant"):
             st.markdown(response)
         
-        # 새 메시지가 추가되었을 때만 화면을 갱신합니다.
+        # 항목 완료 처리
+        if current_item not in st.session_state.get('completed_items', []):
+            st.session_state.completed_items = st.session_state.get('completed_items', []) + [current_item]
+        
+        # 다음 항목으로 자동 이동
+        items = list(SYSTEM_PROMPTS['prompts'].keys())
+        current_index = items.index(current_item)
+        if current_index < len(items) - 1:
+            next_item = items[current_index + 1]
+            st.session_state.current_item = next_item
+            st.info(f"다음 항목 '{next_item}'으로 이동합니다.")
+        else:
+            st.success("모든 항목 작성이 완료되었습니다.")
+        
         st.rerun()
 
 
