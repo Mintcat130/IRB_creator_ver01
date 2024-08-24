@@ -86,9 +86,12 @@ def generate_ai_response(prompt, current_item):
                 ]
             )
             return response.content[0].text
+        except anthropic.APIError as e:
+            st.error(f"Anthropic API 오류: {str(e)}")
+            return f"AI 응답 생성 중 API 오류가 발생했습니다: {str(e)}"
         except Exception as e:
-            st.error(f"AI 응답 생성 중 오류 발생: {str(e)}")
-            return "AI 응답을 생성하는 중 오류가 발생했습니다. 다시 시도해 주세요."
+            st.error(f"예상치 못한 오류 발생: {str(e)}")
+            return f"AI 응답을 생성하는 중 예상치 못한 오류가 발생했습니다: {str(e)}"
     else:
         return "API 클라이언트가 초기화되지 않았습니다. API 키를 다시 확인해주세요."
 
@@ -113,20 +116,19 @@ def show_chat_interface():
         st.rerun()
 
 
-def chat_interface():
-    st.subheader("연구계획서 작성 채팅")
-
-    if 'api_key' not in st.session_state or not st.session_state.api_key:
-        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
-        if st.button("API 키 확인"):
-            client = initialize_anthropic_client(api_key)
-            if client:
-                st.session_state.api_key = api_key
-                st.session_state.anthropic_client = client
-                st.success("API 키가 설정되었습니다!")
-                st.rerun()
-            else:
-                st.error("올바르지 않은 API 키입니다. 다시 확인해 주세요.")
+if 'api_key' not in st.session_state or not st.session_state.api_key:
+    api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
+    if st.button("API 키 확인"):
+        client = initialize_anthropic_client(api_key)
+        if client:
+            st.session_state.api_key = api_key
+            st.session_state.anthropic_client = client
+            st.success("API 키가 설정되었습니다!")
+            st.rerun()
+        else:
+            st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
+else:
+    st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
         
         if st.button("연구계획서 작성하기✏️"):
             st.warning("API 키를 먼저 입력해주세요.")
