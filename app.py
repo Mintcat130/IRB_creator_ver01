@@ -68,9 +68,13 @@ def chat_interface():
             "14. 연구예정기간", "15. 자료 보관 기간 및 폐기 방법", "16. 연구결과 보고와 출판 방법",
             "17. 참고 문헌", "18. 자료 수집 항목 (평가 항목)"
         ]
-        for item in items:
-            if st.button(item):
-                start_writing(item)
+        
+        # 버튼을 3열로 배치
+        cols = st.columns(3)
+        for i, item in enumerate(items):
+            with cols[i % 3]:
+                if st.button(item):
+                    start_writing(item)
 
     # 채팅 메시지 표시
     for message in st.session_state.messages:
