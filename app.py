@@ -16,9 +16,6 @@ SYSTEM_PROMPT = """
 한국어로 작성하되 의학 용어는 괄호 안에 영어 원문을 포함시키세요. 예를 들어, "엽상종양(Phyllodes tumor)"과 같은 형식으로 작성하세요.
 """
 
-import streamlit as st
-import anthropic
-
 # 기존의 SYSTEM_PROMPT 정의 다음에 추가
 
 PREDEFINED_PROMPTS = {
@@ -88,18 +85,18 @@ def show_item_selection():
                 button_label = item
             if st.button(button_label, key=f"item_{i}", type=button_color):
                 start_writing(item)
-def generate_ai_response(prompt, current_item):
+                
+def generate_ai_response(prompt):
     if 'anthropic_client' in st.session_state and st.session_state.anthropic_client:
         try:
-            system_prompt = f"{SYSTEM_PROMPTS['system_role']}\n\n{SYSTEM_PROMPTS['scope_of_work']}\n\n추가 지시사항: 답변을 작성할 때 번호나 불렛 포인트를 사용하지 말고, 서술형으로 작성해주세요. 문단을 나누어 가독성 있게 작성하되, 전체적으로 하나의 연결된 글이 되도록 해주세요."
-            item_prompt = SYSTEM_PROMPTS['prompts'].get(current_item, "이 항목에 대해 작성해주세요.")
+            system_prompt = f"{SYSTEM_PROMPT}\n\n추가 지시사항: 답변을 작성할 때 번호나 불렛 포인트를 사용하지 말고, 서술형으로 작성해주세요. 문단을 나누어 가독성 있게 작성하되, 전체적으로 하나의 연결된 글이 되도록 해주세요."
             
             response = st.session_state.anthropic_client.messages.create(
                 model="claude-3-5-sonnet-20240620",
                 max_tokens=1000,
                 system=system_prompt,
                 messages=[
-                    {"role": "user", "content": f"{item_prompt}\n\n사용자 입력: {prompt}"}
+                    {"role": "user", "content": prompt}
                 ]
             )
             return response.content[0].text
