@@ -31,9 +31,23 @@ PREDEFINED_PROMPTS = {
     {user_input}
 
     위의 내용을 바탕으로 연구 목적과 가설을 구체화하여 작성해주세요.
+    """,
+    "3. 연구 배경": """
+    연구의 배경을 1000자 이내로 설명해주세요. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
+    다음 사항을 포함하세요:
+    1. 이론적 배경 및 근거
+    2. 선행 연구 및 결과
+    3. 연구 배경과 연구의 정당성에 대한 설명
+    4. 국내외 연구 현황
+
+    사용자 입력:
+    {user_input}
+
+    위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
     """
-    # 다른 섹션들은 나중에 추가할 예정입니다.
 }
+    # 다른 섹션들은 나중에 추가할 예정입니다.
+
 
 # 연구 섹션 순서 정의
 RESEARCH_SECTIONS = [
@@ -182,6 +196,56 @@ def write_research_purpose():
             st.session_state.section_contents["2. 연구 목적"] = edited_content
             st.success("편집된 내용이 저장되었습니다.")
 
+def write_research_background():
+    st.markdown("## 3. 연구 배경")
+    st.markdown("연구의 배경에 대한 정보를 입력해주세요.")
+    
+    user_input = st.text_area("연구 배경 정보:", height=150)
+    
+    if st.button("연구 배경 생성"):
+        if user_input:
+            prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(user_input=user_input)
+            ai_response = generate_ai_response(prompt)
+            
+            st.session_state.section_contents["3. 연구 배경"] = ai_response
+            st.markdown("### AI가 생성한 연구 배경:")
+            st.markdown(ai_response)
+            
+            # 참고문헌 추출
+            references = extract_references(ai_response)
+            if references:
+                st.session_state.references = references
+                st.markdown("### 참고문헌:")
+                for ref in references:
+                    st.markdown(f"- {ref}")
+            
+            # 글자 수 확인
+            char_count = len(ai_response)
+            st.info(f"생성된 내용의 글자 수: {char_count}/1000")
+            
+            if char_count > 1000:
+                st.warning("생성된 내용이 1000자를 초과했습니다. 수정이 필요할 수 있습니다.")
+        else:
+            st.warning("연구 배경 정보를 입력해주세요.")
+
+    # 편집 기능
+    if "3. 연구 배경" in st.session_state.section_contents:
+        edited_content = st.text_area(
+            "생성된 내용을 편집하세요:",
+            st.session_state.section_contents["3. 연구 배경"],
+            height=300
+        )
+        if st.button("편집 내용 저장"):
+            st.session_state.section_contents["3. 연구 배경"] = edited_content
+            st.success("편집된 내용이 저장되었습니다.")
+
+import re
+
+def extract_references(text):
+    # [저자, 연도] 형식의 참고문헌을 추출
+    references = re.findall(r'\[([^\]]+)\]', text)
+    return list(set(references))  # 중복 제거
+
 # 여기에 chat_interface 함수가 이어집니다.
 
 def chat_interface():
@@ -224,6 +288,8 @@ def chat_interface():
         # 현재 섹션에 따른 작성 인터페이스 표시
         if st.session_state.current_section == "2. 연구 목적":
             write_research_purpose()
+        elif st.session_state.current_section == "3. 연구 배경":
+            write_research_background()
 
         # 다음 섹션으로 이동
         if st.button("다음 섹션"):
