@@ -304,11 +304,6 @@ def chat_interface():
             else:
                 st.success("모든 섹션을 완료했습니다!")
 
-        # 현재 섹션에 따른 작성 인터페이스 표시
-        if st.session_state.current_section == "2. 연구 목적":
-            write_research_purpose()
-        elif st.session_state.current_section == "3. 연구 배경":
-            write_research_background()
 
         # 전체 내용 미리보기
         if st.sidebar.button("전체 내용 미리보기"):
