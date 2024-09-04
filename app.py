@@ -16,13 +16,33 @@ SYSTEM_PROMPT = """
 한국어로 작성하되 의학 용어는 괄호 안에 영어 원문을 포함시키세요. 예를 들어, "엽상종양(Phyllodes tumor)"과 같은 형식으로 작성하세요.
 """
 
-# 사전 정의된 프롬프트
+import streamlit as st
+import anthropic
+
+# 기존의 SYSTEM_PROMPT 정의 다음에 추가
+
 PREDEFINED_PROMPTS = {
-    "연구 배경": "유방의 엽상종양에 대한 연구 배경을 작성해주세요. 발생 빈도, 임상적 중요성, 현재까지의 연구 현황 등을 포함해주세요.",
-    "연구 목적": "유방의 엽상종양의 분자유전학적 특성을 분석하여 예후 예측 모델을 개발하는 연구의 목적을 작성해주세요.",
-    "연구 방법": "유방의 엽상종양 환자의 조직 샘플을 이용한 유전체 분석과 임상 데이터 분석 방법을 설명해주세요.",
-    "기대 효과": "이 연구를 통해 얻을 수 있는 기대 효과와 임상적 의의를 서술해주세요."
+    "2. 연구 목적": """
+    사용자가 제공한 연구 주제와 키워드를 바탕으로, 연구 목적과 가설을 1000자 이내의 줄글로 작성하세요.
+    다음 사항을 포함해야 합니다:
+    1. 연구의 주요 목적
+    2. 연구로 인해 의도하는 가설
+    3. 가설을 입증하기 위한 구체적인 설명
+    4. 연구의 중요성과 예상되는 결과
+
+    사용자 입력:
+    {user_input}
+
+    위의 내용을 바탕으로 연구 목적과 가설을 구체화하여 작성해주세요.
+    """
+    # 다른 섹션들은 나중에 추가할 예정입니다.
 }
+
+# 연구 섹션 순서 정의
+RESEARCH_SECTIONS = [
+    "2. 연구 목적",
+    # 다른 섹션들은 나중에 추가할 예정입니다.
+]
 
 # Anthropic API 클라이언트 초기화 함수
 def initialize_anthropic_client(api_key):
@@ -130,6 +150,42 @@ def show_chat_interface():
         
         st.rerun()
 
+def write_research_purpose():
+    st.markdown("## 2. 연구 목적")
+    st.markdown("연구에 대한 내용이나 키워드를 자유롭게 입력해주세요.")
+    
+    user_input = st.text_area("연구 주제 및 키워드:", height=150)
+    
+    if st.button("연구 목적 생성"):
+        if user_input:
+            prompt = PREDEFINED_PROMPTS["2. 연구 목적"].format(user_input=user_input)
+            ai_response = generate_ai_response(prompt)
+            
+            st.session_state.section_contents["2. 연구 목적"] = ai_response
+            st.markdown("### AI가 생성한 연구 목적:")
+            st.markdown(ai_response)
+            
+            # 글자 수 확인
+            char_count = len(ai_response)
+            st.info(f"생성된 내용의 글자 수: {char_count}/1000")
+            
+            if char_count > 1000:
+                st.warning("생성된 내용이 1000자를 초과했습니다. 수정이 필요할 수 있습니다.")
+        else:
+            st.warning("연구 주제나 키워드를 입력해주세요.")
+
+    # 편집 기능
+    if "2. 연구 목적" in st.session_state.section_contents:
+        edited_content = st.text_area(
+            "생성된 내용을 편집하세요:",
+            st.session_state.section_contents["2. 연구 목적"],
+            height=300
+        )
+        if st.button("편집 내용 저장"):
+            st.session_state.section_contents["2. 연구 목적"] = edited_content
+            st.success("편집된 내용이 저장되었습니다.")
+
+# 여기에 chat_interface 함수가 이어집니다.
 
 def chat_interface():
     st.subheader("연구계획서 작성 채팅")
@@ -157,40 +213,35 @@ def chat_interface():
             else:
                 st.warning("먼저 API 키를 입력하고 확인해주세요.")
     else:
-        # 사이드바에 홈으로 버튼만 남김
+        if 'current_section' not in st.session_state:
+            st.session_state.current_section = RESEARCH_SECTIONS[0]
+        if 'section_contents' not in st.session_state:
+            st.session_state.section_contents = {}
+
+        st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
+        
         if st.sidebar.button("🏠홈으로"):
             reset_session()
             st.rerun()
 
-        # 메시지 초기화
-        if 'messages' not in st.session_state:
-            st.session_state.messages = []
+        # 현재 섹션에 따른 작성 인터페이스 표시
+        if st.session_state.current_section == "2. 연구 목적":
+            write_research_purpose()
 
-        # 프롬프트 선택 버튼 추가
-        cols = st.columns(len(PREDEFINED_PROMPTS))
-        for i, (section, prompt) in enumerate(PREDEFINED_PROMPTS.items()):
-            if cols[i].button(section):
-                st.session_state.messages.append({"role": "user", "content": prompt})
+        # 다음 섹션으로 이동
+        if st.button("다음 섹션"):
+            current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
+            if current_index < len(RESEARCH_SECTIONS) - 1:
+                st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
                 st.rerun()
+            else:
+                st.success("모든 섹션을 완료했습니다!")
 
-        # 채팅 인터페이스 표시
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-        if prompt := st.chat_input("메시지를 입력하세요."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                full_response = ""
-                for response in generate_ai_response(prompt):
-                    full_response += response
-                    message_placeholder.markdown(full_response + "▌")
-                message_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+        # 전체 내용 미리보기
+        if st.sidebar.button("전체 내용 미리보기"):
+            for section in RESEARCH_SECTIONS:
+                st.markdown(f"### {section}")
+                st.markdown(st.session_state.section_contents.get(section, "아직 작성되지 않았습니다."))
 
     # CSS 스타일 (이전과 동일)
     st.markdown("""
