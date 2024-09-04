@@ -1,44 +1,27 @@
 import streamlit as st
 import anthropic  # Anthropic API 추가
 
-# 시스템 프롬프트 딕셔너리
-SYSTEM_PROMPTS = {
-    "system_role": "이 LLM 모델은 병리학 분야의 연구 전문가로서 행동하며, 연구계획서 작성의 모든 단계에서 사용자에게 도움을 줍니다. 사용자는 연구계획서의 특정 항목에 대해 필요한 정보를 제공하며, 모델은 이를 기반으로 해당 항목을 작성합니다. 모델은 사용자가 제공하는 정보와 병리학 연구에 대한 지식을 결합하여 연구계획서를 작성합니다.",
-    
-    "scope_of_work": "사용자는 연구 주제에 대해 자유롭게 기술합니다. 모델은 이 정보를 바탕으로 연구계획서의 '2. 연구 목적' 항목을 먼저 작성합니다. 이후 나머지 항목들이 작성되며, 마지막으로 연구과제명이 결정됩니다. 최종적으로 연구계획서 문서에 해당 내용이 포함됩니다.",
-    
-    "usage_example": (
-        "1. 사용자는 연구 주제에 대해 자유롭게 기술합니다.\n"
-        "2. 모델은 사용자의 입력을 바탕으로 줄글 형식으로 '2. 연구 목적'을 작성합니다.\n"
-        "3. 연구 목적이 작성된 후, 연구 배경, 연구 방법, 선정 기준, 제외 기준, 대상자 수 및 산출 근거, 자료 분석과 통계적 방법에 대해 차례대로 작성합니다.\n"
-        "4. 마지막으로 연구의 핵심 내용을 반영하여 연구과제명을 생성합니다.\n"
-        "5. 최종적으로 연구계획서 문서로 출력됩니다."
-    ),
-    
-    "prompts": {
-        "user_input": """연구 주제나 키워드에 대해 자유롭게 기술해주세요. 
-예시)
-- 이 연구를 통해 무엇을 알아내고자 하십니까?
-- 어떤 문제를 해결하거나 어떤 가설을 검증하고자 하십니까?
-- 이 연구가 왜 중요하다고 생각하십니까?
-- 이 연구의 키워드들은 무엇입니까?""",
-        
-        "2. 연구 목적": "사용자가 연구 주제에 대해 기술한 내용을 바탕으로, 연구의 목적을 번호나 목록 없이 자연스럽게 이어지는 줄글 형식으로 작성하십시오. 연구가 해결하고자 하는 문제, 연구의 중요성, 예상되는 결과 등을 포함하여 설명하십시오.",
-        
-        "3. 연구 배경": "사용자가 제공한 연구 배경 자료를 바탕으로, 연구의 정당성을 자연스럽게 이어지는 서술형 문장으로 설명하세요. 이론적 배경, 근거, 선행 연구 등을 줄글로 서술하고, 국내외 연구 현황도 반영하세요.",
-        
-        "4. 연구 방법": "연구 방법을 번호나 목록 없이 서술형 문장으로 자연스럽게 설명하세요. 연구 절차와 방법론을 병리학적 연구에 적합한 방식으로 자세히 기술하세요.",
-        
-        "5. 선정 기준": "연구 대상자 선정 기준을 자연스럽게 이어지는 줄글 형식으로 명확히 설명하세요. 연구의 목표에 부합하는 대상자 조건을 서술하세요.",
-        
-        "6. 제외 기준": "연구 대상에서 제외될 기준을 자연스럽게 이어지는 서술형 문장으로 명확히 기술하세요. 연구의 신뢰성을 유지하기 위한 제외 조건을 설명하세요.",
-        
-        "7. 대상자 수 및 산출 근거": "예상 연구 대상자의 수와 그 산출 근거를 서술형 문장으로 자연스럽게 설명하세요. 필요 시 선행 연구의 통계학적 방법을 참고하여 기술하세요.",
-        
-        "8. 자료 분석과 통계적 방법": "수집된 자료를 분석하는 방법과 사용할 통계적 방법을 번호나 목록 없이 서술형 문장으로 자연스럽게 설명하세요. 분석 계획과 혼란변수 통제 방법 등을 명확히 기술하세요.",
-        
-        "9. 연구과제명": "사용자가 앞서 제공한 연구의 목적, 배경, 방법 등을 바탕으로 연구과제명을 줄글 형식으로 자연스럽게 작성하세요. 연구의 핵심을 명확히 반영하는 국문과 영문 제목을 생성하십시오."
-    }
+# 시스템 프롬프트
+SYSTEM_PROMPT = """
+당신은 병리학 분야의 연구 전문가로서 행동하는 AI 조수입니다. 당신의 역할은 사용자가 연구계획서를 작성하는 데 도움을 주는 것입니다. 사용자는 연구계획서의 특정 항목에 대한 정보를 제공할 것이며, 당신은 이를 바탕으로 해당 항목을 작성해야 합니다.
+
+사용자가 제공한 정보를 주의 깊게 분석하고, 당신의 병리학 연구에 대한 전문 지식을 활용하여 요청된 연구계획서 섹션을 작성하세요. 다음 지침을 따르세요:
+
+1. 사용자가 제공한 정보를 최대한 활용하세요.
+2. 필요한 경우, 병리학 연구에 대한 당신의 지식을 사용하여 정보를 보완하세요.
+3. 연구계획서 섹션의 구조와 형식을 적절히 유지하세요.
+4. 명확하고 전문적인 언어를 사용하세요.
+5. 필요한 경우 적절한 참고문헌이나 인용을 포함하세요.
+
+한국어로 작성하되 의학 용어는 괄호 안에 영어 원문을 포함시키세요. 예를 들어, "엽상종양(Phyllodes tumor)"과 같은 형식으로 작성하세요.
+"""
+
+# 사전 정의된 프롬프트
+PREDEFINED_PROMPTS = {
+    "연구 배경": "유방의 엽상종양에 대한 연구 배경을 작성해주세요. 발생 빈도, 임상적 중요성, 현재까지의 연구 현황 등을 포함해주세요.",
+    "연구 목적": "유방의 엽상종양의 분자유전학적 특성을 분석하여 예후 예측 모델을 개발하는 연구의 목적을 작성해주세요.",
+    "연구 방법": "유방의 엽상종양 환자의 조직 샘플을 이용한 유전체 분석과 임상 데이터 분석 방법을 설명해주세요.",
+    "기대 효과": "이 연구를 통해 얻을 수 있는 기대 효과와 임상적 의의를 서술해주세요."
 }
 
 # Anthropic API 클라이언트 초기화 함수
@@ -158,7 +141,10 @@ def chat_interface():
         if st.button("API 키 확인"):
             client = initialize_anthropic_client(api_key)
             if client:
-                st.success("유효한 API 키입니다.")
+                st.session_state.api_key = api_key
+                st.session_state.anthropic_client = client
+                st.success("유효한 API 키입니다. 연구계획서 작성을 시작할 수 있습니다.")
+                st.rerun()
             else:
                 st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
         
@@ -176,28 +162,42 @@ def chat_interface():
             else:
                 st.warning("API 키를 먼저 입력해주세요.")
     else:
-        st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
-        
+        # 사이드바에 홈으로 버튼만 남김
         if st.sidebar.button("🏠홈으로"):
             reset_session()
             st.rerun()
 
-        if st.sidebar.button("작성 원하는 항목 선택하기"):
-            st.session_state.show_item_selection = True
+        # 메시지 초기화
+        if 'messages' not in st.session_state:
+            st.session_state.messages = []
 
-        if not st.session_state.get('chat_started', False):
-            st.info(SYSTEM_PROMPTS['usage_example'])
-            
-            if st.button("연구 주제 기술하기", key="start_writing"):
-                start_writing("1. 연구 주제")
+        # 프롬프트 선택 버튼 추가
+        cols = st.columns(len(PREDEFINED_PROMPTS))
+        for i, (section, prompt) in enumerate(PREDEFINED_PROMPTS.items()):
+            if cols[i].button(section):
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                st.rerun()
 
-        if st.session_state.get('show_item_selection', False):
-            show_item_selection()
+        # 채팅 인터페이스 표시
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-        if st.session_state.get('chat_started', False):
-            show_chat_interface()
-    #Css style
+        if prompt := st.chat_input("메시지를 입력하세요."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                full_response = ""
+                for response in generate_ai_response(prompt):
+                    full_response += response
+                    message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+
+    # CSS 스타일 (이전과 동일)
     st.markdown("""
     <style>
     .stButton>button {
