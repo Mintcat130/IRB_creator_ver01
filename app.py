@@ -1,5 +1,11 @@
 import streamlit as st
-import anthropic  # Anthropic API 추가
+import anthropic
+import PyPDF2
+import io
+import requests
+from scholarly import scholarly
+from Bio import Entrez
+import json
 
 # 시스템 프롬프트
 SYSTEM_PROMPT = """
@@ -125,6 +131,47 @@ def generate_ai_response(prompt):
         return "API 클라이언트가 초기화되지 않았습니다. API 키를 다시 확인해주세요."
 
 
+# PDF 파일 업로드 함수
+def upload_pdf():
+    uploaded_file = st.file_uploader("PDF 파일을 업로드하세요", type="pdf")
+    if uploaded_file is not None:
+        return extract_text_from_pdf(uploaded_file)
+    return None
+
+# PDF에서 텍스트 추출 함수
+def extract_text_from_pdf(file):
+    pdf_reader = PyPDF2.PdfReader(io.BytesIO(file.getvalue()))
+    text = ""
+    for page in pdf_reader.pages:
+        text += page.extract_text()
+    return text
+
+# PubMed 검색 함수
+def search_pubmed(query, max_results=10):
+    Entrez.email = "your_email@example.com"  # PubMed API 사용을 위해 이메일 필요
+    handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
+    record = Entrez.read(handle)
+    handle.close()
+    
+    ids = record["IdList"]
+    results = []
+    for id in ids:
+        handle = Entrez.efetch(db="pubmed", id=id, rettype="medline", retmode="text")
+        results.append(handle.read())
+        handle.close()
+    return results
+
+# Google Scholar 검색 함수
+def search_google_scholar(query, max_results=10):
+    search_query = scholarly.search_pubs(query)
+    results = []
+    for i, result in enumerate(search_query):
+        if i >= max_results:
+            break
+        results.append(result)
+    return results
+
+
 def show_chat_interface():
     current_item = st.session_state.get('current_item', '')
     if current_item:
@@ -199,13 +246,53 @@ def write_research_purpose():
 
 def write_research_background():
     st.markdown("## 3. 연구 배경")
-    st.markdown("연구의 배경에 대한 정보를 입력해주세요.")
     
-    user_input = st.text_area("연구 배경 정보:", height=150)
+    # PDF 파일 업로드
+    pdf_text = upload_pdf()
+    if pdf_text:
+        st.success("PDF 파일이 성공적으로 업로드되었습니다.")
+        st.text_area("추출된 텍스트:", pdf_text[:500] + "...", height=200)  # 처음 500자만 표시
+    
+    # 검색 쿼리 입력
+    search_query = st.text_input("연구 주제 키워드를 입력하세요:")
+    
+    pubmed_results = []
+    scholar_results = []
+    if search_query:
+        if st.button("논문 검색"):
+            with st.spinner("논문을 검색 중입니다..."):
+                pubmed_results = search_pubmed(search_query)
+                scholar_results = search_google_scholar(search_query)
+            
+            st.success("검색이 완료되었습니다.")
+            st.write(f"PubMed에서 {len(pubmed_results)}개의 결과를 찾았습니다.")
+            st.write(f"Google Scholar에서 {len(scholar_results)}개의 결과를 찾았습니다.")
+            
+            # 결과 표시 (예시)
+            if pubmed_results:
+                st.subheader("PubMed 검색 결과")
+                for result in pubmed_results[:3]:  # 처음 3개만 표시
+                    st.text(result[:200] + "...")  # 처음 200자만 표시
+            
+            if scholar_results:
+                st.subheader("Google Scholar 검색 결과")
+                for result in scholar_results[:3]:  # 처음 3개만 표시
+                    st.write(result.bib['title'])
+                    st.write(result.bib['author'])
+                    st.write(result.bib['abstract'][:200] + "...")  # 처음 200자만 표시
+    
+    # 사용자 입력
+    user_input = st.text_area("추가적인 연구 배경 정보:", height=150)
     
     if st.button("연구 배경 생성"):
-        if user_input:
-            prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(user_input=user_input)
+        if user_input or pdf_text or pubmed_results or scholar_results:
+            # PDF 텍스트, 검색 결과, 사용자 입력을 결합
+            combined_input = f"PDF 내용: {pdf_text[:1000] if pdf_text else '없음'}\n\n"
+            combined_input += f"PubMed 검색 결과: {str(pubmed_results[:3])}\n\n"
+            combined_input += f"Google Scholar 검색 결과: {str([r.bib['title'] for r in scholar_results[:3]])}\n\n"
+            combined_input += f"사용자 입력: {user_input}"
+            
+            prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(user_input=combined_input)
             ai_response = generate_ai_response(prompt)
             
             st.session_state.section_contents["3. 연구 배경"] = ai_response
@@ -227,9 +314,9 @@ def write_research_background():
             if char_count > 1000:
                 st.warning("생성된 내용이 1000자를 초과했습니다. 수정이 필요할 수 있습니다.")
         else:
-            st.warning("연구 배경 정보를 입력해주세요.")
+            st.warning("연구 배경 정보를 입력하거나 PDF를 업로드하거나 논문을 검색해주세요.")
 
-    # 편집 기능
+    # 편집 기능 (기존과 동일)
     if "3. 연구 배경" in st.session_state.section_contents:
         edited_content = st.text_area(
             "생성된 내용을 편집하세요:",
@@ -240,7 +327,6 @@ def write_research_background():
             st.session_state.section_contents["3. 연구 배경"] = edited_content
             st.success("편집된 내용이 저장되었습니다.")
 
-import re
 
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
@@ -282,6 +368,8 @@ def chat_interface():
             st.session_state.current_section = RESEARCH_SECTIONS[0]
         if 'section_contents' not in st.session_state:
             st.session_state.section_contents = {}
+        if 'references' not in st.session_state:
+            st.session_state.references = []  # 참고문헌 리스트 초기화
 
         st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
         
@@ -294,8 +382,9 @@ def chat_interface():
             write_research_purpose()
         elif st.session_state.current_section == "3. 연구 배경":
             write_research_background()
+             # ... (다른 섹션들에 대한 조건문 추가)
 
-        # 다음 섹션으로 이동
+      # 다음 섹션으로 이동
         if st.button("다음 섹션"):
             current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
             if current_index < len(RESEARCH_SECTIONS) - 1:
@@ -304,12 +393,17 @@ def chat_interface():
             else:
                 st.success("모든 섹션을 완료했습니다!")
 
-
         # 전체 내용 미리보기
         if st.sidebar.button("전체 내용 미리보기"):
             for section in RESEARCH_SECTIONS:
                 st.markdown(f"### {section}")
                 st.markdown(st.session_state.section_contents.get(section, "아직 작성되지 않았습니다."))
+            
+            # 참고문헌 표시
+            if st.session_state.references:
+                st.markdown("### 참고문헌")
+                for ref in st.session_state.references:
+                    st.markdown(f"- {ref}")
 
     # CSS 스타일 (이전과 동일)
     st.markdown("""
@@ -326,3 +420,4 @@ def chat_interface():
 
 if __name__ == "__main__":
     chat_interface()
+
