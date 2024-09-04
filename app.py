@@ -152,7 +152,7 @@ def show_chat_interface():
 
 def write_research_purpose():
     st.markdown("## 2. 연구 목적")
-    st.markdown("어떤 연구를 계획중인지, 연구에 대한 내용이나 키워드를 자유롭게 입력해주세요.")
+    st.markdown("어떤 연구를 계획중인지, 연구에 대한 내용이나 키워드를 형식에 상관없이 자유롭게 입력해주세요. 입력 후 버튼을 누르면 AI 모델이 연구목적에 대한 줄글을 작성 해 줍니다.")
     
     user_input = st.text_area("연구 주제 및 키워드:", height=150)
     
