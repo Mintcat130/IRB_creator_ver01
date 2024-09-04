@@ -152,7 +152,7 @@ def show_chat_interface():
 
 def write_research_purpose():
     st.markdown("## 2. 연구 목적")
-    st.markdown("연구에 대한 내용이나 키워드를 자유롭게 입력해주세요.")
+    st.markdown("어떤 연구를 계획중인지, 연구에 대한 내용이나 키워드를 자유롭게 입력해주세요.")
     
     user_input = st.text_area("연구 주제 및 키워드:", height=150)
     
