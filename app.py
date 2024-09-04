@@ -141,26 +141,21 @@ def chat_interface():
         if st.button("API 키 확인"):
             client = initialize_anthropic_client(api_key)
             if client:
-                st.session_state.api_key = api_key
-                st.session_state.anthropic_client = client
-                st.success("유효한 API 키입니다. 연구계획서 작성을 시작할 수 있습니다.")
-                st.rerun()
+                st.success("유효한 API 키입니다. 연구계획서 작성하기 버튼을 눌러 시작하세요.")
+                st.session_state.temp_api_key = api_key  # 임시로 API 키 저장
             else:
                 st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
         
-        # 연구계획서 작성하기 버튼 (새로운 줄에 배치)
+        # 연구계획서 작성하기 버튼
         if st.button("연구계획서 작성하기✏️"):
-            if api_key:
-                client = initialize_anthropic_client(api_key)
-                if client:
-                    st.session_state.api_key = api_key
-                    st.session_state.anthropic_client = client
-                    st.success("API 키가 설정되었습니다!")
-                    st.rerun()
-                else:
-                    st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
+            if 'temp_api_key' in st.session_state:
+                st.session_state.api_key = st.session_state.temp_api_key
+                st.session_state.anthropic_client = initialize_anthropic_client(st.session_state.api_key)
+                del st.session_state.temp_api_key  # 임시 저장된 API 키 삭제
+                st.success("API 키가 설정되었습니다!")
+                st.rerun()
             else:
-                st.warning("API 키를 먼저 입력해주세요.")
+                st.warning("먼저 API 키를 입력하고 확인해주세요.")
     else:
         # 사이드바에 홈으로 버튼만 남김
         if st.sidebar.button("🏠홈으로"):
