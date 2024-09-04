@@ -52,6 +52,7 @@ PREDEFINED_PROMPTS = {
 # 연구 섹션 순서 정의
 RESEARCH_SECTIONS = [
     "2. 연구 목적",
+    "3. 연구 배경",
     # 다른 섹션들은 나중에 추가할 예정입니다.
 ]
 
@@ -253,6 +254,9 @@ def chat_interface():
 
     if 'api_key' not in st.session_state or not st.session_state.api_key:
         api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
+
+    if 'current_section' not in st.session_state:
+        st.session_state.current_section = RESEARCH_SECTIONS[0]
         
         # API 키 확인 버튼
         if st.button("API 키 확인"):
@@ -299,6 +303,12 @@ def chat_interface():
                 st.rerun()
             else:
                 st.success("모든 섹션을 완료했습니다!")
+
+        # 현재 섹션에 따른 작성 인터페이스 표시
+        if st.session_state.current_section == "2. 연구 목적":
+            write_research_purpose()
+        elif st.session_state.current_section == "3. 연구 배경":
+            write_research_background()
 
         # 전체 내용 미리보기
         if st.sidebar.button("전체 내용 미리보기"):
