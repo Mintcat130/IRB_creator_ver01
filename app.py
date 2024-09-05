@@ -77,7 +77,7 @@ def initialize_anthropic_client(api_key):
         # 간단한 API 호출로 키 유효성 검사
         client.messages.create(
             model="claude-3-5-sonnet-20240620",
-            max_tokens=1000,
+            max_tokens=2000,
             messages=[{"role": "user", "content": "Hello"}]
         )
         return client
@@ -100,7 +100,7 @@ def generate_ai_response(prompt):
             
             response = st.session_state.anthropic_client.messages.create(
                 model="claude-3-5-sonnet-20240620",
-                max_tokens=1000,
+                max_tokens=2000,
                 system=system_prompt,
                 messages=[
                     {"role": "user", "content": prompt}
