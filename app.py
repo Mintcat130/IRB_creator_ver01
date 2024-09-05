@@ -154,20 +154,23 @@ def search_pubmed(query, max_results=10):
         handle.close()
     return results
 
-# Google Scholar 검색 함수 (수정)
+# Google Scholar 검색 함수 수정
 def search_google_scholar(query, max_results=10):
     search_query = scholarly.search_pubs(query)
     results = []
     for i, result in enumerate(search_query):
         if i >= max_results:
             break
-        title = result.bib.get('title', 'No title')
-        year = result.bib.get('year', 'No year')
-        authors = result.bib.get('author', 'No author')
-        if isinstance(authors, list):
-            authors = ", ".join(authors[:2]) + "..." if len(authors) > 2 else ", ".join(authors)
-        link = result.bib.get('url', '#')
-        results.append({"title": title, "year": year, "authors": authors, "link": link})
+        try:
+            title = result['bib'].get('title', 'No title')
+            year = result['bib'].get('pub_year', 'No year')
+            authors = result['bib'].get('author', 'No author')
+            if isinstance(authors, list):
+                authors = ", ".join(authors[:2]) + "..." if len(authors) > 2 else ", ".join(authors)
+            link = result.get('pub_url', '#')
+            results.append({"title": title, "year": year, "authors": authors, "link": link})
+        except AttributeError:
+            continue  # 결과를 건너뛰고 다음 결과로 진행
     return results
 
 
@@ -255,7 +258,8 @@ def write_research_background():
     if keywords_list:
         st.write("입력된 키워드:", ", ".join(keywords_list))
         
-        if st.button("논문 검색"):
+    if st.button("논문 검색"):
+        if keywords_list:
             search_query = " ".join(keywords_list)
             
             with st.spinner("논문을 검색 중입니다..."):
@@ -276,7 +280,7 @@ def write_research_background():
                         del pubmed_results[i]
                         st.rerun()
             
-            # Google Scholar 결과 표시
+           # Google Scholar 결과 표시
             st.subheader("Google Scholar 검색 결과")
             for i, result in enumerate(scholar_results):
                 col1, col2 = st.columns([3, 1])
@@ -291,6 +295,8 @@ def write_research_background():
             # 검색 결과 세션 상태에 저장
             st.session_state.pubmed_results = pubmed_results
             st.session_state.scholar_results = scholar_results
+        else:
+            st.warning("키워드를 입력해주세요.")
             
     # PDF 파일 업로드
     uploaded_files = st.file_uploader("PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
