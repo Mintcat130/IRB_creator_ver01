@@ -6,9 +6,7 @@ import requests
 from scholarly import scholarly
 from Bio import Entrez
 import json
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-import numpy as np
+import re
 
 # 시스템 프롬프트
 SYSTEM_PROMPT = """
@@ -25,8 +23,7 @@ SYSTEM_PROMPT = """
 한국어로 작성하되 의학 용어는 괄호 안에 영어 원문을 포함시키세요. 예를 들어, "엽상종양(Phyllodes tumor)"과 같은 형식으로 작성하세요.
 """
 
-# 기존의 SYSTEM_PROMPT 정의 다음에 추가
-
+# PREDEFINED_PROMPTS 수정
 PREDEFINED_PROMPTS = {
     "2. 연구 목적": """
     사용자가 제공한 연구 주제와 키워드를 바탕으로, 연구 목적과 가설을 1000자 이내의 줄글로 작성하세요. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
@@ -42,7 +39,7 @@ PREDEFINED_PROMPTS = {
     위의 내용을 바탕으로 연구 목적과 가설을 구체화하여 작성해주세요.
     """,
     "3. 연구 배경": """
-    연구의 배경을 1000자 이내로 설명해주세요. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
+    제공된 정보를 바탕으로 연구의 배경을 1500자 이내로 설명해주세요. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
     다음 사항을 포함하세요:
     1. 이론적 배경 및 근거
     2. 선행 연구 및 결과
@@ -52,10 +49,18 @@ PREDEFINED_PROMPTS = {
     사용자 입력:
     {user_input}
 
+    연구 목적:
+    {research_purpose}
+
+    검색된 논문:
+    {papers}
+
+    PDF 내용:
+    {pdf_content}
+
     위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
     """
 }
-    # 다른 섹션들은 나중에 추가할 예정입니다.
 
 
 # 연구 섹션 순서 정의
@@ -80,36 +85,14 @@ def initialize_anthropic_client(api_key):
         st.error(f"API 키 초기화 중 오류 발생: {str(e)}")
         return None
 
+#세션 초기화 함수
 def reset_session():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.session_state.clear()
 
-def start_writing(item):
-    if 'messages' not in st.session_state:
-        st.session_state.messages = []
-    if 'completed_items' not in st.session_state:
-        st.session_state.completed_items = []
-    
-    st.session_state.current_item = item
-    st.session_state.chat_started = True
-    st.session_state.show_item_selection = False
-
-def show_item_selection():
-    st.write("작성할 항목을 선택하세요:")
-    items = list(SYSTEM_PROMPTS['prompts'].keys())
-    
-    cols = st.columns(3)
-    for i, item in enumerate(items):
-        with cols[i % 3]:
-            button_color = "primary" if item == st.session_state.get('current_item', '') else "secondary"
-            if item in st.session_state.get('completed_items', []):
-                button_label = f"✅ {item}"
-            else:
-                button_label = item
-            if st.button(button_label, key=f"item_{i}", type=button_color):
-                start_writing(item)
                 
+#AI 응답 생성 함수
 def generate_ai_response(prompt):
     if 'anthropic_client' in st.session_state and st.session_state.anthropic_client:
         try:
@@ -149,9 +132,9 @@ def extract_text_from_pdf(file):
         text += page.extract_text()
     return text
 
-# PubMed 검색 함수
+# PubMed 검색 함수 (수정)
 def search_pubmed(query, max_results=10):
-    Entrez.email = "your_email@example.com"  # PubMed API 사용을 위해 이메일 필요
+    Entrez.email = "your_email@example.com"
     handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
     record = Entrez.read(handle)
     handle.close()
@@ -160,18 +143,31 @@ def search_pubmed(query, max_results=10):
     results = []
     for id in ids:
         handle = Entrez.efetch(db="pubmed", id=id, rettype="medline", retmode="text")
-        results.append(handle.read())
+        record = Entrez.read(Entrez.parse(handle))
+        if record:
+            article = record[0]
+            title = article.get("TI", "No title")
+            year = article.get("DP", "")[:4]  # 출판 연도
+            authors = ", ".join(article.get("AU", []))[:50] + "..." if len(article.get("AU", [])) > 2 else ", ".join(article.get("AU", []))
+            link = f"https://pubmed.ncbi.nlm.nih.gov/{id}/"
+            results.append({"title": title, "year": year, "authors": authors, "link": link})
         handle.close()
     return results
 
-# Google Scholar 검색 함수
+# Google Scholar 검색 함수 (수정)
 def search_google_scholar(query, max_results=10):
     search_query = scholarly.search_pubs(query)
     results = []
     for i, result in enumerate(search_query):
         if i >= max_results:
             break
-        results.append(result)
+        title = result.bib.get('title', 'No title')
+        year = result.bib.get('year', 'No year')
+        authors = result.bib.get('author', 'No author')
+        if isinstance(authors, list):
+            authors = ", ".join(authors[:2]) + "..." if len(authors) > 2 else ", ".join(authors)
+        link = result.bib.get('url', '#')
+        results.append({"title": title, "year": year, "authors": authors, "link": link})
     return results
 
 
@@ -247,29 +243,56 @@ def write_research_purpose():
             st.session_state.section_contents["2. 연구 목적"] = edited_content
             st.success("편집된 내용이 저장되었습니다.")
 
-def extract_keywords(text, num_keywords=7):
-    # 불용어 설정
-    stop_words_list = list(ENGLISH_STOP_WORDS) + ['연구', '목적', '가설', '중요성']
-    
-    # TF-IDF 벡터라이저 초기화
-    vectorizer = TfidfVectorizer(stop_words=stop_words_list)
-    
-    # TF-IDF 행렬 생성
-    tfidf_matrix = vectorizer.fit_transform([text])
-    
-    # 단어별 TF-IDF 점수 계산
-    feature_array = np.array(vectorizer.get_feature_names_out())
-    tfidf_sorting = np.argsort(tfidf_matrix.toarray()).flatten()[::-1]
-    
-    # 상위 키워드 추출
-    top_keywords = feature_array[tfidf_sorting][:num_keywords]
-    
-    return top_keywords
 
+# 연구 배경 작성 함수 (수정)
 def write_research_background():
     st.markdown("## 3. 연구 배경")
     
-    # 여러 PDF 파일 업로드
+    # 키워드 입력
+    keywords = st.text_input("검색에 사용할 키워드를 입력하세요 (최대 10개, 쉼표로 구분):")
+    keywords_list = [k.strip() for k in keywords.split(',') if k.strip()][:10]
+    
+    if keywords_list:
+        st.write("입력된 키워드:", ", ".join(keywords_list))
+        
+        if st.button("논문 검색"):
+            search_query = " ".join(keywords_list)
+            
+            with st.spinner("논문을 검색 중입니다..."):
+                pubmed_results = search_pubmed(search_query)
+                scholar_results = search_google_scholar(search_query)
+            
+            st.success("검색이 완료되었습니다.")
+            
+            # PubMed 결과 표시
+            st.subheader("PubMed 검색 결과")
+            for i, result in enumerate(pubmed_results):
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
+                    st.caption(f"저자: {result['authors']}")
+                with col2:
+                    if st.button("삭제", key=f"del_pubmed_{i}"):
+                        del pubmed_results[i]
+                        st.rerun()
+            
+            # Google Scholar 결과 표시
+            st.subheader("Google Scholar 검색 결과")
+            for i, result in enumerate(scholar_results):
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
+                    st.caption(f"저자: {result['authors']}")
+                with col2:
+                    if st.button("삭제", key=f"del_scholar_{i}"):
+                        del scholar_results[i]
+                        st.rerun()
+            
+            # 검색 결과 세션 상태에 저장
+            st.session_state.pubmed_results = pubmed_results
+            st.session_state.scholar_results = scholar_results
+            
+    # PDF 파일 업로드
     uploaded_files = st.file_uploader("PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
     
     pdf_texts = []
@@ -279,80 +302,47 @@ def write_research_background():
             pdf_texts.append(pdf_text)
         st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
     
-    # 2. 연구 목적에서 작성한 내용 가져오기
-    research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
-    
-    if research_purpose:
-        # 키워드 추출
-        keywords = extract_keywords(research_purpose)
-        st.write("추출된 키워드:", ", ".join(keywords))
-        
-        # 자동 검색 수행
-        search_query = " ".join(keywords)
-        
-        if st.button("관련 논문 자동 검색"):
-            with st.spinner("논문을 검색 중입니다..."):
-                pubmed_results = search_pubmed(search_query)
-                scholar_results = search_google_scholar(search_query)
+    # 연구 배경 생성 버튼
+    if st.button("해당 내용으로 연구배경 작성하기"):
+        if 'pubmed_results' in st.session_state or 'scholar_results' in st.session_state or pdf_texts:
+            # 연구 목적 가져오기
+            research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
             
-            st.success("검색이 완료되었습니다.")
-            st.write(f"PubMed에서 {len(pubmed_results)}개의 결과를 찾았습니다.")
-            st.write(f"Google Scholar에서 {len(scholar_results)}개의 결과를 찾았습니다.")
+            # 검색 결과 및 PDF 내용 결합
+            papers = []
+            if 'pubmed_results' in st.session_state:
+                papers.extend([f"{r['title']} ({r['year']})" for r in st.session_state.pubmed_results])
+            if 'scholar_results' in st.session_state:
+                papers.extend([f"{r['title']} ({r['year']})" for r in st.session_state.scholar_results])
+            papers_text = "\n".join(papers)
             
-            # 결과 표시 및 선택 옵션
-            selected_pubmed = []
-            selected_scholar = []
+            pdf_content = "\n".join(pdf_texts)
             
-            if pubmed_results:
-                st.subheader("PubMed 검색 결과")
-                for i, result in enumerate(pubmed_results[:5]):  # 상위 5개만 표시
-                    if st.checkbox(f"PubMed 결과 {i+1}", key=f"pubmed_{i}"):
-                        selected_pubmed.append(result)
-                    st.text(result[:200] + "...")  # 처음 200자만 표시
+            # AI에 전달할 프롬프트 생성
+            prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
+                user_input=keywords,
+                research_purpose=research_purpose,
+                papers=papers_text,
+                pdf_content=pdf_content[:1000]  # PDF 내용은 1000자로 제한
+            )
             
-            if scholar_results:
-                st.subheader("Google Scholar 검색 결과")
-                for i, result in enumerate(scholar_results[:5]):  # 상위 5개만 표시
-                    if st.checkbox(f"Scholar 결과 {i+1}: {result.bib['title']}", key=f"scholar_{i}"):
-                        selected_scholar.append(result)
-                    st.write(result.bib['abstract'][:200] + "...")  # 처음 200자만 표시
-    
-    # 사용자 입력
-    user_input = st.text_area("추가적인 연구 배경 정보:", height=150)
-    
-    if st.button("연구 배경 생성"):
-        if user_input or pdf_texts or selected_pubmed or selected_scholar:
-            # PDF 텍스트, 검색 결과, 사용자 입력을 결합
-            combined_input = f"PDF 내용: {' '.join(pdf_texts)[:1000] if pdf_texts else '없음'}\n\n"
-            combined_input += f"PubMed 검색 결과: {str(selected_pubmed)}\n\n"
-            combined_input += f"Google Scholar 검색 결과: {str([r.bib['title'] for r in selected_scholar])}\n\n"
-            combined_input += f"사용자 입력: {user_input}"
-            
-            prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(user_input=combined_input)
+            # AI 응답 생성
             ai_response = generate_ai_response(prompt)
             
             st.session_state.section_contents["3. 연구 배경"] = ai_response
             st.markdown("### AI가 생성한 연구 배경:")
             st.markdown(ai_response)
             
-            # 참고문헌 추출
-            references = extract_references(ai_response)
-            if references:
-                st.session_state.references = references
-                st.markdown("### 참고문헌:")
-                for ref in references:
-                    st.markdown(f"- {ref}")
-            
             # 글자 수 확인
             char_count = len(ai_response)
-            st.info(f"생성된 내용의 글자 수: {char_count}/1000")
+            st.info(f"생성된 내용의 글자 수: {char_count}/1500")
             
-            if char_count > 1000:
-                st.warning("생성된 내용이 1000자를 초과했습니다. 수정이 필요할 수 있습니다.")
+            if char_count > 1500:
+                st.warning("생성된 내용이 1500자를 초과했습니다. 수정이 필요할 수 있습니다.")
         else:
-            st.warning("연구 배경 정보를 입력하거나 PDF를 업로드하거나 논문을 검색해주세요.")
+            st.warning("논문을 검색하거나 PDF를 업로드한 후 다시 시도해주세요.")
 
-    # 편집 기능 (기존과 동일)
+    # 편집 기능
     if "3. 연구 배경" in st.session_state.section_contents:
         edited_content = st.text_area(
             "생성된 내용을 편집하세요:",
@@ -362,6 +352,7 @@ def write_research_background():
         if st.button("편집 내용 저장"):
             st.session_state.section_contents["3. 연구 배경"] = edited_content
             st.success("편집된 내용이 저장되었습니다.")
+
 
 
 def extract_references(text):
