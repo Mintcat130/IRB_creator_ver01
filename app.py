@@ -340,9 +340,6 @@ def chat_interface():
 
     if 'api_key' not in st.session_state or not st.session_state.api_key:
         api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
-
-    if 'current_section' not in st.session_state:
-        st.session_state.current_section = RESEARCH_SECTIONS[0]
         
         # API 키 확인 버튼
         if st.button("API 키 확인"):
@@ -364,6 +361,7 @@ def chat_interface():
             else:
                 st.warning("먼저 API 키를 입력하고 확인해주세요.")
     else:
+        # API 키가 이미 설정된 경우의 로직
         if 'current_section' not in st.session_state:
             st.session_state.current_section = RESEARCH_SECTIONS[0]
         if 'section_contents' not in st.session_state:
@@ -371,7 +369,10 @@ def chat_interface():
         if 'references' not in st.session_state:
             st.session_state.references = []  # 참고문헌 리스트 초기화
 
-        st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
+        if 'api_key' in st.session_state:
+            st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
+        
+    
         
         if st.sidebar.button("🏠홈으로"):
             reset_session()
