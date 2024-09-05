@@ -4,5 +4,4 @@ PyPDF2
 scholarly
 biopython
 requests
-scikit-learn
-numpy
+
