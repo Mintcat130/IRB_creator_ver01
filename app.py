@@ -7,7 +7,7 @@ from scholarly import scholarly
 from Bio import Entrez
 import json
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction import stop_words
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 import numpy as np
 
 # 시스템 프롬프트
@@ -247,9 +247,9 @@ def write_research_purpose():
             st.session_state.section_contents["2. 연구 목적"] = edited_content
             st.success("편집된 내용이 저장되었습니다.")
 
-def extract_keywords(text, num_keywords=5):
+def extract_keywords(text, num_keywords=7):
     # 불용어 설정
-    stop_words_list = list(stop_words.ENGLISH_STOP_WORDS) + ['연구', '목적', '가설', '중요성']
+    stop_words_list = list(ENGLISH_STOP_WORDS) + ['연구', '목적', '가설', '중요성']
     
     # TF-IDF 벡터라이저 초기화
     vectorizer = TfidfVectorizer(stop_words=stop_words_list)
