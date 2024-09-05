@@ -6,6 +6,9 @@ import requests
 from scholarly import scholarly
 from Bio import Entrez
 import json
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction import stop_words
+import numpy as np
 
 # 시스템 프롬프트
 SYSTEM_PROMPT = """
@@ -244,22 +247,50 @@ def write_research_purpose():
             st.session_state.section_contents["2. 연구 목적"] = edited_content
             st.success("편집된 내용이 저장되었습니다.")
 
+def extract_keywords(text, num_keywords=5):
+    # 불용어 설정
+    stop_words_list = list(stop_words.ENGLISH_STOP_WORDS) + ['연구', '목적', '가설', '중요성']
+    
+    # TF-IDF 벡터라이저 초기화
+    vectorizer = TfidfVectorizer(stop_words=stop_words_list)
+    
+    # TF-IDF 행렬 생성
+    tfidf_matrix = vectorizer.fit_transform([text])
+    
+    # 단어별 TF-IDF 점수 계산
+    feature_array = np.array(vectorizer.get_feature_names_out())
+    tfidf_sorting = np.argsort(tfidf_matrix.toarray()).flatten()[::-1]
+    
+    # 상위 키워드 추출
+    top_keywords = feature_array[tfidf_sorting][:num_keywords]
+    
+    return top_keywords
+
 def write_research_background():
     st.markdown("## 3. 연구 배경")
     
-    # PDF 파일 업로드
-    pdf_text = upload_pdf()
-    if pdf_text:
-        st.success("PDF 파일이 성공적으로 업로드되었습니다.")
-        st.text_area("추출된 텍스트:", pdf_text[:500] + "...", height=200)  # 처음 500자만 표시
+    # 여러 PDF 파일 업로드
+    uploaded_files = st.file_uploader("PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
     
-    # 검색 쿼리 입력
-    search_query = st.text_input("연구 주제 키워드를 입력하세요:")
+    pdf_texts = []
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            pdf_text = extract_text_from_pdf(uploaded_file)
+            pdf_texts.append(pdf_text)
+        st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
     
-    pubmed_results = []
-    scholar_results = []
-    if search_query:
-        if st.button("논문 검색"):
+    # 2. 연구 목적에서 작성한 내용 가져오기
+    research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
+    
+    if research_purpose:
+        # 키워드 추출
+        keywords = extract_keywords(research_purpose)
+        st.write("추출된 키워드:", ", ".join(keywords))
+        
+        # 자동 검색 수행
+        search_query = " ".join(keywords)
+        
+        if st.button("관련 논문 자동 검색"):
             with st.spinner("논문을 검색 중입니다..."):
                 pubmed_results = search_pubmed(search_query)
                 scholar_results = search_google_scholar(search_query)
@@ -268,28 +299,33 @@ def write_research_background():
             st.write(f"PubMed에서 {len(pubmed_results)}개의 결과를 찾았습니다.")
             st.write(f"Google Scholar에서 {len(scholar_results)}개의 결과를 찾았습니다.")
             
-            # 결과 표시 (예시)
+            # 결과 표시 및 선택 옵션
+            selected_pubmed = []
+            selected_scholar = []
+            
             if pubmed_results:
                 st.subheader("PubMed 검색 결과")
-                for result in pubmed_results[:3]:  # 처음 3개만 표시
+                for i, result in enumerate(pubmed_results[:5]):  # 상위 5개만 표시
+                    if st.checkbox(f"PubMed 결과 {i+1}", key=f"pubmed_{i}"):
+                        selected_pubmed.append(result)
                     st.text(result[:200] + "...")  # 처음 200자만 표시
             
             if scholar_results:
                 st.subheader("Google Scholar 검색 결과")
-                for result in scholar_results[:3]:  # 처음 3개만 표시
-                    st.write(result.bib['title'])
-                    st.write(result.bib['author'])
+                for i, result in enumerate(scholar_results[:5]):  # 상위 5개만 표시
+                    if st.checkbox(f"Scholar 결과 {i+1}: {result.bib['title']}", key=f"scholar_{i}"):
+                        selected_scholar.append(result)
                     st.write(result.bib['abstract'][:200] + "...")  # 처음 200자만 표시
     
     # 사용자 입력
     user_input = st.text_area("추가적인 연구 배경 정보:", height=150)
     
     if st.button("연구 배경 생성"):
-        if user_input or pdf_text or pubmed_results or scholar_results:
+        if user_input or pdf_texts or selected_pubmed or selected_scholar:
             # PDF 텍스트, 검색 결과, 사용자 입력을 결합
-            combined_input = f"PDF 내용: {pdf_text[:1000] if pdf_text else '없음'}\n\n"
-            combined_input += f"PubMed 검색 결과: {str(pubmed_results[:3])}\n\n"
-            combined_input += f"Google Scholar 검색 결과: {str([r.bib['title'] for r in scholar_results[:3]])}\n\n"
+            combined_input = f"PDF 내용: {' '.join(pdf_texts)[:1000] if pdf_texts else '없음'}\n\n"
+            combined_input += f"PubMed 검색 결과: {str(selected_pubmed)}\n\n"
+            combined_input += f"Google Scholar 검색 결과: {str([r.bib['title'] for r in selected_scholar])}\n\n"
             combined_input += f"사용자 입력: {user_input}"
             
             prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(user_input=combined_input)
