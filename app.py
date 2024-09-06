@@ -60,6 +60,21 @@ PREDEFINED_PROMPTS = {
 
     위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
     """
+
+    "4. 선정기준": """
+    2, 3번 섹션의 결과물과 참고한 논문들을 토대로, 이 연구에 적당한 대상자 그룹을 추천해주세요. 다음 지침을 따라주세요:
+    1. 구체적인 년도나 시기는 적지 않습니다. (잘못된 예시: 2009년 국가 건강검진을 받은 4,234,415명)
+    2. 어미는 적지 않고 단어로 문장을 끝냅니다.
+    3. 선정기준 예시: 40세에서 60세 사이에 해당하며, 이전 치매에 진단받은 과거력이 없는 수검자
+
+    연구 목적:
+    {research_purpose}
+
+    연구 배경:
+    {research_background}
+
+    위의 내용을 바탕으로 적절한 선정기준을 작성해주세요.
+    """
 }
 
 
@@ -67,6 +82,7 @@ PREDEFINED_PROMPTS = {
 RESEARCH_SECTIONS = [
     "2. 연구 목적",
     "3. 연구 배경",
+    "4. 선정기준",
     # 다른 섹션들은 나중에 추가할 예정입니다.
 ]
 
@@ -359,7 +375,35 @@ def write_research_background():
             st.session_state.section_contents["3. 연구 배경"] = edited_content
             st.success("편집된 내용이 저장되었습니다.")
 
-
+# 선정기준 작성 함수
+def write_selection_criteria():
+    st.markdown("## 4. 선정기준")
+    
+    # 편집 기능 (AI 추천 전에도 표시)
+    edited_content = st.text_area(
+        "생성된 내용을 편집하거나, 선정기준을 직접 작성하세요:",
+        st.session_state.section_contents.get("4. 선정기준", ""),
+        height=200
+    )
+    
+    if st.button("선정기준 AI에게 추천받기"):
+        research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
+        research_background = st.session_state.section_contents.get("3. 연구 배경", "")
+        
+        prompt = PREDEFINED_PROMPTS["4. 선정기준"].format(
+            research_purpose=research_purpose,
+            research_background=research_background
+        )
+        
+        ai_response = generate_ai_response(prompt)
+        
+        st.session_state.section_contents["4. 선정기준"] = ai_response
+        st.markdown("### AI가 추천한 선정기준:")
+        st.markdown(ai_response)
+    
+    if st.button("편집 내용 저장"):
+        st.session_state.section_contents["4. 선정기준"] = edited_content
+        st.success("편집된 내용이 저장되었습니다.")
 
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
@@ -416,6 +460,8 @@ def chat_interface():
             write_research_purpose()
         elif st.session_state.current_section == "3. 연구 배경":
             write_research_background()
+        elif st.session_state.current_section == "4. 선정기준":
+            write_selection_criteria()
              # ... (다른 섹션들에 대한 조건문 추가)
 
       # 다음 섹션으로 이동
