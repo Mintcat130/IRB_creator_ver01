@@ -20,7 +20,7 @@ SYSTEM_PROMPT = """
 4. 명확하고 전문적인 언어를 사용하세요.
 5. 필요한 경우 적절한 참고문헌이나 인용을 포함하세요.
 
-한국어로 작성하되 의학 용어는 괄호 안에 영어 원문을 포함시키세요. 예를 들어, "엽상종양(Phyllodes tumor)"과 같은 형식으로 작성하세요.
+한국어로 작성하되 의학 용어나 통계용어는 괄호 안에 영어 원문을 포함시키세요. 한국어로 번역이 불가능한 고유명사는 영어 그대로 적으세요. 예를 들어, "엽상종양(Phyllodes tumor)", "Student T-검정(Student T-test)"과 같은 형식으로 작성하세요.
 """
 
 # PREDEFINED_PROMPTS 수정
@@ -75,7 +75,29 @@ PREDEFINED_PROMPTS = {
     {research_background}
 
     위의 내용을 바탕으로 적절한 선정기준, 제외기준을 작성해주세요.
-    """
+    """,
+    ["5. 대상자 수 및 산출근거"] = """
+이전 섹션의 내용과 업로드된 논문들을 참고하여 다음 사항을 포함한 대상자 수 및 산출근거를 작성해주세요:
+
+1) 대상자 수 
+- 계획된 연구에서 필요한 결과를 얻을 수 있는 최소한 이상의 연구대상자 수를 제시하세요.
+- 이전 섹션의 내용들과 업로드한 논문들을 참고하여 적절한 대상자 수를 제안해주세요.
+
+2) 산출 근거
+- 선행연구와 통계학적 평가방법에 근거하여 대상자 수 산출 근거를 제시해주세요.
+- 가능한 경우, 구체적인 통계적 방법(예: 검정력 분석)을 언급하고 사용된 가정들을 설명해주세요.
+
+연구 목적:
+{research_purpose}
+
+연구 배경:
+{research_background}
+
+선정기준, 제외기준:
+{selection_criteria}
+
+위의 내용을 바탕으로 적절한 대상자 수와 그 산출근거를 작성해주세요.
+"""
 }
 
 
@@ -84,6 +106,7 @@ RESEARCH_SECTIONS = [
     "2. 연구 목적",
     "3. 연구 배경",
     "4. 선정기준, 제외기준",
+    "5. 대상자 수 및 산출근거",
     # 다른 섹션들은 나중에 추가할 예정입니다.
 ]
 
@@ -398,6 +421,39 @@ def write_selection_criteria():
         st.session_state.section_contents["4. 선정기준, 제외기준"] = edited_content
         st.success("편집된 내용이 저장되었습니다.")
 
+
+# 대상자 수 및 산출근거 작성 함수 추가
+def write_sample_size():
+    st.markdown("## 5. 대상자 수 및 산출근거")
+    
+    # 편집 기능 (AI 추천 전에도 표시)
+    edited_content = st.text_area(
+        "연구 대상자 수를 직접 여기에 작성하거나, 아래 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        st.session_state.section_contents.get("5. 대상자 수 및 산출근거", ""),
+        height=200
+    )
+    
+    if st.button("대상자 수 및 산출근거 AI에게 추천받기"):
+        research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
+        research_background = st.session_state.section_contents.get("3. 연구 배경", "")
+        selection_criteria = st.session_state.section_contents.get("4. 선정기준, 제외기준", "")
+        
+        prompt = PREDEFINED_PROMPTS["5. 대상자 수 및 산출근거"].format(
+            research_purpose=research_purpose,
+            research_background=research_background,
+            selection_criteria=selection_criteria
+        )
+        
+        ai_response = generate_ai_response(prompt)
+        
+        st.session_state.section_contents["5. 대상자 수 및 산출근거"] = ai_response
+        st.markdown("### AI가 추천한 대상자 수 및 산출근거:")
+        st.markdown(ai_response)
+    
+    if st.button("편집 내용 저장"):
+        st.session_state.section_contents["5. 대상자 수 및 산출근거"] = edited_content
+        st.success("편집된 내용이 저장되었습니다.")
+
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
     references = re.findall(r'\[([^\]]+)\]', text)
@@ -464,6 +520,8 @@ def chat_interface():
                 write_research_background()
             elif st.session_state.current_section == "4. 선정기준, 제외기준":
                 write_selection_criteria()
+            elif st.session_state.current_section == "5. 대상자 수 및 산출근거":
+                write_sample_size()
             # ... (다른 섹션들에 대한 조건문 추가)
 
             # 이전 섹션과 다음 섹션 버튼 (홈 화면이 아닐 때만 표시)
