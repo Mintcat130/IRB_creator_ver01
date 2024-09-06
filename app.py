@@ -455,17 +455,17 @@ def write_research_background():
                     st.warning("수정 요청 내용을 입력해주세요.")
 
     # 편집 기능
-   if "3. 연구 배경" in st.session_state.section_contents:
-        edited_content = st.text_area(
-            "생성된 내용을 편집하세요:",
-            st.session_state.section_contents["3. 연구 배경"],
-            height=300,
-            key="edit_content_3"
-        )
-        if st.button("편집 내용 저장", key="save_edit_3"):
-            st.session_state.section_contents["3. 연구 배경"] = edited_content
-            st.success("편집된 내용이 저장되었습니다.")
-            st.rerun()
+if "3. 연구 배경" in st.session_state.section_contents:
+    edited_content = st.text_area(
+        "생성된 내용을 편집하세요:",
+        st.session_state.section_contents["3. 연구 배경"],
+        height=300,
+        key="edit_content_3"
+    )
+    if st.button("편집 내용 저장", key="save_edit_3"):
+        st.session_state.section_contents["3. 연구 배경"] = edited_content
+        st.success("편집된 내용이 저장되었습니다.")
+        st.rerun()
 
 # 선정기준, 제외기준 작성 함수
 def write_selection_criteria():
