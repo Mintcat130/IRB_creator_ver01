@@ -465,7 +465,19 @@ def chat_interface():
             write_selection_criteria()
              # ... (다른 섹션들에 대한 조건문 추가)
 
-      # 다음 섹션으로 이동
+    # 이전 섹션과 다음 섹션 버튼
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("이전 섹션"):
+            current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
+            if current_index > 0:
+                st.session_state.current_section = RESEARCH_SECTIONS[current_index - 1]
+                st.rerun()
+            else:
+                st.warning("첫 번째 섹션입니다.")
+
+    with col2:
         if st.button("다음 섹션"):
             current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
             if current_index < len(RESEARCH_SECTIONS) - 1:
