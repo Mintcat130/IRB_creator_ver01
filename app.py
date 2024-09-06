@@ -268,7 +268,7 @@ def write_research_background():
     st.markdown("## 3. 연구 배경")
     
     # 키워드 입력
-    keywords = st.text_input("검색에 사용할 키워드를 입력하세요 (최대 10개, 쉼표로 구분):")
+    keywords = st.text_input("연구 배경 작성을 위한 참조논문 검색에 사용할 키워드를 입력하세요 (최대 10개, 쉼표로 구분):")
     keywords_list = [k.strip() for k in keywords.split(',') if k.strip()][:10]
     
     if keywords_list:
@@ -315,7 +315,7 @@ def write_research_background():
             st.warning("키워드를 입력해주세요.")
             
     # PDF 파일 업로드
-    uploaded_files = st.file_uploader("PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
     
     pdf_texts = []
     if uploaded_files:
