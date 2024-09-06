@@ -441,50 +441,59 @@ def chat_interface():
     else:
         # API 키가 이미 설정된 경우의 로직
         if 'current_section' not in st.session_state:
-            st.session_state.current_section = RESEARCH_SECTIONS[0]
+            st.session_state.current_section = 'home'
         if 'section_contents' not in st.session_state:
             st.session_state.section_contents = {}
         if 'references' not in st.session_state:
-            st.session_state.references = []  # 참고문헌 리스트 초기화
+            st.session_state.references = []
 
         if 'api_key' in st.session_state:
             st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
-        
-    
-        
+
         if st.sidebar.button("🏠홈으로"):
-            reset_session()
+            st.session_state.current_section = 'home'
             st.rerun()
 
-        # 현재 섹션에 따른 작성 인터페이스 표시
-        if st.session_state.current_section == "2. 연구 목적":
-            write_research_purpose()
-        elif st.session_state.current_section == "3. 연구 배경":
-            write_research_background()
-        elif st.session_state.current_section == "4. 선정기준, 제외기준":
-            write_selection_criteria()
-             # ... (다른 섹션들에 대한 조건문 추가)
+        # 홈 화면 표시
+        if st.session_state.current_section == 'home':
+            st.markdown("## 연구계획서 작성을 시작합니다")
+            st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요.")
+            
+            for section in RESEARCH_SECTIONS:
+                if st.button(f"{section} 작성하기"):
+                    st.session_state.current_section = section
+                    st.rerun()
 
-    # 이전 섹션과 다음 섹션 버튼
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("이전 섹션"):
-            current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
-            if current_index > 0:
-                st.session_state.current_section = RESEARCH_SECTIONS[current_index - 1]
-                st.rerun()
-            else:
-                st.warning("첫 번째 섹션입니다.")
+        else:
+            # 현재 섹션에 따른 작성 인터페이스 표시
+            if st.session_state.current_section == "2. 연구 목적":
+                write_research_purpose()
+            elif st.session_state.current_section == "3. 연구 배경":
+                write_research_background()
+            elif st.session_state.current_section == "4. 선정기준, 제외기준":
+                write_selection_criteria()
+            # ... (다른 섹션들에 대한 조건문 추가)
 
-    with col2:
-        if st.button("다음 섹션"):
-            current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
-            if current_index < len(RESEARCH_SECTIONS) - 1:
-                st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
-                st.rerun()
-            else:
-                st.success("모든 섹션을 완료했습니다!")
+            # 이전 섹션과 다음 섹션 버튼 (홈 화면이 아닐 때만 표시)
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("이전 섹션"):
+                    current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
+                    if current_index > 0:
+                        st.session_state.current_section = RESEARCH_SECTIONS[current_index - 1]
+                    else:
+                        st.session_state.current_section = 'home'
+                    st.rerun()
+
+            with col2:
+                if st.button("다음 섹션"):
+                    current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
+                    if current_index < len(RESEARCH_SECTIONS) - 1:
+                        st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
+                        st.rerun()
+                    else:
+                        st.success("모든 섹션을 완료했습니다!")
 
         # 전체 내용 미리보기
         if st.sidebar.button("전체 내용 미리보기"):
