@@ -253,6 +253,10 @@ def show_chat_interface():
 
 def write_research_purpose():
     st.markdown("## 2. 연구 목적")
+    # 히스토리 초기화
+    if "2. 연구 목적_history" not in st.session_state:
+        st.session_state["2. 연구 목적_history"] = []
+
     st.markdown("어떤 연구를 계획중인지, 연구에 대한 내용이나 키워드를 형식에 상관없이 자유롭게 입력해주세요. 입력 후 버튼을 누르면 AI 모델이 연구목적에 대한 줄글을 작성 해 줍니다.")
     
     user_input = st.text_area("연구 주제 및 키워드:", height=150)
@@ -262,8 +266,12 @@ def write_research_purpose():
             prompt = PREDEFINED_PROMPTS["2. 연구 목적"].format(user_input=user_input)
             ai_response = generate_ai_response(prompt)
             
+            # 현재 내용을 히스토리에 추가
+            if "2. 연구 목적" in st.session_state.section_contents:
+                st.session_state["2. 연구 목적_history"].append(st.session_state.section_contents["2. 연구 목적"])
+            
             st.session_state.section_contents["2. 연구 목적"] = ai_response
-            st.session_state.show_modification_request = False  # 수정 요청 폼 초기 상태
+            st.session_state.show_modification_request = False
             st.rerun()
         else:
             st.warning("연구 주제나 키워드를 입력해주세요.")
@@ -293,6 +301,9 @@ def write_research_purpose():
             if st.button("수정 요청 제출", key="submit_modification_2"):
                 if modification_request:
                     current_content = st.session_state.section_contents["2. 연구 목적"]
+                    # 현재 내용을 히스토리에 추가
+                    st.session_state["2. 연구 목적_history"].append(current_content)
+                    
                     prompt = f"""
                     현재 연구 목적:
                     {current_content}
@@ -300,7 +311,8 @@ def write_research_purpose():
                     사용자의 수정 요청:
                     {modification_request}
 
-                    위의 수정 요청을 반영하여 연구 목적을 수정해주세요. 전체 내용을 다시 작성하세요. 수정된 내용은 1000자 내외로 해야 합니다.
+                    위의 수정 요청을 반영하여 연구 목적을 수정해주세요. 전체 내용을 다시 작성하지 말고, 
+                    요청된 부분만 수정하세요. 수정된 내용은 1000자를 넘지 않아야 합니다.
                     """
                     modified_response = generate_ai_response(prompt)
                     
@@ -318,15 +330,32 @@ def write_research_purpose():
             height=300,
             key="edit_content_2"
         )
-        if st.button("편집 내용 저장", key="save_edit_2"):
-            st.session_state.section_contents["2. 연구 목적"] = edited_content
-            st.success("편집된 내용이 저장되었습니다.")
-            st.rerun()
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("편집 내용 저장", key="save_edit_2"):
+                # 현재 내용을 히스토리에 추가
+                st.session_state["2. 연구 목적_history"].append(st.session_state.section_contents["2. 연구 목적"])
+                st.session_state.section_contents["2. 연구 목적"] = edited_content
+                st.success("편집된 내용이 저장되었습니다.")
+                st.rerun()
+        with col2:
+            if st.button("실행 취소", key="undo_edit_2"):
+                if st.session_state["2. 연구 목적_history"]:
+                    # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
+                    st.session_state.section_contents["2. 연구 목적"] = st.session_state["2. 연구 목적_history"].pop()
+                    st.success("이전 버전으로 되돌렸습니다.")
+                    st.rerun()
+                else:
+                    st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
 
 # 연구 배경 작성 함수 (수정)
 def write_research_background():
     st.markdown("## 3. 연구 배경")
+
+    # 히스토리 초기화
+    if "3. 연구 배경_history" not in st.session_state:
+        st.session_state["3. 연구 배경_history"] = []
     
     # 키워드 입력
     keywords = st.text_input("연구 배경 작성을 위한 참조논문 검색에 사용할 키워드를 입력하세요 (최대 10개, 쉼표로 구분):")
@@ -412,7 +441,7 @@ def write_research_background():
         else:
             st.warning("논문을 검색하거나 PDF를 업로드한 후 다시 시도해주세요.")
 
-  # AI 응답 표시
+    # AI 응답 표시
     if "3. 연구 배경" in st.session_state.section_contents:
         st.markdown("### AI가 생성한 연구 배경:")
         st.markdown(st.session_state.section_contents["3. 연구 배경"])
@@ -437,6 +466,9 @@ def write_research_background():
             if st.button("수정 요청 제출", key="submit_modification_3"):
                 if modification_request:
                     current_content = st.session_state.section_contents["3. 연구 배경"]
+                    # 현재 내용을 히스토리에 추가
+                    st.session_state["3. 연구 배경_history"].append(current_content)
+                    
                     prompt = f"""
                     현재 연구 배경:
                     {current_content}
@@ -444,7 +476,8 @@ def write_research_background():
                     사용자의 수정 요청:
                     {modification_request}
 
-                    위의 수정 요청을 반영하여 연구 배경을 수정해주세요. 전체 내용을 다시 작성하세요. 수정된 내용은 1500자를 넘지 않아야 합니다.
+                    위의 수정 요청을 반영하여 연구 배경을 수정해주세요. 전체 내용을 다시 작성하지 말고, 
+                    요청된 부분만 수정하세요. 수정된 내용은 1500자를 넘지 않아야 합니다.
                     """
                     modified_response = generate_ai_response(prompt)
                     
@@ -462,10 +495,23 @@ def write_research_background():
             height=300,
             key="edit_content_3"
         )
-        if st.button("편집 내용 저장", key="save_edit_3"):
-            st.session_state.section_contents["3. 연구 배경"] = edited_content
-            st.success("편집된 내용이 저장되었습니다.")
-            st.rerun()
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("편집 내용 저장", key="save_edit_3"):
+                # 현재 내용을 히스토리에 추가
+                st.session_state["3. 연구 배경_history"].append(st.session_state.section_contents["3. 연구 배경"])
+                st.session_state.section_contents["3. 연구 배경"] = edited_content
+                st.success("편집된 내용이 저장되었습니다.")
+                st.rerun()
+        with col2:
+            if st.button("실행 취소", key="undo_edit_3"):
+                if st.session_state["3. 연구 배경_history"]:
+                    # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
+                    st.session_state.section_contents["3. 연구 배경"] = st.session_state["3. 연구 배경_history"].pop()
+                    st.success("이전 버전으로 되돌렸습니다.")
+                    st.rerun()
+                else:
+                    st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
 # 선정기준, 제외기준 작성 함수
 def write_selection_criteria():
