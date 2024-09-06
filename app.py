@@ -312,7 +312,7 @@ def write_research_purpose():
                     {modification_request}
 
                     위의 수정 요청을 반영하여 연구 목적을 수정해주세요. 전체 내용을 다시 작성하지 말고, 
-                    요청된 부분만 수정하세요. 수정된 내용은 1000자를 넘지 않아야 합니다.
+                    요청된 부분만 수정하세요. 수정된 내용은 1000자를 넘지 않아야 합니다. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
                     """
                     modified_response = generate_ai_response(prompt)
                     
@@ -477,7 +477,7 @@ def write_research_background():
                     {modification_request}
 
                     위의 수정 요청을 반영하여 연구 배경을 수정해주세요. 전체 내용을 다시 작성하지 말고, 
-                    요청된 부분만 수정하세요. 수정된 내용은 1500자를 넘지 않아야 합니다.
+                    요청된 부분만 수정하세요. 수정된 내용은 1500자를 넘지 않아야 합니다. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
                     """
                     modified_response = generate_ai_response(prompt)
                     
