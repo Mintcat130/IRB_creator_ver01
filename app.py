@@ -266,7 +266,6 @@ def write_research_purpose():
             st.markdown("### AI가 생성한 연구 목적:")
             st.markdown(ai_response)
             
-            # 글자 수 확인
             char_count = len(ai_response)
             st.info(f"생성된 내용의 글자 수: {char_count}/1000")
             
@@ -274,6 +273,40 @@ def write_research_purpose():
                 st.warning("생성된 내용이 1000자를 초과했습니다. 수정이 필요할 수 있습니다.")
         else:
             st.warning("연구 주제나 키워드를 입력해주세요.")
+
+    # 수정 요청 기능
+    if "2. 연구 목적" in st.session_state.section_contents:
+        if st.button("수정 요청하기"):
+            modification_request = st.text_area(
+                "수정을 원하는 부분과 수정 방향을 설명해주세요:",
+                height=150
+            )
+            if st.button("수정 요청 제출"):
+                if modification_request:
+                    current_content = st.session_state.section_contents["2. 연구 목적"]
+                    prompt = f"""
+                    현재 연구 목적:
+                    {current_content}
+
+                    사용자의 수정 요청:
+                    {modification_request}
+
+                    위의 수정 요청을 반영하여 연구 목적을 수정해주세요. 전체 내용을 다시 작성하지 말고, 
+                    요청된 부분만 수정하세요. 수정된 내용은 1000자를 넘지 않아야 합니다.
+                    """
+                    modified_response = generate_ai_response(prompt)
+                    
+                    st.session_state.section_contents["2. 연구 목적"] = modified_response
+                    st.markdown("### 수정된 연구 목적:")
+                    st.markdown(modified_response)
+                    
+                    char_count = len(modified_response)
+                    st.info(f"수정된 내용의 글자 수: {char_count}/1000")
+                    
+                    if char_count > 1000:
+                        st.warning("수정된 내용이 1000자를 초과했습니다. 추가 수정이 필요할 수 있습니다.")
+                else:
+                    st.warning("수정 요청 내용을 입력해주세요.")
 
     # 편집 기능
     if "2. 연구 목적" in st.session_state.section_contents:
@@ -345,7 +378,7 @@ def write_research_background():
             st.session_state.pdf_texts.append(pdf_text)
         st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
     
-    # 연구 배경 생성 버튼
+   # 연구 배경 생성 버튼
     if st.button("해당 내용으로 연구배경 작성하기"):
         if 'pubmed_results' in st.session_state or 'scholar_results' in st.session_state or 'pdf_texts' in st.session_state:
             research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
@@ -379,6 +412,40 @@ def write_research_background():
                 st.warning("생성된 내용이 1500자를 초과했습니다. 수정이 필요할 수 있습니다.")
         else:
             st.warning("논문을 검색하거나 PDF를 업로드한 후 다시 시도해주세요.")
+
+    # 수정 요청 기능 (새로 추가된 부분)
+    if "3. 연구 배경" in st.session_state.section_contents:
+        if st.button("수정 요청하기"):
+            modification_request = st.text_area(
+                "수정을 원하는 부분과 수정 방향을 설명해주세요:",
+                height=150
+            )
+            if st.button("수정 요청 제출"):
+                if modification_request:
+                    current_content = st.session_state.section_contents["3. 연구 배경"]
+                    prompt = f"""
+                    현재 연구 배경:
+                    {current_content}
+
+                    사용자의 수정 요청:
+                    {modification_request}
+
+                    위의 수정 요청을 반영하여 연구 배경을 수정해주세요. 전체 내용을 다시 작성하지 말고, 
+                    요청된 부분만 수정하세요. 수정된 내용은 1500자를 넘지 않아야 합니다.
+                    """
+                    modified_response = generate_ai_response(prompt)
+                    
+                    st.session_state.section_contents["3. 연구 배경"] = modified_response
+                    st.markdown("### 수정된 연구 배경:")
+                    st.markdown(modified_response)
+                    
+                    char_count = len(modified_response)
+                    st.info(f"수정된 내용의 글자 수: {char_count}/1500")
+                    
+                    if char_count > 1500:
+                        st.warning("수정된 내용이 1500자를 초과했습니다. 추가 수정이 필요할 수 있습니다.")
+                else:
+                    st.warning("수정 요청 내용을 입력해주세요.")
 
     # 편집 기능
     if "3. 연구 배경" in st.session_state.section_contents:
