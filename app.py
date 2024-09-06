@@ -398,13 +398,6 @@ def write_selection_criteria():
     if "4. 선정기준, 제외기준" not in st.session_state.section_contents:
         st.session_state.section_contents["4. 선정기준, 제외기준"] = ""
 
-    # 편집 기능
-    edited_content = st.text_area(
-        "선정기준, 제외기준을 직접 여기에 작성하거나, 아래 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
-        st.session_state.section_contents["4. 선정기준, 제외기준"],
-        height=200
-    )
-    
     if st.button("선정, 제외기준 AI에게 추천받기"):
         research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
         research_background = st.session_state.section_contents.get("3. 연구 배경", "")
@@ -421,11 +414,16 @@ def write_selection_criteria():
         st.markdown(ai_response)
         st.rerun()  # 페이지를 새로고침하여 편집창에 AI 응답을 표시
     
+    # 편집 기능
+    edited_content = st.text_area(
+        "선정기준, 제외기준을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        st.session_state.section_contents["4. 선정기준, 제외기준"],
+        height=200
+    )
+    
     if st.button("편집 내용 저장"):
         st.session_state.section_contents["4. 선정기준, 제외기준"] = edited_content
         st.success("편집된 내용이 저장되었습니다.")
-
-
 
 # 대상자 수 및 산출근거 작성 함수 (수정)
 def write_sample_size():
@@ -434,13 +432,6 @@ def write_sample_size():
     if "5. 대상자 수 및 산출근거" not in st.session_state.section_contents:
         st.session_state.section_contents["5. 대상자 수 및 산출근거"] = ""
 
-    # 편집 기능
-    edited_content = st.text_area(
-        "연구 대상자 수를 직접 여기에 작성하거나, 아래 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
-        st.session_state.section_contents["5. 대상자 수 및 산출근거"],
-        height=200
-    )
-    
     if st.button("대상자 수 및 산출근거 AI에게 추천받기"):
         research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
         research_background = st.session_state.section_contents.get("3. 연구 배경", "")
@@ -458,6 +449,13 @@ def write_sample_size():
         st.markdown("### AI가 추천한 대상자 수 및 산출근거:")
         st.markdown(ai_response)
         st.rerun()  # 페이지를 새로고침하여 편집창에 AI 응답을 표시
+    
+    # 편집 기능
+    edited_content = st.text_area(
+        "연구 대상자 수를 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        st.session_state.section_contents["5. 대상자 수 및 산출근거"],
+        height=200
+    )
     
     if st.button("편집 내용 저장"):
         st.session_state.section_contents["5. 대상자 수 및 산출근거"] = edited_content
