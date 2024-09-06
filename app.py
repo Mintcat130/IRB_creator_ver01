@@ -395,10 +395,13 @@ def write_research_background():
 def write_selection_criteria():
     st.markdown("## 4. 선정기준, 제외기준")
     
-    # 편집 기능 (AI 추천 전에도 표시)
+    if "4. 선정기준, 제외기준" not in st.session_state.section_contents:
+        st.session_state.section_contents["4. 선정기준, 제외기준"] = ""
+
+    # 편집 기능
     edited_content = st.text_area(
         "선정기준, 제외기준을 직접 여기에 작성하거나, 아래 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
-        st.session_state.section_contents.get("4. 선정기준", ""),
+        st.session_state.section_contents["4. 선정기준, 제외기준"],
         height=200
     )
     
@@ -416,20 +419,25 @@ def write_selection_criteria():
         st.session_state.section_contents["4. 선정기준, 제외기준"] = ai_response
         st.markdown("### AI가 추천한 선정, 제외기준:")
         st.markdown(ai_response)
+        st.rerun()  # 페이지를 새로고침하여 편집창에 AI 응답을 표시
     
     if st.button("편집 내용 저장"):
         st.session_state.section_contents["4. 선정기준, 제외기준"] = edited_content
         st.success("편집된 내용이 저장되었습니다.")
 
 
-# 대상자 수 및 산출근거 작성 함수 추가
+
+# 대상자 수 및 산출근거 작성 함수 (수정)
 def write_sample_size():
     st.markdown("## 5. 대상자 수 및 산출근거")
     
-    # 편집 기능 (AI 추천 전에도 표시)
+    if "5. 대상자 수 및 산출근거" not in st.session_state.section_contents:
+        st.session_state.section_contents["5. 대상자 수 및 산출근거"] = ""
+
+    # 편집 기능
     edited_content = st.text_area(
         "연구 대상자 수를 직접 여기에 작성하거나, 아래 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
-        st.session_state.section_contents.get("5. 대상자 수 및 산출근거", ""),
+        st.session_state.section_contents["5. 대상자 수 및 산출근거"],
         height=200
     )
     
@@ -449,6 +457,7 @@ def write_sample_size():
         st.session_state.section_contents["5. 대상자 수 및 산출근거"] = ai_response
         st.markdown("### AI가 추천한 대상자 수 및 산출근거:")
         st.markdown(ai_response)
+        st.rerun()  # 페이지를 새로고침하여 편집창에 AI 응답을 표시
     
     if st.button("편집 내용 저장"):
         st.session_state.section_contents["5. 대상자 수 및 산출근거"] = edited_content
