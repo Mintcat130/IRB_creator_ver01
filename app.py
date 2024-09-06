@@ -58,7 +58,7 @@ PREDEFINED_PROMPTS = {
     PDF 내용:
     {pdf_content}
 
-    위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
+    위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 특히 모든 PDF 파일의 내용을 적극적으로 활용하여 연구 배경 작성에 참고해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
     """,
 
     "4. 선정기준, 제외기준": """
@@ -283,55 +283,50 @@ def write_research_background():
                 pubmed_results = search_pubmed(search_query)
                 scholar_results = search_google_scholar(search_query)
             
-            st.success("검색이 완료되었습니다.")
-            
-            # PubMed 결과 표시
-            st.subheader("PubMed 검색 결과")
-            for i, result in enumerate(pubmed_results):
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
-                    st.caption(f"저자: {result['authors']}")
-                with col2:
-                    if st.button("삭제", key=f"del_pubmed_{i}"):
-                        del pubmed_results[i]
-                        st.rerun()
-            
-           # Google Scholar 결과 표시
-            st.subheader("Google Scholar 검색 결과")
-            for i, result in enumerate(scholar_results):
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
-                    st.caption(f"저자: {result['authors']}")
-                with col2:
-                    if st.button("삭제", key=f"del_scholar_{i}"):
-                        del scholar_results[i]
-                        st.rerun()
-            
-            # 검색 결과 세션 상태에 저장
             st.session_state.pubmed_results = pubmed_results
             st.session_state.scholar_results = scholar_results
-        else:
-            st.warning("키워드를 입력해주세요.")
+            st.success("검색이 완료되었습니다.")
+            
+    # 검색 결과 표시
+    if 'pubmed_results' in st.session_state:
+        st.subheader("PubMed 검색 결과")
+        for i, result in enumerate(st.session_state.pubmed_results):
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
+                st.caption(f"저자: {result['authors']}")
+            with col2:
+                if st.button("삭제", key=f"del_pubmed_{i}"):
+                    del st.session_state.pubmed_results[i]
+                    st.rerun()
+    
+    if 'scholar_results' in st.session_state:
+        st.subheader("Google Scholar 검색 결과")
+        for i, result in enumerate(st.session_state.scholar_results):
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
+                st.caption(f"저자: {result['authors']}")
+            with col2:
+                if st.button("삭제", key=f"del_scholar_{i}"):
+                    del st.session_state.scholar_results[i]
+                    st.rerun()
             
     # PDF 파일 업로드
-    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
     
-    pdf_texts = []
     if uploaded_files:
+        st.session_state.pdf_texts = []
         for uploaded_file in uploaded_files:
             pdf_text = extract_text_from_pdf(uploaded_file)
-            pdf_texts.append(pdf_text)
+            st.session_state.pdf_texts.append(pdf_text)
         st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
     
     # 연구 배경 생성 버튼
     if st.button("해당 내용으로 연구배경 작성하기"):
-        if 'pubmed_results' in st.session_state or 'scholar_results' in st.session_state or pdf_texts:
-            # 연구 목적 가져오기
+        if 'pubmed_results' in st.session_state or 'scholar_results' in st.session_state or 'pdf_texts' in st.session_state:
             research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
             
-            # 검색 결과 및 PDF 내용 결합
             papers = []
             if 'pubmed_results' in st.session_state:
                 papers.extend([f"{r['title']} ({r['year']})" for r in st.session_state.pubmed_results])
@@ -339,24 +334,21 @@ def write_research_background():
                 papers.extend([f"{r['title']} ({r['year']})" for r in st.session_state.scholar_results])
             papers_text = "\n".join(papers)
             
-            pdf_content = "\n".join(pdf_texts)
+            pdf_content = "\n".join(st.session_state.get('pdf_texts', []))
             
-            # AI에 전달할 프롬프트 생성
             prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
                 user_input=keywords,
                 research_purpose=research_purpose,
                 papers=papers_text,
-                pdf_content=pdf_content[:1000]  # PDF 내용은 1000자로 제한
+                pdf_content=pdf_content
             )
             
-            # AI 응답 생성
             ai_response = generate_ai_response(prompt)
             
             st.session_state.section_contents["3. 연구 배경"] = ai_response
             st.markdown("### AI가 생성한 연구 배경:")
             st.markdown(ai_response)
             
-            # 글자 수 확인
             char_count = len(ai_response)
             st.info(f"생성된 내용의 글자 수: {char_count}/1500")
             
