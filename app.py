@@ -608,7 +608,7 @@ def extract_references(text):
 # 여기에 chat_interface 함수가 이어집니다.
 
 def chat_interface():
-    st.subheader("연구계획서 작성 채팅")
+    st.subheader("IRB 연구계획서 작성 도우미✏️ ver.01 (by HJY)")
 
     if 'api_key' not in st.session_state or not st.session_state.api_key:
         api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
