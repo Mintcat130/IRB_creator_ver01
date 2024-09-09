@@ -8,6 +8,7 @@ from Bio import Entrez
 import json
 import re
 import uuid
+import pyperclip
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -186,7 +187,25 @@ PREDEFINED_PROMPTS = {
     {data_analysis}
 
     위의 내용을 바탕으로 전체 연구방법을 요약해주세요.
-    """
+    """,
+    "1. 연구 과제명": """
+지금까지 작성된 연구계획서의 모든 내용을 바탕으로 연구 과제명을 추천해주세요. 다음 지침을 따라주세요:
+
+1. 영문 제목과 한글 제목을 각각 작성해주세요.
+2. 총 3가지의 제목 옵션을 제시해주세요.
+3. 제목은 연구의 핵심 내용을 간결하고 명확하게 표현해야 합니다.
+4. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
+5. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
+
+연구 목적: {research_purpose}
+연구 배경: {research_background}
+선정기준, 제외기준: {selection_criteria}
+대상자 수 및 산출근거: {sample_size}
+자료분석과 통계적 방법: {data_analysis}
+연구방법: {research_method}
+
+위의 내용을 바탕으로 3가지의 연구 과제명 옵션을 제시해주세요.
+"""
 }
 
 
@@ -198,6 +217,7 @@ RESEARCH_SECTIONS = [
     "5. 대상자 수 및 산출근거",
     "6. 자료분석과 통계적 방법",
     "7. 연구방법",
+    "1. 연구 과제명", 
     # 다른 섹션들은 나중에 추가할 예정입니다.
 ]
 
@@ -1039,6 +1059,144 @@ def write_research_method():
         if char_count > 1000:
             st.warning("글자 수가 1000자를 초과했습니다. 내용을 줄여주세요.")
 
+# 연구 과제명 작성 함수
+def write_research_title():
+    st.markdown("## 1. 연구 과제명")
+    
+    # 히스토리 초기화
+    if "1. 연구 과제명_history" not in st.session_state:
+        st.session_state["1. 연구 과제명_history"] = []
+
+    if st.button("연구 과제명 추천받기"):
+        research_purpose = load_section_content("2. 연구 목적")
+        research_background = load_section_content("3. 연구 배경")
+        selection_criteria = load_section_content("4. 선정기준, 제외기준")
+        sample_size = load_section_content("5. 대상자 수 및 산출근거")
+        data_analysis = load_section_content("6. 자료분석과 통계적 방법")
+        research_method = load_section_content("7. 연구방법")
+        
+        prompt = PREDEFINED_PROMPTS["1. 연구 과제명"].format(
+            research_purpose=research_purpose,
+            research_background=research_background,
+            selection_criteria=selection_criteria,
+            sample_size=sample_size,
+            data_analysis=data_analysis,
+            research_method=research_method
+        )
+        
+        ai_response = generate_ai_response(prompt)
+        
+        # 현재 내용을 히스토리에 추가
+        current_content = load_section_content("1. 연구 과제명")
+        if current_content:
+            st.session_state["1. 연구 과제명_history"].append(current_content)
+        
+        save_section_content("1. 연구 과제명", ai_response)
+        st.rerun()
+
+    # AI 응답 표시
+    content = load_section_content("1. 연구 과제명")
+    if content:
+        st.markdown("### AI가 추천한 연구 과제명:")
+        st.markdown(content)
+
+        # 사용자 선택 옵션
+        options = content.split("\n\n")
+        selected_option = st.radio("원하는 연구 과제명을 선택하세요:", options)
+        
+        if st.button("선택한 연구 과제명 저장"):
+            save_section_content("1. 연구 과제명", selected_option)
+            st.success("선택한 연구 과제명이 저장되었습니다.")
+            st.rerun()
+
+        # 수정 요청 기능
+        if st.button("수정 요청하기", key="request_modification_1"):
+            st.session_state.show_modification_request_1 = True
+            st.rerun()
+
+        if st.session_state.get('show_modification_request_1', False):
+            modification_request = st.text_area(
+                "수정을 원하는 부분과 수정 방향을 설명해주세요:",
+                height=150,
+                key="modification_request_1"
+            )
+            if st.button("수정 요청 제출", key="submit_modification_1"):
+                if modification_request:
+                    current_content = load_section_content("1. 연구 과제명")
+                    # 현재 내용을 히스토리에 추가
+                    st.session_state["1. 연구 과제명_history"].append(current_content)
+                    
+                    prompt = f"""
+                    현재 연구 과제명 옵션들:
+                    {current_content}
+
+                    사용자의 수정 요청:
+                    {modification_request}
+
+                    위의 수정 요청을 반영하여 연구 과제명을 수정해주세요. 다음 지침을 따라주세요:
+                    1. 영문 제목과 한글 제목을 각각 작성해주세요.
+                    2. 총 3가지의 제목 옵션을 제시해주세요.
+                    3. 제목은 연구의 핵심 내용을 간결하고 명확하게 표현해야 합니다.
+                    4. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
+                    5. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
+                    6. 수정 요청을 최대한 반영하되, 전체적인 일관성을 유지하세요.
+                    
+                    수정된 3가지 연구 과제명 옵션을 작성해주세요.
+                    """
+                    modified_response = generate_ai_response(prompt)
+                    
+                    save_section_content("1. 연구 과제명", modified_response)
+                    st.session_state.show_modification_request_1 = False
+                    st.rerun()
+                else:
+                    st.warning("수정 요청 내용을 입력해주세요.")
+    
+    # 편집 기능
+    edited_content = st.text_area(
+        "연구 과제명을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        content,
+        height=300,
+        key="edit_content_1"
+    )
+
+    st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("편집 내용 저장", key="save_edit_1"):
+            # 현재 내용을 히스토리에 추가
+            st.session_state["1. 연구 과제명_history"].append(content)
+            save_section_content("1. 연구 과제명", edited_content)
+            st.success("편집된 내용이 저장되었습니다.")
+            st.rerun()
+    with col2:
+        if st.button("실행 취소", key="undo_edit_1"):
+            if st.session_state["1. 연구 과제명_history"]:
+                # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
+                previous_content = st.session_state["1. 연구 과제명_history"].pop()
+                save_section_content("1. 연구 과제명", previous_content)
+                st.success("이전 버전으로 되돌렸습니다.")
+                st.rerun()
+            else:
+                st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+
+# 전체 내용 확인 및 복사 함수
+def view_and_copy_full_content():
+    st.markdown("## 전체 연구계획서 내용")
+    
+    full_content = ""
+    for section in RESEARCH_SECTIONS:
+        content = load_section_content(section)
+        if content:
+            full_content += f"## {section}\n\n{content}\n\n"
+            st.markdown(f"### {section}")
+            st.markdown(content)
+            if st.button(f"{section} 복사", key=f"copy_{section}"):
+                pyperclip.copy(content)
+                st.success(f"{section} 내용이 클립보드에 복사되었습니다.")
+    
+    if st.button("전체 내용 복사"):
+        pyperclip.copy(full_content)
+        st.success("전체 연구계획서 내용이 클립보드에 복사되었습니다.")
 
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
@@ -1099,7 +1257,9 @@ def chat_interface():
 
         else:
             # 현재 섹션에 따른 작성 인터페이스 표시
-            if st.session_state.current_section == "2. 연구 목적":
+            if st.session_state.current_section == "1. 연구 과제명":
+                write_research_title()
+            elif st.session_state.current_section == "2. 연구 목적":
                 write_research_purpose()
             elif st.session_state.current_section == "3. 연구 배경":
                 write_research_background()
@@ -1125,19 +1285,22 @@ def chat_interface():
                     st.rerun()
 
             with col2:
-                if st.button("다음 섹션➡️"):
-                    current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
-                    if current_index < len(RESEARCH_SECTIONS) - 1:
-                        st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
-                        st.rerun()
-                    else:
-                        st.success("모든 섹션을 완료했습니다!")
+                if st.session_state.current_section != "1. 연구 과제명":
+                    if st.button("다음 섹션➡️"):
+                        current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
+                        if current_index < len(RESEARCH_SECTIONS) - 1:
+                            st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
+                            st.rerun()
 
         # 전체 내용 미리보기
         if st.sidebar.button("전체 내용 미리보기"):
             for section in RESEARCH_SECTIONS:
                 st.markdown(f"### {section}")
                 st.markdown(load_section_content(section))
+
+        # 전체 내용 확인 및 복사 버튼
+        if st.sidebar.button("전체 내용 확인 및 복사"):
+            view_and_copy_full_content()
             
             # 참고문헌 표시
             references = st.session_state.get('references', [])
