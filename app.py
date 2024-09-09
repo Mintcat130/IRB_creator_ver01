@@ -1163,12 +1163,15 @@ def write_research_title():
 
         # 사용자 선택 옵션
         options = content.split("\n\n")
-        selected_option = st.radio("원하는 연구 과제명을 선택하세요:", options)
-        
-        if st.button("선택한 연구 과제명 저장"):
-            save_section_content("1. 연구 과제명", selected_option)
-            st.success("선택한 연구 과제명이 저장되었습니다.")
-            st.rerun()
+        if len(options) == 3:
+            selected_option = st.radio("원하는 연구 과제명을 선택하세요:", options, format_func=lambda x: x.split('\n')[0])
+            
+            if st.button("선택한 연구 과제명 저장"):
+                save_section_content("1. 연구 과제명", selected_option)
+                st.success("선택한 연구 과제명이 저장되었습니다.")
+                st.rerun()
+        else:
+            st.error("AI가 생성한 연구 과제명의 형식이 올바르지 않습니다. 다시 생성해주세요.")
 
         # 수정 요청 기능
         if st.button("수정 요청하기", key="request_modification_1"):
@@ -1197,12 +1200,21 @@ def write_research_title():
                     위의 수정 요청을 반영하여 연구 과제명을 수정해주세요. 다음 지침을 따라주세요:
                     1. 영문 제목과 한글 제목을 각각 작성해주세요.
                     2. 총 3가지의 제목 옵션을 제시해주세요.
-                    3. 제목은 연구의 핵심 내용을 간결하고 명확하게 표현해야 합니다.
-                    4. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
-                    5. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
-                    6. 수정 요청을 최대한 반영하되, 전체적인 일관성을 유지하세요.
+                    3. 각 옵션은 영문 제목과 한글 제목이 한 쌍을 이루어야 합니다.
+                    4. 제목은 연구의 핵심 내용을 간결하고 명확하게 표현해야 합니다.
+                    5. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
+                    6. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
+                    7. 수정 요청을 최대한 반영하되, 전체적인 일관성을 유지하세요.
                     
-                    수정된 3가지 연구 과제명 옵션을 작성해주세요.
+                    수정된 3가지 연구 과제명 옵션을 작성해주세요. 각 옵션은 다음과 같은 형식으로 작성해주세요:
+                    1. [영문 제목]
+                       [한글 제목]
+
+                    2. [영문 제목]
+                       [한글 제목]
+
+                    3. [영문 제목]
+                       [한글 제목]
                     """
                     modified_response = generate_ai_response(prompt)
                     
