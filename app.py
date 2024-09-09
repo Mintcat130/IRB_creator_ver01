@@ -537,6 +537,10 @@ def write_research_background():
 def write_selection_criteria():
     st.markdown("## 4. 선정기준, 제외기준")
     
+    # 히스토리 초기화
+    if "4. 선정기준, 제외기준_history" not in st.session_state:
+        st.session_state["4. 선정기준, 제외기준_history"] = []
+
     if "4. 선정기준, 제외기준" not in st.session_state.section_contents:
         st.session_state.section_contents["4. 선정기준, 제외기준"] = ""
 
@@ -551,10 +555,57 @@ def write_selection_criteria():
         
         ai_response = generate_ai_response(prompt)
         
+        # 현재 내용을 히스토리에 추가
+        st.session_state["4. 선정기준, 제외기준_history"].append(st.session_state.section_contents["4. 선정기준, 제외기준"])
+        
         st.session_state.section_contents["4. 선정기준, 제외기준"] = ai_response
+        st.rerun()
+
+    # AI 응답 표시
+    if "4. 선정기준, 제외기준" in st.session_state.section_contents:
         st.markdown("### AI가 추천한 선정, 제외기준:")
-        st.markdown(ai_response)
-        st.rerun()  # 페이지를 새로고침하여 편집창에 AI 응답을 표시
+        st.markdown(st.session_state.section_contents["4. 선정기준, 제외기준"])
+
+        # 수정 요청 기능
+        if st.button("수정 요청하기", key="request_modification_4"):
+            st.session_state.show_modification_request_4 = True
+            st.rerun()
+
+        if st.session_state.get('show_modification_request_4', False):
+            modification_request = st.text_area(
+                "수정을 원하는 부분과 수정 방향을 설명해주세요:",
+                height=150,
+                key="modification_request_4"
+            )
+            if st.button("수정 요청 제출", key="submit_modification_4"):
+                if modification_request:
+                    current_content = st.session_state.section_contents["4. 선정기준, 제외기준"]
+                    # 현재 내용을 히스토리에 추가
+                    st.session_state["4. 선정기준, 제외기준_history"].append(current_content)
+                    
+                    prompt = f"""
+                    현재 선정기준, 제외기준:
+                    {current_content}
+
+                    사용자의 수정 요청:
+                    {modification_request}
+
+                    위의 수정 요청을 반영하여 선정기준, 제외기준을 수정해주세요. 어미는 문어제 반말을 사용하세요.(예시: "~했다.", "~있다.", "~이다.") 다음 지침을 따라주세요:
+                    1. 전체 내용을 유지하면서, 수정 요청된 부분만 변경하세요.
+                    2. 수정 요청에 명시적으로 언급되지 않은 부분은 그대로 유지하세요.
+                    3. 수정된 내용은 자연스럽게 기존 내용과 연결되어야 합니다.
+                    4. 수정된 부분은 기존 내용의 맥락과 일관성을 유지해야 합니다.
+                    5. 내용 이외 다른말은 하지 말것.
+                    
+                    수정된 전체 선정기준, 제외기준을 작성해주세요.
+                    """
+                    modified_response = generate_ai_response(prompt)
+                    
+                    st.session_state.section_contents["4. 선정기준, 제외기준"] = modified_response
+                    st.session_state.show_modification_request_4 = False
+                    st.rerun()
+                else:
+                    st.warning("수정 요청 내용을 입력해주세요.")
     
     # 편집 기능
     edited_content = st.text_area(
@@ -564,9 +615,23 @@ def write_selection_criteria():
     )
 
     st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
-    if st.button("편집 내용 저장"):
-        st.session_state.section_contents["4. 선정기준, 제외기준"] = edited_content
-        st.success("편집된 내용이 저장되었습니다.")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("편집 내용 저장"):
+            # 현재 내용을 히스토리에 추가
+            st.session_state["4. 선정기준, 제외기준_history"].append(st.session_state.section_contents["4. 선정기준, 제외기준"])
+            st.session_state.section_contents["4. 선정기준, 제외기준"] = edited_content
+            st.success("편집된 내용이 저장되었습니다.")
+            st.rerun()
+    with col2:
+        if st.button("실행 취소", key="undo_edit_4"):
+            if st.session_state["4. 선정기준, 제외기준_history"]:
+                # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
+                st.session_state.section_contents["4. 선정기준, 제외기준"] = st.session_state["4. 선정기준, 제외기준_history"].pop()
+                st.success("이전 버전으로 되돌렸습니다.")
+                st.rerun()
+            else:
+                st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
 # 대상자 수 및 산출근거 작성 함수 (수정)
 def write_sample_size():
