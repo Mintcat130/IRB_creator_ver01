@@ -182,7 +182,7 @@ def search_pubmed(query, max_results=10):
     record = Entrez.read(handle)
     handle.close()
     
-       ids = record["IdList"]
+        ids = record["IdList"]
         results = []
         for id in ids:
             handle = Entrez.efetch(db="pubmed", id=id, rettype="medline", retmode="text")
