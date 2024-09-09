@@ -1187,9 +1187,10 @@ def write_research_title():
             selected_option = st.radio(
                 "",
                 valid_options,
-                format_func=lambda x: format_title_option(x),
+                format_func=lambda x: format_title_option(x).replace('\n', '<br>'),
                 index=0
             )
+st.markdown(format_title_option(selected_option), unsafe_allow_html=True)
             
             if st.button("선택한 연구 과제명 저장"):
                 save_section_content("1. 연구 과제명", selected_option)
@@ -1250,8 +1251,7 @@ def write_research_title():
                 else:
                     st.warning("수정 요청 내용을 입력해주세요.")
 
-    # 편집 기능 (선택적으로 표시)
-    if st.checkbox("연구 과제명 직접 편집하기"):
+    # 편집 기능 (선택적으로 표시):
         edited_content = st.text_area(
             "연구 과제명을 직접 편집하세요:",
             content,
@@ -1275,6 +1275,57 @@ def write_research_title():
             st.rerun()
         else:
             st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+            # write_research_title 함수 끝 부분에 추가
+if st.button("전체 내용 보기"):
+    view_full_content()
+
+# 새로운 함수 추가
+def view_full_content():
+    st.markdown("## 전체 연구계획서 내용")
+    
+    # 연구 과제명을 먼저 표시
+    title_content = load_section_content("1. 연구 과제명")
+    if title_content:
+        st.markdown("### 1. 연구 과제명")
+        st.markdown(title_content)
+    
+    for section in RESEARCH_SECTIONS[1:]:  # "1. 연구 과제명"을 제외한 나머지 섹션
+        content = load_section_content(section)
+        if content:
+            st.markdown(f"### {section}")
+            st.markdown(content)
+    
+    # 참고문헌 표시
+    display_references()
+
+
+def display_references():
+    st.markdown("### 참고문헌")
+    references = format_references(
+        st.session_state.get('pubmed_results', []),
+        st.session_state.get('scholar_results', []),
+        st.session_state.get('pdf_files', [])
+    )
+    for i, ref in enumerate(references, 1):
+        st.markdown(f"{i}. {ref}")
+
+def format_references(pubmed_results, scholar_results, pdf_files):
+    references = []
+    
+    for result in pubmed_results + scholar_results:
+        authors = result['authors'].split(', ')
+        if len(authors) > 6:
+            authors = authors[:6] + ['et al.']
+        author_string = ', '.join(authors)
+        reference = f"{author_string}. {result['title']} {result.get('journal', '')} {result.get('year', '')}."
+        references.append(reference)
+    
+    for pdf_file in pdf_files:
+        references.append(f"{pdf_file.name}")
+    
+    return references
+
+
 
 
 def parse_and_validate_titles(response):
