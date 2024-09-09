@@ -1155,13 +1155,9 @@ def write_research_title():
         save_section_content("1. 연구 과제명", ai_response)
         st.rerun()
 
-    # AI 응답 표시
+    # AI 응답 표시 및 선택
     content = load_section_content("1. 연구 과제명")
     if content:
-        st.markdown("### AI가 추천한 연구 과제명:")
-        st.markdown(content)  # 연구 과제명 전체 내용 출력
-        
-         # 사용자 선택 옵션
         options = content.split("\n\n")
         valid_options = []
         for option in options:
@@ -1173,18 +1169,13 @@ def write_research_title():
                     valid_options.append(f"{eng_title}\n{kor_title}")
 
         if len(valid_options) == 3:
+            st.markdown("### AI가 추천한 연구 과제명 (선택해주세요):")
             selected_option = st.radio(
-                "원하는 연구 과제명을 선택하세요:", 
-                valid_options, 
-                format_func=lambda x: f"{x.split('n')[0]}\n{x.split('n')[1]}",
+                "",  # 라벨 제거
+                valid_options,
+                format_func=lambda x: f"영문: {x.split('n')[0]}\n한글: {x.split('n')[1]}",
                 index=0
             )
-            
-            # 선택된 옵션 표시
-            st.markdown("**선택된 연구 과제명:**")
-            eng_title, kor_title = selected_option.split('\n')
-            st.markdown(f"영문: {eng_title}")
-            st.markdown(f"한글: {kor_title}")
             
             if st.button("선택한 연구 과제명 저장"):
                 save_section_content("1. 연구 과제명", selected_option)
@@ -1192,7 +1183,6 @@ def write_research_title():
                 st.rerun()
         else:
             st.error("AI가 생성한 연구 과제명의 형식이 올바르지 않습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
-
 
         # 수정 요청 기능
         if st.button("수정 요청하기", key="request_modification_1"):
@@ -1226,7 +1216,6 @@ def write_research_title():
                     5. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
                     6. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
                     7. 수정 요청을 최대한 반영하되, 전체적인 일관성을 유지하세요.
-                    8. 답변시 제목들을 제시하는 것 외 다른말이나 설명은 하지 말것.
                     
                     수정된 3가지 연구 과제명 옵션을 작성해주세요. 각 옵션은 다음과 같은 형식으로 작성해주세요:
                     1. [영문 제목]
@@ -1245,34 +1234,33 @@ def write_research_title():
                     st.rerun()
                 else:
                     st.warning("수정 요청 내용을 입력해주세요.")
-    
-    # 편집 기능
-    edited_content = st.text_area(
-        "연구 과제명을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
-        content,
-        height=300,
-        key="edit_content_1"
-    )
 
-    st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
-    col1, col2 = st.columns(2)
-    with col1:
+    # 편집 기능 (선택적으로 표시)
+    if st.checkbox("연구 과제명 직접 편집하기"):
+        edited_content = st.text_area(
+            "연구 과제명을 직접 편집하세요:",
+            content,
+            height=300,
+            key="edit_content_1"
+        )
+
         if st.button("편집 내용 저장", key="save_edit_1"):
             # 현재 내용을 히스토리에 추가
             st.session_state["1. 연구 과제명_history"].append(content)
             save_section_content("1. 연구 과제명", edited_content)
             st.success("편집된 내용이 저장되었습니다.")
             st.rerun()
-    with col2:
-        if st.button("실행 취소", key="undo_edit_1"):
-            if st.session_state["1. 연구 과제명_history"]:
-                # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
-                previous_content = st.session_state["1. 연구 과제명_history"].pop()
-                save_section_content("1. 연구 과제명", previous_content)
-                st.success("이전 버전으로 되돌렸습니다.")
-                st.rerun()
-            else:
-                st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+
+    if st.button("이전 버전으로 되돌리기", key="undo_edit_1"):
+        if st.session_state["1. 연구 과제명_history"]:
+            # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
+            previous_content = st.session_state["1. 연구 과제명_history"].pop()
+            save_section_content("1. 연구 과제명", previous_content)
+            st.success("이전 버전으로 되돌렸습니다.")
+            st.rerun()
+        else:
+            st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+            
 # 전체 내용 확인 및 복사 함수
 def view_and_copy_full_content():
     st.markdown("## 전체 연구계획서 내용")
