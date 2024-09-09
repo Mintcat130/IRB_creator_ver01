@@ -1163,15 +1163,28 @@ def write_research_title():
 
         # 사용자 선택 옵션
         options = content.split("\n\n")
-        if len(options) == 3:
-            selected_option = st.radio("원하는 연구 과제명을 선택하세요:", options, format_func=lambda x: x.split('\n')[0])
+        valid_options = []
+        for option in options:
+            lines = option.split("\n")
+            if len(lines) >= 2:
+                eng_title = lines[0].strip()
+                kor_title = lines[1].strip()
+                if eng_title and kor_title:
+                    valid_options.append(f"{eng_title}\n{kor_title}")
+
+        if len(valid_options) == 3:
+            selected_option = st.radio(
+                "원하는 연구 과제명을 선택하세요:", 
+                valid_options, 
+                format_func=lambda x: x.split('\n')[0]
+            )
             
             if st.button("선택한 연구 과제명 저장"):
                 save_section_content("1. 연구 과제명", selected_option)
                 st.success("선택한 연구 과제명이 저장되었습니다.")
                 st.rerun()
         else:
-            st.error("AI가 생성한 연구 과제명의 형식이 올바르지 않습니다. 다시 생성해주세요.")
+            st.error("AI가 생성한 연구 과제명의 형식이 올바르지 않습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
 
         # 수정 요청 기능
         if st.button("수정 요청하기", key="request_modification_1"):
@@ -1205,16 +1218,17 @@ def write_research_title():
                     5. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
                     6. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
                     7. 수정 요청을 최대한 반영하되, 전체적인 일관성을 유지하세요.
+                    8. 제목을 제시하는 것 이외 다른 말은 아무것도 하지 마세요.
                     
                     수정된 3가지 연구 과제명 옵션을 작성해주세요. 각 옵션은 다음과 같은 형식으로 작성해주세요:
                     1. [영문 제목]
-                       [한글 제목]
+                    [한글 제목]
 
                     2. [영문 제목]
-                       [한글 제목]
+                    [한글 제목]
 
                     3. [영문 제목]
-                       [한글 제목]
+                    [한글 제목]
                     """
                     modified_response = generate_ai_response(prompt)
                     
