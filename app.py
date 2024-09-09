@@ -643,7 +643,7 @@ def chat_interface():
             col1, col2 = st.columns(2)
             
             with col1:
-                if st.button("이전 섹션"):
+                if st.button("⬅️이전 섹션"):
                     current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
                     if current_index > 0:
                         st.session_state.current_section = RESEARCH_SECTIONS[current_index - 1]
@@ -652,7 +652,7 @@ def chat_interface():
                     st.rerun()
 
             with col2:
-                if st.button("다음 섹션"):
+                if st.button("다음 섹션➡️"):
                     current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
                     if current_index < len(RESEARCH_SECTIONS) - 1:
                         st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
