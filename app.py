@@ -1278,30 +1278,30 @@ def write_research_title():
             # write_research_title 함수 끝 부분에 추가
     if st.button("전체 내용 보기"):
         view_full_content()
-        # write_research_title 함수 끝 부분에 추가
-        st.markdown("<br>", unsafe_allow_html=True)  # 버튼 위에 약간의 공간 추가
-        st.markdown(
-            """
-            <style>
-            .stButton>button {
-                color: #ffffff;
-                background-color: #FF4B4B;
-                border: none;
-                border-radius: 4px;
-                padding: 0.5rem 1rem;
-                font-size: 1.1rem;
-                font-weight: bold;
-                width: 100%;
-            }
-            .stButton>button:hover {
-                background-color: #FF7171;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-        if st.button("📄 전체 내용 보기"):
-            view_full_content()
+    # write_research_title 함수 끝 부분에 추가
+    st.markdown("<br>", unsafe_allow_html=True)  # 버튼 위에 약간의 공간 추가
+    st.markdown(
+        """
+        <style>
+        .stButton>button {
+            color: #ffffff;
+            background-color: #FF4B4B;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 100%;
+        }
+        .stButton>button:hover {
+            background-color: #FF7171;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    if st.button("📄 전체 내용 보기"):
+        view_full_content()
 
 # 새로운 함수 추가
 def view_full_content():
