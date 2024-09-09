@@ -1159,21 +1159,11 @@ def write_research_title():
     content = load_section_content("1. 연구 과제명")
     if content:
         st.markdown("### AI가 추천한 연구 과제명:")
-        st.markdown(content)
-
-        # 디버깅을 위한 원본 내용 출력
-        st.text("원본 내용:")
-        st.text(content)
-
+        
         # 사용자 선택 옵션
         options = content.split("\n\n")
-        st.text(f"옵션 수: {len(options)}")
-        
         valid_options = []
-        for i, option in enumerate(options):
-            st.text(f"옵션 {i+1}:")
-            st.text(option)
-            
+        for option in options:
             lines = option.split("\n")
             if len(lines) >= 2:
                 eng_title = lines[0].strip()
@@ -1181,13 +1171,11 @@ def write_research_title():
                 if eng_title and kor_title:
                     valid_options.append(f"{eng_title}\n{kor_title}")
 
-        st.text(f"유효한 옵션 수: {len(valid_options)}")
-
         if len(valid_options) == 3:
             selected_option = st.radio(
                 "원하는 연구 과제명을 선택하세요:", 
                 valid_options, 
-                format_func=lambda x: x.split('\n')[0]
+                format_func=lambda x: f"{x.split('n')[0]}\n{x.split('n')[1]}"
             )
             
             if st.button("선택한 연구 과제명 저장"):
@@ -1196,10 +1184,6 @@ def write_research_title():
                 st.rerun()
         else:
             st.error("AI가 생성한 연구 과제명의 형식이 올바르지 않습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
-            st.text("유효하지 않은 옵션:")
-            for option in options:
-                if option not in valid_options:
-                    st.text(option)
 
         # 수정 요청 기능
         if st.button("수정 요청하기", key="request_modification_1"):
@@ -1233,7 +1217,7 @@ def write_research_title():
                     5. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
                     6. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
                     7. 수정 요청을 최대한 반영하되, 전체적인 일관성을 유지하세요.
-                    8. 제목을 제시하는 것 이외 다른 말은 아무것도 하지 마세요.
+                    8. 답변시 제목들을 제시하는 것 외 다른말이나 설명은 하지 말것.
                     
                     수정된 3가지 연구 과제명 옵션을 작성해주세요. 각 옵션은 다음과 같은 형식으로 작성해주세요:
                     1. [영문 제목]
@@ -1280,7 +1264,6 @@ def write_research_title():
                 st.rerun()
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
-
 # 전체 내용 확인 및 복사 함수
 def view_and_copy_full_content():
     st.markdown("## 전체 연구계획서 내용")
