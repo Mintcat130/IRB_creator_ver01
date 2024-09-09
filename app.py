@@ -1161,16 +1161,27 @@ def write_research_title():
         st.markdown("### AI가 추천한 연구 과제명:")
         st.markdown(content)
 
+        # 디버깅을 위한 원본 내용 출력
+        st.text("원본 내용:")
+        st.text(content)
+
         # 사용자 선택 옵션
         options = content.split("\n\n")
+        st.text(f"옵션 수: {len(options)}")
+        
         valid_options = []
-        for option in options:
+        for i, option in enumerate(options):
+            st.text(f"옵션 {i+1}:")
+            st.text(option)
+            
             lines = option.split("\n")
             if len(lines) >= 2:
                 eng_title = lines[0].strip()
                 kor_title = lines[1].strip()
                 if eng_title and kor_title:
                     valid_options.append(f"{eng_title}\n{kor_title}")
+
+        st.text(f"유효한 옵션 수: {len(valid_options)}")
 
         if len(valid_options) == 3:
             selected_option = st.radio(
@@ -1185,6 +1196,10 @@ def write_research_title():
                 st.rerun()
         else:
             st.error("AI가 생성한 연구 과제명의 형식이 올바르지 않습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
+            st.text("유효하지 않은 옵션:")
+            for option in options:
+                if option not in valid_options:
+                    st.text(option)
 
         # 수정 요청 기능
         if st.button("수정 요청하기", key="request_modification_1"):
