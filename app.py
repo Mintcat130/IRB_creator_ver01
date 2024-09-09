@@ -303,6 +303,7 @@ def write_research_purpose():
             height=300,
             key="edit_content_2"
         )
+        st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("편집 내용 저장", key="save_edit_2"):
@@ -477,6 +478,7 @@ def write_research_background():
             height=300,
             key="edit_content_3"
         )
+        st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("편집 내용 저장", key="save_edit_3"):
@@ -524,7 +526,8 @@ def write_selection_criteria():
         st.session_state.section_contents["4. 선정기준, 제외기준"],
         height=200
     )
-    
+
+    st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
     if st.button("편집 내용 저장"):
         st.session_state.section_contents["4. 선정기준, 제외기준"] = edited_content
         st.success("편집된 내용이 저장되었습니다.")
@@ -536,6 +539,7 @@ def write_sample_size():
     if "5. 대상자 수 및 산출근거" not in st.session_state.section_contents:
         st.session_state.section_contents["5. 대상자 수 및 산출근거"] = ""
 
+    st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
     if st.button("대상자 수 및 산출근거 AI에게 추천받기"):
         research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
         research_background = st.session_state.section_contents.get("3. 연구 배경", "")
