@@ -191,11 +191,24 @@ PREDEFINED_PROMPTS = {
     "1. 연구 과제명": """
 지금까지 작성된 연구계획서의 모든 내용을 바탕으로 연구 과제명을 추천해주세요. 다음 지침을 따라주세요:
 
-1. 영문 제목과 한글 제목을 각각 작성해주세요.
-2. 총 3가지의 제목 옵션을 제시해주세요.
-3. 제목은 연구의 핵심 내용을 간결하고 명확하게 표현해야 합니다.
-4. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
-5. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
+1. 총 3가지의 제목 옵션을 제시해주세요.
+2. 각 옵션은 영문 제목 1개와과 한글 제목 1개로 구성됩니다.
+3. 영문 제목과 한글 제목은 별도의 줄에 작성합니다.
+4. 각 옵션은 번호를 붙여 구분합니다.
+5. 제목은 완전한 문장으로, 잘리지 않게 작성합니다.
+6. 제목은 연구의 핵심 내용을 간결하고 명확하게 표현해야 합니다.
+7. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
+8. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
+
+형식 예시:
+1. [완전한 영문 제목]
+[완전한 한글 제목]
+
+2. [완전한 영문 제목]
+[완전한 한글 제목]
+
+3. [완전한 영문 제목]
+[완전한 한글 제목]
 
 연구 목적: {research_purpose}
 연구 배경: {research_background}
@@ -1155,25 +1168,26 @@ def write_research_title():
         save_section_content("1. 연구 과제명", ai_response)
         st.rerun()
 
-    # AI 응답 표시 및 선택
+        # AI 응답 파싱 및 검증
+        options = parse_and_validate_titles(ai_response)
+        
+        if options:
+            save_section_content("1. 연구 과제명", "\n\n".join(options))
+            st.rerun()
+        else:
+            st.error("AI가 올바른 형식의 연구 과제명을 생성하지 못했습니다. 다시 시도해주세요.")
+
     content = load_section_content("1. 연구 과제명")
     if content:
         options = content.split("\n\n")
-        valid_options = []
-        for option in options:
-            lines = option.split("\n")
-            if len(lines) >= 2:
-                eng_title = lines[0].strip()
-                kor_title = lines[1].strip()
-                if eng_title and kor_title:
-                    valid_options.append(f"{eng_title}\n{kor_title}")
+        valid_options = [opt for opt in options if is_valid_title_option(opt)]
 
-        if len(valid_options) == 3:
+        if valid_options:
             st.markdown("### AI가 추천한 연구 과제명 (선택해주세요):")
             selected_option = st.radio(
-                "",  # 라벨 제거
+                "",
                 valid_options,
-                format_func=lambda x: f"영문: {x.split('n')[0]}\n한글: {x.split('n')[1]}",
+                format_func=lambda x: format_title_option(x),
                 index=0
             )
             
@@ -1182,7 +1196,8 @@ def write_research_title():
                 st.success("선택한 연구 과제명이 저장되었습니다.")
                 st.rerun()
         else:
-            st.error("AI가 생성한 연구 과제명의 형식이 올바르지 않습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
+            st.error("유효한 연구 과제명 옵션이 없습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
+
 
         # 수정 요청 기능
         if st.button("수정 요청하기", key="request_modification_1"):
@@ -1260,6 +1275,34 @@ def write_research_title():
             st.rerun()
         else:
             st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+
+
+def parse_and_validate_titles(response):
+    lines = response.split('\n')
+    options = []
+    current_option = []
+    
+    for line in lines:
+        if line.strip().startswith(('1.', '2.', '3.')):
+            if current_option:
+                options.append('\n'.join(current_option))
+                current_option = []
+        current_option.append(line.strip())
+    
+    if current_option:
+        options.append('\n'.join(current_option))
+    
+    return [opt for opt in options if is_valid_title_option(opt)]
+
+def is_valid_title_option(option):
+    lines = option.split('\n')
+    return len(lines) >= 2 and lines[0].strip() and lines[1].strip()
+
+def format_title_option(option):
+    lines = option.split('\n')
+    if len(lines) >= 2:
+        return f"영문: {lines[0]}\n한글: {lines[1]}"
+    return option
             
 # 전체 내용 확인 및 복사 함수
 def view_and_copy_full_content():
