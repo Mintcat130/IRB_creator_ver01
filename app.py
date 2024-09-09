@@ -8,6 +8,9 @@ from Bio import Entrez
 import json
 import re
 
+# 페이지 설정을 코드 최상단에 추가
+st.set_page_config(page_title="📖연구계획서 작성 도우미", page_icon="📖")
+
 # 시스템 프롬프트
 SYSTEM_PROMPT = """
 당신은 병리학 분야의 연구 전문가로서 행동하는 AI 조수입니다. 당신의 역할은 사용자가 연구계획서를 작성하는 데 도움을 주는 것입니다. 사용자는 연구계획서의 특정 항목에 대한 정보를 제공할 것이며, 당신은 이를 바탕으로 해당 항목을 작성해야 합니다.
@@ -212,44 +215,6 @@ def search_google_scholar(query, max_results=10):
         except AttributeError:
             continue  # 결과를 건너뛰고 다음 결과로 진행
     return results
-
-
-def show_chat_interface():
-    current_item = st.session_state.get('current_item', '')
-    if current_item:
-        st.markdown(f"**현재 작성 중인 항목: {current_item}**")
-        instruction = SYSTEM_PROMPTS['prompts'].get(current_item, "이 항목에 대해 어떤 내용을 작성하고 싶으신가요?")
-        st.info(instruction)
-
-    for message in st.session_state.get('messages', []):
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    if prompt := st.chat_input("메시지를 입력하세요."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        response = generate_ai_response(prompt, current_item)
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        with st.chat_message("assistant"):
-            st.markdown(response)
-        
-        # 항목 완료 처리
-        if current_item not in st.session_state.get('completed_items', []):
-            st.session_state.completed_items = st.session_state.get('completed_items', []) + [current_item]
-        
-        # 다음 항목으로 자동 이동
-        items = list(SYSTEM_PROMPTS['prompts'].keys())
-        current_index = items.index(current_item)
-        if current_index < len(items) - 1:
-            next_item = items[current_index + 1]
-            st.session_state.current_item = next_item
-            st.info(f"다음 항목 '{next_item}'으로 이동합니다.")
-        else:
-            st.success("모든 항목 작성이 완료되었습니다.")
-        
-        st.rerun()
 
 def write_research_purpose():
     st.markdown("## 2. 연구 목적")
