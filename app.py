@@ -100,7 +100,36 @@ PREDEFINED_PROMPTS = {
 {selection_criteria}
 
 위의 내용을 바탕으로 적절한 대상자 수와 그 산출근거를 작성해주세요.
-"""
+""",
+        "6. 자료분석과 통계적 방법": """
+    이전 섹션의 내용을 바탕으로 자료분석과 통계적 방법을 1500자 이내로 작성해주세요. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다) 다음 사항을 포함해야 합니다:
+
+    1. 수집해야 하는 수치나 값, 변수들 제시
+    2. 변수의 이름은 영어로 작성하고, 긴 변수명의 경우 연구에 사용할 수 있는 약자도 함께 제시
+    3. 연구에 사용할 군(group) 제시
+    4. 연구를 통해 수집된 자료 또는 정보를 이용하는 방법(통계적 방법 포함) 기술
+    5. 통계분석(계획) 제시:
+       - 통계분석 방법
+       - 분석대상군
+       - 결측치의 처리 방법
+       - 혼란변수 통제방법
+       - 유의수준
+       - 결과제시와 결과 도출 방안
+
+    연구 목적:
+    {research_purpose}
+
+    연구 배경:
+    {research_background}
+
+    선정기준, 제외기준:
+    {selection_criteria}
+
+    대상자 수 및 산출근거:
+    {sample_size}
+
+    위의 내용을 바탕으로 자료분석과 통계적 방법을 구체적으로 작성해주세요. 각 항목을 명확히 구분하여 작성하되, 전체적으로 일관성 있는 내용이 되도록 해주세요.
+    """
 }
 
 
@@ -110,6 +139,7 @@ RESEARCH_SECTIONS = [
     "3. 연구 배경",
     "4. 선정기준, 제외기준",
     "5. 대상자 수 및 산출근거",
+    "6. 자료분석과 통계적 방법",
     # 다른 섹션들은 나중에 추가할 예정입니다.
 ]
 
@@ -575,6 +605,44 @@ def write_sample_size():
         st.session_state.section_contents["5. 대상자 수 및 산출근거"] = edited_content
         st.success("편집된 내용이 저장되었습니다.")
 
+def write_data_analysis():
+    st.markdown("## 6. 자료분석과 통계적 방법")
+    
+    if "6. 자료분석과 통계적 방법" not in st.session_state.section_contents:
+        st.session_state.section_contents["6. 자료분석과 통계적 방법"] = ""
+
+    if st.button("자료분석 및 통계방법 AI에게 추천받기"):
+        research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
+        research_background = st.session_state.section_contents.get("3. 연구 배경", "")
+        selection_criteria = st.session_state.section_contents.get("4. 선정기준, 제외기준", "")
+        sample_size = st.session_state.section_contents.get("5. 대상자 수 및 산출근거", "")
+        
+        prompt = PREDEFINED_PROMPTS["6. 자료분석과 통계적 방법"].format(
+            research_purpose=research_purpose,
+            research_background=research_background,
+            selection_criteria=selection_criteria,
+            sample_size=sample_size
+        )
+        
+        ai_response = generate_ai_response(prompt)
+        
+        st.session_state.section_contents["6. 자료분석과 통계적 방법"] = ai_response
+        st.markdown("### AI가 추천한 자료분석과 통계적 방법:")
+        st.markdown(ai_response)
+        st.rerun()
+
+    # 편집 기능
+    edited_content = st.text_area(
+        "자료분석과 통계적 방법을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        st.session_state.section_contents["6. 자료분석과 통계적 방법"],
+        height=400
+    )
+    
+    st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
+    if st.button("편집 내용 저장"):
+        st.session_state.section_contents["6. 자료분석과 통계적 방법"] = edited_content
+        st.success("편집된 내용이 저장되었습니다.")
+
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
     references = re.findall(r'\[([^\]]+)\]', text)
@@ -643,6 +711,8 @@ def chat_interface():
                 write_selection_criteria()
             elif st.session_state.current_section == "5. 대상자 수 및 산출근거":
                 write_sample_size()
+            elif st.session_state.current_section == "6. 자료분석과 통계적 방법":
+                write_data_analysis()
             # ... (다른 섹션들에 대한 조건문 추가)
 
             # 이전 섹션과 다음 섹션 버튼 (홈 화면이 아닐 때만 표시)
