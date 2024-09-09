@@ -1159,8 +1159,9 @@ def write_research_title():
     content = load_section_content("1. 연구 과제명")
     if content:
         st.markdown("### AI가 추천한 연구 과제명:")
+        st.markdown(content)  # 연구 과제명 전체 내용 출력
         
-        # 사용자 선택 옵션
+         # 사용자 선택 옵션
         options = content.split("\n\n")
         valid_options = []
         for option in options:
@@ -1175,8 +1176,15 @@ def write_research_title():
             selected_option = st.radio(
                 "원하는 연구 과제명을 선택하세요:", 
                 valid_options, 
-                format_func=lambda x: f"{x.split('n')[0]}\n{x.split('n')[1]}"
+                format_func=lambda x: f"{x.split('n')[0]}\n{x.split('n')[1]}",
+                index=0
             )
+            
+            # 선택된 옵션 표시
+            st.markdown("**선택된 연구 과제명:**")
+            eng_title, kor_title = selected_option.split('\n')
+            st.markdown(f"영문: {eng_title}")
+            st.markdown(f"한글: {kor_title}")
             
             if st.button("선택한 연구 과제명 저장"):
                 save_section_content("1. 연구 과제명", selected_option)
@@ -1184,6 +1192,7 @@ def write_research_title():
                 st.rerun()
         else:
             st.error("AI가 생성한 연구 과제명의 형식이 올바르지 않습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
+
 
         # 수정 요청 기능
         if st.button("수정 요청하기", key="request_modification_1"):
