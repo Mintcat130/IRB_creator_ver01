@@ -1187,7 +1187,7 @@ def write_research_title():
             selected_option = st.radio(
                 "",
                 valid_options,
-                format_func=lambda x: format_title_option(x).replace('\n', '<br>'),
+                format_func=lambda x: x.replace('\n', ' / '),  # 라디오 버튼에서는 간단히 표시
                 index=0
             )
             st.markdown(format_title_option(selected_option), unsafe_allow_html=True)
@@ -1352,8 +1352,8 @@ def is_valid_title_option(option):
 def format_title_option(option):
     lines = option.split('\n')
     if len(lines) >= 2:
-        return f"영문: {lines[0]}\n한글: {lines[1]}"
-    return option
+        return f"<p><strong>영문:</strong> {lines[0]}<br><strong>한글:</strong> {lines[1]}</p>"
+    return f"<p>{option}</p>"
             
 # 전체 내용 확인 및 복사 함수
 def view_and_copy_full_content():
