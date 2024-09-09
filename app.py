@@ -330,6 +330,66 @@ def search_google_scholar(query, max_results=10):
             continue  # 결과를 건너뛰고 다음 결과로 진행
     return results
 
+# 참고문헌 정리 함수 추가
+def format_references(pubmed_results, scholar_results, pdf_files):
+    references = []
+    
+    # PubMed 결과 처리
+    for i, result in enumerate(pubmed_results, start=1):
+        authors = result['authors'].split(', ')
+        if len(authors) > 6:
+            authors = authors[:6] + ['et al.']
+        author_string = ', '.join(authors)
+        reference = f"{i}. {author_string}. {result['title']} PubMed PMID: {result['link'].split('/')[-1]}."
+        references.append(reference)
+    
+    # Google Scholar 결과 처리
+    for i, result in enumerate(scholar_results, start=len(references)+1):
+        authors = result['authors'].split(', ')
+        if len(authors) > 6:
+            authors = authors[:6] + ['et al.']
+        author_string = ', '.join(authors)
+        reference = f"{i}. {author_string}. {result['title']} URL: {result['link']}."
+        references.append(reference)
+    
+    # PDF 파일 처리
+    for i, pdf_file in enumerate(pdf_files, start=len(references)+1):
+        reference = f"{i}. {pdf_file.name}"
+        references.append(reference)
+    
+    return references
+
+# 전체 내용 확인 및 복사 함수 수정
+def view_and_copy_full_content():
+    st.markdown("## 전체 연구계획서 내용")
+    
+    full_content = ""
+    for section in RESEARCH_SECTIONS:
+        content = load_section_content(section)
+        if content:
+            full_content += f"## {section}\n\n{content}\n\n"
+            st.markdown(f"### {section}")
+            st.markdown(content)
+            if st.button(f"{section} 복사", key=f"copy_{section}"):
+                pyperclip.copy(content)
+                st.success(f"{section} 내용이 클립보드에 복사되었습니다.")
+    
+    # 참고문헌 추가
+    if 'pubmed_results' in st.session_state or 'scholar_results' in st.session_state or 'pdf_files' in st.session_state:
+        st.markdown("### 참고문헌")
+        references = format_references(
+            st.session_state.get('pubmed_results', []),
+            st.session_state.get('scholar_results', []),
+            st.session_state.get('pdf_files', [])
+        )
+        for ref in references:
+            st.markdown(f"- {ref}")
+        full_content += "## 참고문헌\n\n" + "\n".join(references)
+    
+    if st.button("전체 내용 복사"):
+        pyperclip.copy(full_content)
+        st.success("전체 연구계획서 내용이 클립보드에 복사되었습니다.")
+
 def write_research_purpose():
     st.markdown("## 2. 연구 목적")
     
@@ -493,11 +553,12 @@ def write_research_background():
                     del st.session_state.scholar_results[i]
                     st.rerun()
             
-    # PDF 파일 업로드
+    # PDF 파일 업로드 
     uploaded_files = st.file_uploader("PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
     
     if uploaded_files:
         st.session_state.pdf_texts = []
+        st.session_state.pdf_files = uploaded_files  # PDF 파일 정보 저장
         for uploaded_file in uploaded_files:
             pdf_text = extract_text_from_pdf(uploaded_file)
             st.session_state.pdf_texts.append(pdf_text)
