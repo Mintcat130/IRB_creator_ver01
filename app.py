@@ -1276,9 +1276,7 @@ def write_research_title():
         else:
             st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
             # write_research_title 함수 끝 부분에 추가
-    if st.button("전체 내용 보기"):
-        view_full_content()
-    # write_research_title 함수 끝 부분에 추가
+
     st.markdown("<br>", unsafe_allow_html=True)  # 버튼 위에 약간의 공간 추가
     st.markdown(
         """
