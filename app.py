@@ -637,10 +637,13 @@ def write_selection_criteria():
 def write_sample_size():
     st.markdown("## 5. 대상자 수 및 산출근거")
     
+    # 히스토리 초기화
+    if "5. 대상자 수 및 산출근거_history" not in st.session_state:
+        st.session_state["5. 대상자 수 및 산출근거_history"] = []
+
     if "5. 대상자 수 및 산출근거" not in st.session_state.section_contents:
         st.session_state.section_contents["5. 대상자 수 및 산출근거"] = ""
 
-    st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
     if st.button("대상자 수 및 산출근거 AI에게 추천받기"):
         research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
         research_background = st.session_state.section_contents.get("3. 연구 배경", "")
@@ -654,25 +657,92 @@ def write_sample_size():
         
         ai_response = generate_ai_response(prompt)
         
+        # 현재 내용을 히스토리에 추가
+        st.session_state["5. 대상자 수 및 산출근거_history"].append(st.session_state.section_contents["5. 대상자 수 및 산출근거"])
+        
         st.session_state.section_contents["5. 대상자 수 및 산출근거"] = ai_response
+        st.rerun()
+
+    # AI 응답 표시
+    if "5. 대상자 수 및 산출근거" in st.session_state.section_contents:
         st.markdown("### AI가 추천한 대상자 수 및 산출근거:")
-        st.markdown(ai_response)
-        st.rerun()  # 페이지를 새로고침하여 편집창에 AI 응답을 표시
+        st.markdown(st.session_state.section_contents["5. 대상자 수 및 산출근거"])
+
+        # 수정 요청 기능
+        if st.button("수정 요청하기", key="request_modification_5"):
+            st.session_state.show_modification_request_5 = True
+            st.rerun()
+
+        if st.session_state.get('show_modification_request_5', False):
+            modification_request = st.text_area(
+                "수정을 원하는 부분과 수정 방향을 설명해주세요:",
+                height=150,
+                key="modification_request_5"
+            )
+            if st.button("수정 요청 제출", key="submit_modification_5"):
+                if modification_request:
+                    current_content = st.session_state.section_contents["5. 대상자 수 및 산출근거"]
+                    # 현재 내용을 히스토리에 추가
+                    st.session_state["5. 대상자 수 및 산출근거_history"].append(current_content)
+                    
+                    prompt = f"""
+                    현재 대상자 수 및 산출근거:
+                    {current_content}
+
+                    사용자의 수정 요청:
+                    {modification_request}
+
+                    위의 수정 요청을 반영하여 대상자 수 및 산출근거를 수정해주세요. 다음 지침을 따라주세요:
+                    1. 전체 내용을 유지하면서, 수정 요청된 부분만 변경하세요.
+                    2. 수정 요청에 명시적으로 언급되지 않은 부분은 그대로 유지하세요.
+                    3. 수정된 내용은 자연스럽게 기존 내용과 연결되어야 합니다.
+                    4. 수정된 부분은 기존 내용의 맥락과 일관성을 유지해야 합니다.
+                    5. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
+                    6. 내용 이외 다른말은 하지 말것.
+                    
+                    수정된 전체 대상자 수 및 산출근거를 작성해주세요.
+                    """
+                    modified_response = generate_ai_response(prompt)
+                    
+                    st.session_state.section_contents["5. 대상자 수 및 산출근거"] = modified_response
+                    st.session_state.show_modification_request_5 = False
+                    st.rerun()
+                else:
+                    st.warning("수정 요청 내용을 입력해주세요.")
     
     # 편집 기능
     edited_content = st.text_area(
-        "연구 대상자 수를 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        "대상자 수 및 산출근거를 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
         st.session_state.section_contents["5. 대상자 수 및 산출근거"],
         height=200
     )
-    
-    if st.button("편집 내용 저장"):
-        st.session_state.section_contents["5. 대상자 수 및 산출근거"] = edited_content
-        st.success("편집된 내용이 저장되었습니다.")
+
+    st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("편집 내용 저장"):
+            # 현재 내용을 히스토리에 추가
+            st.session_state["5. 대상자 수 및 산출근거_history"].append(st.session_state.section_contents["5. 대상자 수 및 산출근거"])
+            st.session_state.section_contents["5. 대상자 수 및 산출근거"] = edited_content
+            st.success("편집된 내용이 저장되었습니다.")
+            st.rerun()
+    with col2:
+        if st.button("실행 취소", key="undo_edit_5"):
+            if st.session_state["5. 대상자 수 및 산출근거_history"]:
+                # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
+                st.session_state.section_contents["5. 대상자 수 및 산출근거"] = st.session_state["5. 대상자 수 및 산출근거_history"].pop()
+                st.success("이전 버전으로 되돌렸습니다.")
+                st.rerun()
+            else:
+                st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
 def write_data_analysis():
     st.markdown("## 6. 자료분석과 통계적 방법")
     
+    # 히스토리 초기화
+    if "6. 자료분석과 통계적 방법_history" not in st.session_state:
+        st.session_state["6. 자료분석과 통계적 방법_history"] = []
+
     if "6. 자료분석과 통계적 방법" not in st.session_state.section_contents:
         st.session_state.section_contents["6. 자료분석과 통계적 방법"] = ""
 
@@ -691,22 +761,92 @@ def write_data_analysis():
         
         ai_response = generate_ai_response(prompt)
         
+        # 현재 내용을 히스토리에 추가
+        st.session_state["6. 자료분석과 통계적 방법_history"].append(st.session_state.section_contents["6. 자료분석과 통계적 방법"])
+        
         st.session_state.section_contents["6. 자료분석과 통계적 방법"] = ai_response
-        st.markdown("### AI가 추천한 자료분석과 통계적 방법:")
-        st.markdown(ai_response)
         st.rerun()
 
+    # AI 응답 표시
+    if "6. 자료분석과 통계적 방법" in st.session_state.section_contents:
+        st.markdown("### AI가 추천한 자료분석과 통계적 방법:")
+        st.markdown(st.session_state.section_contents["6. 자료분석과 통계적 방법"])
+
+        # 수정 요청 기능
+        if st.button("수정 요청하기", key="request_modification_6"):
+            st.session_state.show_modification_request_6 = True
+            st.rerun()
+
+        if st.session_state.get('show_modification_request_6', False):
+            modification_request = st.text_area(
+                "수정을 원하는 부분과 수정 방향을 설명해주세요:",
+                height=150,
+                key="modification_request_6"
+            )
+            if st.button("수정 요청 제출", key="submit_modification_6"):
+                if modification_request:
+                    current_content = st.session_state.section_contents["6. 자료분석과 통계적 방법"]
+                    # 현재 내용을 히스토리에 추가
+                    st.session_state["6. 자료분석과 통계적 방법_history"].append(current_content)
+                    
+                    prompt = f"""
+                    현재 자료분석과 통계적 방법:
+                    {current_content}
+
+                    사용자의 수정 요청:
+                    {modification_request}
+
+                    위의 수정 요청을 반영하여 자료분석과 통계적 방법을 수정해주세요. 다음 지침을 따라주세요:
+                    1. 전체 내용을 유지하면서, 수정 요청된 부분만 변경하세요.
+                    2. 수정 요청에 명시적으로 언급되지 않은 부분은 그대로 유지하세요.
+                    3. 수정된 내용은 자연스럽게 기존 내용과 연결되어야 합니다.
+                    4. 전체 내용은 1500자를 넘지 않아야 합니다.
+                    5. 수정된 부분은 기존 내용의 맥락과 일관성을 유지해야 합니다.
+                    6. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
+                    7. 내용 이외 다른말은 하지 말것.
+                    
+                    수정된 전체 자료분석과 통계적 방법을 작성해주세요.
+                    """
+                    modified_response = generate_ai_response(prompt)
+                    
+                    st.session_state.section_contents["6. 자료분석과 통계적 방법"] = modified_response
+                    st.session_state.show_modification_request_6 = False
+                    st.rerun()
+                else:
+                    st.warning("수정 요청 내용을 입력해주세요.")
+    
     # 편집 기능
     edited_content = st.text_area(
         "자료분석과 통계적 방법을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
         st.session_state.section_contents["6. 자료분석과 통계적 방법"],
         height=400
     )
-    
+
     st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
-    if st.button("편집 내용 저장"):
-        st.session_state.section_contents["6. 자료분석과 통계적 방법"] = edited_content
-        st.success("편집된 내용이 저장되었습니다.")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("편집 내용 저장"):
+            # 현재 내용을 히스토리에 추가
+            st.session_state["6. 자료분석과 통계적 방법_history"].append(st.session_state.section_contents["6. 자료분석과 통계적 방법"])
+            st.session_state.section_contents["6. 자료분석과 통계적 방법"] = edited_content
+            st.success("편집된 내용이 저장되었습니다.")
+            st.rerun()
+    with col2:
+        if st.button("실행 취소", key="undo_edit_6"):
+            if st.session_state["6. 자료분석과 통계적 방법_history"]:
+                # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
+                st.session_state.section_contents["6. 자료분석과 통계적 방법"] = st.session_state["6. 자료분석과 통계적 방법_history"].pop()
+                st.success("이전 버전으로 되돌렸습니다.")
+                st.rerun()
+            else:
+                st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+
+    # 글자 수 표시
+    if "6. 자료분석과 통계적 방법" in st.session_state.section_contents:
+        char_count = len(st.session_state.section_contents["6. 자료분석과 통계적 방법"])
+        st.info(f"현재 글자 수: {char_count}/1500")
+        if char_count > 1500:
+            st.warning("글자 수가 1500자를 초과했습니다. 내용을 줄여주세요.")
 
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
