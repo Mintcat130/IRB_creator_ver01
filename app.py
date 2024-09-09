@@ -1190,7 +1190,7 @@ def write_research_title():
                 format_func=lambda x: format_title_option(x).replace('\n', '<br>'),
                 index=0
             )
-st.markdown(format_title_option(selected_option), unsafe_allow_html=True)
+            st.markdown(format_title_option(selected_option), unsafe_allow_html=True)
             
             if st.button("선택한 연구 과제명 저장"):
                 save_section_content("1. 연구 과제명", selected_option)
