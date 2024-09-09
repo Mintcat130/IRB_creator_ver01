@@ -129,6 +129,34 @@ PREDEFINED_PROMPTS = {
     {sample_size}
 
     위의 내용을 바탕으로 자료분석과 통계적 방법을 구체적으로 작성해주세요. 각 항목을 명확히 구분하여 작성하되, 전체적으로 일관성 있는 내용이 되도록 해주세요.
+    """,
+        "7. 연구방법": """
+    2번부터 6번까지의 섹션 내용을 바탕으로 전체 연구방법을 1000자 이내로 요약해주세요. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다) 다음 사항을 포함해야 합니다:
+
+    1. 연구 목적의 핵심
+    2. 연구 대상자 선정 및 제외 기준의 요점
+    3. 대상자 수와 그 근거의 간략한 설명
+    4. 주요 자료수집 방법
+    5. 핵심적인 통계분석 방법
+
+    이 연구가 어떤 방법으로 진행되는지 간단명료하게 설명해주세요. 전문적이면서도 이해하기 쉽게 작성해주세요.
+
+    연구 목적:
+    {research_purpose}
+
+    연구 배경:
+    {research_background}
+
+    선정기준, 제외기준:
+    {selection_criteria}
+
+    대상자 수 및 산출근거:
+    {sample_size}
+
+    자료분석과 통계적 방법:
+    {data_analysis}
+
+    위의 내용을 바탕으로 전체 연구방법을 요약해주세요.
     """
 }
 
@@ -140,6 +168,7 @@ RESEARCH_SECTIONS = [
     "4. 선정기준, 제외기준",
     "5. 대상자 수 및 산출근거",
     "6. 자료분석과 통계적 방법",
+    "7. 연구방법",
     # 다른 섹션들은 나중에 추가할 예정입니다.
 ]
 
@@ -633,7 +662,7 @@ def write_selection_criteria():
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
-# 대상자 수 및 산출근거 작성 함수 (수정)
+# 5. 대상자 수 및 산출근거 작성 함수 (수정)
 def write_sample_size():
     st.markdown("## 5. 대상자 수 및 산출근거")
     
@@ -736,6 +765,7 @@ def write_sample_size():
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
+#6. 자료분석과 통계적 방법 함수
 def write_data_analysis():
     st.markdown("## 6. 자료분석과 통계적 방법")
     
@@ -848,6 +878,122 @@ def write_data_analysis():
         if char_count > 1500:
             st.warning("글자 수가 1500자를 초과했습니다. 내용을 줄여주세요.")
 
+#7. 연구방법 정리 함수
+def write_research_method():
+    st.markdown("## 7. 연구방법")
+    
+    # 히스토리 초기화
+    if "7. 연구방법_history" not in st.session_state:
+        st.session_state["7. 연구방법_history"] = []
+
+    if "7. 연구방법" not in st.session_state.section_contents:
+        st.session_state.section_contents["7. 연구방법"] = ""
+
+    if st.button("연구방법 정리 요청하기"):
+        research_purpose = st.session_state.section_contents.get("2. 연구 목적", "")
+        research_background = st.session_state.section_contents.get("3. 연구 배경", "")
+        selection_criteria = st.session_state.section_contents.get("4. 선정기준, 제외기준", "")
+        sample_size = st.session_state.section_contents.get("5. 대상자 수 및 산출근거", "")
+        data_analysis = st.session_state.section_contents.get("6. 자료분석과 통계적 방법", "")
+        
+        prompt = PREDEFINED_PROMPTS["7. 연구방법"].format(
+            research_purpose=research_purpose,
+            research_background=research_background,
+            selection_criteria=selection_criteria,
+            sample_size=sample_size,
+            data_analysis=data_analysis
+        )
+        
+        ai_response = generate_ai_response(prompt)
+        
+        # 현재 내용을 히스토리에 추가
+        st.session_state["7. 연구방법_history"].append(st.session_state.section_contents["7. 연구방법"])
+        
+        st.session_state.section_contents["7. 연구방법"] = ai_response
+        st.rerun()
+
+    # AI 응답 표시
+    if "7. 연구방법" in st.session_state.section_contents:
+        st.markdown("### AI가 정리한 연구방법:")
+        st.markdown(st.session_state.section_contents["7. 연구방법"])
+
+        # 수정 요청 기능
+        if st.button("수정 요청하기", key="request_modification_7"):
+            st.session_state.show_modification_request_7 = True
+            st.rerun()
+
+        if st.session_state.get('show_modification_request_7', False):
+            modification_request = st.text_area(
+                "수정을 원하는 부분과 수정 방향을 설명해주세요:",
+                height=150,
+                key="modification_request_7"
+            )
+            if st.button("수정 요청 제출", key="submit_modification_7"):
+                if modification_request:
+                    current_content = st.session_state.section_contents["7. 연구방법"]
+                    # 현재 내용을 히스토리에 추가
+                    st.session_state["7. 연구방법_history"].append(current_content)
+                    
+                    prompt = f"""
+                    현재 연구방법:
+                    {current_content}
+
+                    사용자의 수정 요청:
+                    {modification_request}
+
+                    위의 수정 요청을 반영하여 연구방법을 수정해주세요. 다음 지침을 따라주세요:
+                    1. 전체 내용을 유지하면서, 수정 요청된 부분만 변경하세요.
+                    2. 수정 요청에 명시적으로 언급되지 않은 부분은 그대로 유지하세요.
+                    3. 수정된 내용은 자연스럽게 기존 내용과 연결되어야 합니다.
+                    4. 전체 내용은 1000자를 넘지 않아야 합니다.
+                    5. 수정된 부분은 기존 내용의 맥락과 일관성을 유지해야 합니다.
+                    6. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
+                    7. 내용 이외 다른말은 하지 말것.
+                    
+                    수정된 전체 연구방법을 작성해주세요.
+                    """
+                    modified_response = generate_ai_response(prompt)
+                    
+                    st.session_state.section_contents["7. 연구방법"] = modified_response
+                    st.session_state.show_modification_request_7 = False
+                    st.rerun()
+                else:
+                    st.warning("수정 요청 내용을 입력해주세요.")
+    
+    # 편집 기능
+    edited_content = st.text_area(
+        "연구방법을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 정리를 받으세요. 생성된 내용을 편집하세요:",
+        st.session_state.section_contents["7. 연구방법"],
+        height=400
+    )
+
+    st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("편집 내용 저장"):
+            # 현재 내용을 히스토리에 추가
+            st.session_state["7. 연구방법_history"].append(st.session_state.section_contents["7. 연구방법"])
+            st.session_state.section_contents["7. 연구방법"] = edited_content
+            st.success("편집된 내용이 저장되었습니다.")
+            st.rerun()
+    with col2:
+        if st.button("실행 취소", key="undo_edit_7"):
+            if st.session_state["7. 연구방법_history"]:
+                # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
+                st.session_state.section_contents["7. 연구방법"] = st.session_state["7. 연구방법_history"].pop()
+                st.success("이전 버전으로 되돌렸습니다.")
+                st.rerun()
+            else:
+                st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+
+    # 글자 수 표시
+    if "7. 연구방법" in st.session_state.section_contents:
+        char_count = len(st.session_state.section_contents["7. 연구방법"])
+        st.info(f"현재 글자 수: {char_count}/1000")
+        if char_count > 1000:
+            st.warning("글자 수가 1000자를 초과했습니다. 내용을 줄여주세요.")
+
+
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
     references = re.findall(r'\[([^\]]+)\]', text)
@@ -918,6 +1064,8 @@ def chat_interface():
                 write_sample_size()
             elif st.session_state.current_section == "6. 자료분석과 통계적 방법":
                 write_data_analysis()
+            elif st.session_state.current_section == "7. 연구방법":
+                write_research_method()
             # ... (다른 섹션들에 대한 조건문 추가)
 
             # 이전 섹션과 다음 섹션 버튼 (홈 화면이 아닐 때만 표시)
