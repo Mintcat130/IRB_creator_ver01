@@ -177,28 +177,31 @@ def extract_text_from_pdf(file):
 
 # PubMed 검색 함수 (수정)
 def search_pubmed(query, max_results=10):
-    # Entrez.email = "your_email@example.com"
-    handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
-    record = Entrez.read(handle)
-    handle.close()
-    
-    ids = record["IdList"]
-    results = []
-    for id in ids:
-        handle = Entrez.efetch(db="pubmed", id=id, rettype="medline", retmode="text")
-        record = Entrez.read(Entrez.parse(handle))
-        if record:
-            article = record[0]
-            title = article.get("TI", "No title")
-            year = article.get("DP", "")[:4]
-            authors = ", ".join(article.get("AU", []))[:50] + "..." if len(article.get("AU", [])) > 2 else ", ".join(article.get("AU", []))
-            link = f"https://pubmed.ncbi.nlm.nih.gov/{id}/"
-            results.append({"title": title, "year": year, "authors": authors, "link": link})
+    try:
+        # 이메일 주소 설정을 제거하거나 더미 값을 사용
+        # Entrez.email = "example@example.com"  # 이 줄을 제거하거나 주석 처리
+
+        handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
+        record = Entrez.read(handle)
         handle.close()
-    return results
-except Exception as e:
-    st.error(f"PubMed 검색 중 오류 발생: {str(e)}")
-    return []
+        
+        ids = record["IdList"]
+        results = []
+        for id in ids:
+            handle = Entrez.efetch(db="pubmed", id=id, rettype="medline", retmode="text")
+            record = Entrez.read(Entrez.parse(handle))
+            if record:
+                article = record[0]
+                title = article.get("TI", "No title")
+                year = article.get("DP", "")[:4]
+                authors = ", ".join(article.get("AU", []))[:50] + "..." if len(article.get("AU", [])) > 2 else ", ".join(article.get("AU", []))
+                link = f"https://pubmed.ncbi.nlm.nih.gov/{id}/"
+                results.append({"title": title, "year": year, "authors": authors, "link": link})
+            handle.close()
+        return results
+    except Exception as e:
+        st.error(f"PubMed 검색 중 오류 발생: {str(e)}")
+        return []
 
 # Google Scholar 검색 함수 수정
 def search_google_scholar(query, max_results=10):
