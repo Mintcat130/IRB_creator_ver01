@@ -143,27 +143,36 @@ PREDEFINED_PROMPTS = {
     위의 내용을 바탕으로 적절한 선정기준, 제외기준을 작성해주세요.
     """,
     "5. 대상자 수 및 산출근거": """
-이전 섹션의 내용과 업로드된 논문들을 참고하여 다음 형식에 맟춰 대상자 수 및 산출근거를 작성해주세요, 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다):
-
-1) 대상자 수: [숫자]명
-
-2) 산출 근거: 
-[여기에 산출 근거를 자세히 설명해주세요. 다음 사항을 포함하세요:]
-- 선행연구와 통계학적 평가방법에 근거한 설명
-- 가능한 경우, 구체적인 통계적 방법(예: 검정력 분석)을 언급하고 사용된 가정들을 설명
-- 대상자 수가 연구 목적을 달성하기에 충분한 이유를 설명
-
-연구 목적:
-{research_purpose}
-
-연구 배경:
-{research_background}
-
-선정기준, 제외기준:
-{selection_criteria}
-
-위의 내용을 바탕으로 적절한 대상자 수와 그 산출근거를 작성해주세요.
-""",
+    이전 섹션의 내용과 업로드된 논문들을 참고하여 다음 형식에 맞춰 대상자 수 및 산출근거를 작성해주세요. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다):
+    
+    사용자가 입력한 대상자 수:
+    - 총 대상자 수: {total_subjects}명
+    - 원내 대상자 수: {internal_subjects}명
+    - 타 기관 대상자 수: {external_subjects}명
+    
+    1) 대상자 수 평가:
+    [사용자가 입력한 대상자 수가 연구에 적절한지 평가해주세요. 다음 사항을 고려하세요:]
+    - 연구 목적과 방법론에 비추어 적절한지 여부
+    - 만약 적절하다면, 그 이유를 설명
+    - 만약 적절하지 않다면, 왜 적절하지 않은지 설명하고, 불가피하게 이 수로 진행해야 한다면 그에 따른 제한점이나 고려사항을 언급
+    
+    2) 산출 근거 또는 대안 제시: 
+    [다음 사항을 포함하여 설명해주세요:]
+    - 선행연구와 통계학적 평가방법에 근거한 설명
+    - 가능한 경우, 구체적인 통계적 방법(예: 검정력 분석)을 언급하고 사용된 가정들을 설명
+    - 만약 사용자가 입력한 대상자 수가 부적절하다면, 적절한 대상자 수를 제안하고 그 근거를 설명
+    
+    연구 목적:
+    {research_purpose}
+    
+    연구 배경:
+    {research_background}
+    
+    선정기준, 제외기준:
+    {selection_criteria}
+    
+    위의 내용을 바탕으로 사용자가 입력한 대상자 수에 대한 평가와 산출근거 또는 대안을 작성해주세요.
+    """,
         "6. 자료분석과 통계적 방법": """
     이전 섹션의 내용을 바탕으로 자료분석과 통계적 방법을 1000자 이내로 작성해주세요. 어미는 '-할 것이다', '-할 예정이다'와 같은 미래형 문어체로 작성합니다. 다음 사항을 포함해야 합니다:
 
@@ -845,6 +854,19 @@ def write_sample_size():
     if "5. 대상자 수 및 산출근거_history" not in st.session_state:
         st.session_state["5. 대상자 수 및 산출근거_history"] = []
 
+    # 안내 텍스트 추가
+    st.write("이미 정해진 대상자 수가 있다면 입력해주세요. 없다면 AI 추천받기 버튼을 눌러 추천받으세요.")
+
+    # 사용자 입력 대상자 수
+    col1, col2 = st.columns(2)
+    with col1:
+        internal_subjects = st.number_input("원내 대상자 수", min_value=0, value=0, step=1)
+    with col2:
+        external_subjects = st.number_input("타 기관 대상자 수", min_value=0, value=0, step=1)
+    
+    total_subjects = internal_subjects + external_subjects
+    st.write(f"총 대상자 수: {total_subjects}명")
+
     if st.button("대상자 수 및 산출근거 AI에게 추천받기"):
         research_purpose = load_section_content("2. 연구 목적")
         research_background = load_section_content("3. 연구 배경")
@@ -853,7 +875,10 @@ def write_sample_size():
         prompt = PREDEFINED_PROMPTS["5. 대상자 수 및 산출근거"].format(
             research_purpose=research_purpose,
             research_background=research_background,
-            selection_criteria=selection_criteria
+            selection_criteria=selection_criteria,
+            total_subjects=total_subjects,
+            internal_subjects=internal_subjects,
+            external_subjects=external_subjects
         )
         
         ai_response = generate_ai_response(prompt)
