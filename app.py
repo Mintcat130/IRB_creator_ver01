@@ -1391,22 +1391,6 @@ def chat_interface():
     if 'current_research_id' not in st.session_state:
         st.session_state.current_research_id = generate_research_id()
 
-    if 'api_key' not in st.session_state or not st.session_state.api_key:
-        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
-        
-        if st.button("API 키 확인"):
-            client = initialize_anthropic_client(api_key)
-            if client:
-                st.success("유효한 API 키입니다. 연구계획서 작성하기 버튼을 눌러 시작하세요.")
-                st.session_state.temp_api_key = api_key
-            else:
-                st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
-        def chat_interface():
-    st.subheader("IRB 연구계획서 작성 도우미✏️ ver.01 (by HJY)")
-
-    if 'current_research_id' not in st.session_state:
-        st.session_state.current_research_id = generate_research_id()
-
     # API 키 입력 및 확인 로직
     if 'api_key' not in st.session_state or not st.session_state.api_key:
         api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
