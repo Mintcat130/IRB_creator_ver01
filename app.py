@@ -163,8 +163,8 @@ PREDEFINED_PROMPTS = {
     - 가능한 경우, 구체적인 통계적 방법(예: 검정력 분석)을 언급하고 사용된 가정들을 설명
     - 대상자 수가 연구 목적을 달성하기에 충분한 이유를 설명
     
-    만약 사용자가 대상자 수를 입력했다면 (총 대상자 수가 0이 아닌 경우), 그 수가 적절한지 평가하고 필요하다면 조정을 제안해주세요. 
-    만약 사용자가 대상자 수를 입력하지 않았다면 (총 대상자 수가 0인 경우), 적절한 대상자 수를 추천해주세요.
+    만약 사용자가 대상자 수를 입력했다면 (총 대상자 수가 "미입력"이 아닌 경우), 그 수가 적절한지 평가하고 필요하다면 조정을 제안해주세요. 
+    만약 사용자가 대상자 수를 입력하지 않았다면 (총 대상자 수가 "미입력"인 경우), 적절한 대상자 수를 추천해주세요.
     
     연구 목적:
     {research_purpose}
@@ -862,15 +862,19 @@ def write_sample_size():
     # 안내 텍스트 추가
     st.write("이미 정해진 대상자 수가 있다면 입력해주세요. 없다면 비워두고 AI 추천받기 버튼을 눌러 추천받으세요.")
 
-    # 사용자 입력 대상자 수
+        # 사용자 입력 대상자 수
     col1, col2 = st.columns(2)
     with col1:
-        internal_subjects = st.number_input("원내 대상자 수", min_value=0, value=0, step=1)
+        internal_subjects = st.number_input("원내 대상자 수", min_value=0, value=None, step=1)
     with col2:
-        external_subjects = st.number_input("타 기관 대상자 수", min_value=0, value=0, step=1)
+        external_subjects = st.number_input("타 기관 대상자 수", min_value=0, value=None, step=1)
     
-    total_subjects = internal_subjects + external_subjects
-    st.write(f"총 대상자 수: {total_subjects}명")
+    # 입력값이 None인 경우를 처리
+    if internal_subjects is not None and external_subjects is not None:
+        total_subjects = internal_subjects + external_subjects
+        st.write(f"총 대상자 수: {total_subjects}명")
+    else:
+        st.write("대상자 수가 입력되지 않았습니다. AI에게 추천을 받으세요.")
 
     if st.button("대상자 수 및 산출근거 AI에게 추천받기"):
         research_purpose = load_section_content("2. 연구 목적")
@@ -881,9 +885,9 @@ def write_sample_size():
             research_purpose=research_purpose,
             research_background=research_background,
             selection_criteria=selection_criteria,
-            total_subjects=total_subjects,
-            internal_subjects=internal_subjects,
-            external_subjects=external_subjects
+            total_subjects=total_subjects if internal_subjects is not None and external_subjects is not None else "미입력",
+            internal_subjects=internal_subjects if internal_subjects is not None else "미입력",
+            external_subjects=external_subjects if external_subjects is not None else "미입력"
         )
         
         ai_response = generate_ai_response(prompt)
