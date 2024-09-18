@@ -1401,6 +1401,23 @@ def chat_interface():
                 st.session_state.temp_api_key = api_key
             else:
                 st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
+        def chat_interface():
+    st.subheader("IRB 연구계획서 작성 도우미✏️ ver.01 (by HJY)")
+
+    if 'current_research_id' not in st.session_state:
+        st.session_state.current_research_id = generate_research_id()
+
+    # API 키 입력 및 확인 로직
+    if 'api_key' not in st.session_state or not st.session_state.api_key:
+        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
+        
+        if st.button("API 키 확인"):
+            client = initialize_anthropic_client(api_key)
+            if client:
+                st.success("유효한 API 키입니다. 연구계획서 작성하기 버튼을 눌러 시작하세요.")
+                st.session_state.temp_api_key = api_key
+            else:
+                st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
         
         if st.button("연구계획서 작성하기✏️"):
             if 'temp_api_key' in st.session_state:
@@ -1411,33 +1428,34 @@ def chat_interface():
                 st.rerun()
             else:
                 st.warning("먼저 API 키를 입력하고 확인해주세요.")
+    
+    # API 키가 설정된 후의 메인 인터페이스
     else:
+        st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
+
+        if st.sidebar.button("🔄 초기화면으로"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
+
+        if st.sidebar.button("새 연구계획서 시작"):
+            reset_session_state()
+            st.success("새로운 연구계획서를 시작합니다.")
+            st.rerun()
+
         if 'current_section' not in st.session_state:
             st.session_state.current_section = 'home'
 
-        st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
-
-    if st.sidebar.button("🔄 초기화면으로"):
-        # 모든 세션 상태 초기화
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
-
-    if st.sidebar.button("새 연구계획서 시작"):
-        reset_session_state()
-        st.success("새로운 연구계획서를 시작합니다.")
-        st.rerun()
-
-    # 'current_section'이 없거나 'home'일 때 홈 화면 표시
-    if 'current_section' not in st.session_state or st.session_state.current_section == 'home':
-        st.markdown("## 연구계획서 작성을 시작합니다")
-        st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요. 각 파트만 선택해서 작성도 가능하지만, 최상의 결과를 위해서는 연구 목적 세션부터 시작하여 어플이 제공하는 순서대로 작성하는 것을 가장 추천합니다.")
+        # 홈 화면 표시
+        if st.session_state.current_section == 'home':
+            st.markdown("## 연구계획서 작성을 시작합니다")
+            st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요. 각 파트만 선택해서 작성도 가능하지만, 최상의 결과를 위해서는 연구 목적 세션부터 시작하여 어플이 제공하는 순서대로 작성하는 것을 가장 추천합니다.")
+            
+            for section in RESEARCH_SECTIONS:
+                if st.button(f"{section} 작성하기"):
+                    st.session_state.current_section = section
+                    st.rerun()
         
-        for section in RESEARCH_SECTIONS:
-            if st.button(f"{section} 작성하기"):
-                st.session_state.current_section = section
-                st.rerun()
-
         else:
             # 현재 섹션에 따른 작성 인터페이스 표시
             if st.session_state.current_section == "1. 연구 과제명":
