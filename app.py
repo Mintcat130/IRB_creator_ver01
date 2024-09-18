@@ -1429,7 +1429,7 @@ def chat_interface():
         # 홈 화면 표시
         if st.session_state.current_section == 'home':
             st.markdown("## 연구계획서 작성을 시작합니다")
-            st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요.")
+            st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요. 각 파트만 선택해서 작성도 가능하지만, 최상의 결과를 위해서는 연구 목적 세션부터 시작하여 어플이 제공하는 순서대로 작성하는 것을 가장 추천합니다.")
             
             for section in RESEARCH_SECTIONS:
                 if st.button(f"{section} 작성하기"):
