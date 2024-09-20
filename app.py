@@ -1408,10 +1408,12 @@ def view_full_content():
 def show_full_content():
     full_content = view_full_content()
     st.markdown("## 전체 연구계획서 내용")
-    st.text_area("전체 내용", full_content, height=500)
-    if st.button("내용 복사"):
-        pyperclip.copy(full_content)
-        st.success("전체 내용이 클립보드에 복사되었습니다.")
+    
+    # st.code()를 사용하여 전체 내용 표시 및 복사 버튼 제공
+    st.code(full_content, language="plaintext")
+    
+    st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
+    
     if st.button("닫기"):
         st.session_state.show_full_content = False
         st.rerun()
