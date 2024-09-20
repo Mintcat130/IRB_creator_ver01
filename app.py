@@ -8,7 +8,6 @@ from Bio import Entrez
 import json
 import re
 import uuid
-import pyperclip
 import streamlit.components.v1 as components
 
 #연구계획서 ID 생성
@@ -427,36 +426,6 @@ def format_references(pubmed_results, scholar_results, pdf_files):
     
     return references
 
-# 전체 내용 확인 및 복사 함수 수정
-def view_and_copy_full_content():
-    st.markdown("## 전체 연구계획서 내용")
-    
-    full_content = ""
-    for section in RESEARCH_SECTIONS:
-        content = load_section_content(section)
-        if content:
-            full_content += f"## {section}\n\n{content}\n\n"
-            st.markdown(f"### {section}")
-            st.markdown(content)
-            if st.button(f"{section} 복사", key=f"copy_{section}"):
-                pyperclip.copy(content)
-                st.success(f"{section} 내용이 클립보드에 복사되었습니다.")
-    
-    # 참고문헌 추가
-    if 'pubmed_results' in st.session_state or 'scholar_results' in st.session_state or 'pdf_files' in st.session_state:
-        st.markdown("### 참고문헌")
-        references = format_references(
-            st.session_state.get('pubmed_results', []),
-            st.session_state.get('scholar_results', []),
-            st.session_state.get('pdf_files', [])
-        )
-        for ref in references:
-            st.markdown(f"- {ref}")
-        full_content += "## 참고문헌\n\n" + "\n".join(references)
-    
-    if st.button("전체 내용 복사"):
-        pyperclip.copy(full_content)
-        st.success("전체 연구계획서 내용이 클립보드에 복사되었습니다.")
 
 def write_research_purpose():
     st.markdown("## 2. 연구 목적")
@@ -1413,6 +1382,9 @@ def show_full_content():
     st.code(full_content, language="plaintext")
     
     st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
+
+    # 참고문헌 표시
+    display_references()
     
     if st.button("닫기"):
         st.session_state.show_full_content = False
@@ -1474,36 +1446,6 @@ def format_title_option(option):
         return f"<p><strong>영문:</strong> {lines[0]}<br><strong>한글:</strong> {lines[1]}</p>"
     return f"<p>{option}</p>"
             
-# 전체 내용 확인 및 복사 함수
-def view_and_copy_full_content():
-    st.markdown("## 전체 연구계획서 내용")
-    
-    full_content = view_full_content()
-    st.text_area("전체 내용", full_content, height=500)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("전체 내용 복사"):
-            pyperclip.copy(full_content)
-            st.success("전체 연구계획서 내용이 클립보드에 복사되었습니다.")
-    
-    with col2:
-        if st.button("닫기"):
-            st.session_state.show_full_content = False
-            st.rerun()
-
-    st.markdown("### 섹션별 복사")
-    for section in RESEARCH_SECTIONS:
-        content = load_section_content(section)
-        if content:
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.markdown(f"**{section}**")
-            with col2:
-                if st.button(f"복사", key=f"copy_{section}"):
-                    pyperclip.copy(content)
-                    st.success(f"{section} 내용이 클립보드에 복사되었습니다.")
 
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
@@ -1612,10 +1554,6 @@ def chat_interface():
         if st.session_state.get('show_full_content', False):
             show_full_content()
 
-
-        # 전체 내용 확인 및 복사 버튼
-        if st.sidebar.button("전체 내용 확인 및 복사"):
-            view_and_copy_full_content()
             
             # 참고문헌 표시
             references = st.session_state.get('references', [])
