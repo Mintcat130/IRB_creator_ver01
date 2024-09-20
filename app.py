@@ -1382,9 +1382,6 @@ def show_full_content():
     st.code(full_content, language="plaintext")
     
     st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
-
-    # 참고문헌 표시
-    display_references()
     
     if st.button("닫기"):
         st.session_state.show_full_content = False
