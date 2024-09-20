@@ -1100,6 +1100,12 @@ def write_data_analysis():
 #7. 연구방법 정리 함수
 def write_research_method():
     st.markdown("## 7. 연구방법")
+        
+    # 안내 글 추가
+    st.markdown("""
+    `연구 방법`은 앞서 작성한 모든 섹션의 내용을 약 500자 가량의 글로 요약 정리해서 연구의 방법을 한눈에 볼 수 있도록 제시합니다. 
+    AI의 내용 정리를 받기 원하면 아래 버튼을 누르고, 직접 작성하시려면 버튼아래 편집창에 직접 작성도 가능합니다.
+    """)
     
     # 히스토리 초기화
     if "7. 연구방법_history" not in st.session_state:
