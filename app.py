@@ -1377,7 +1377,7 @@ def write_research_title():
 
     if st.button("📄 전체 내용 보기"):
         st.session_state.show_full_content = True
-        st.experimental_rerun()
+        st.rerun()
 
 # 새로운 함수 추가
 def view_full_content():
@@ -1414,7 +1414,7 @@ def show_full_content():
         st.success("전체 내용이 클립보드에 복사되었습니다.")
     if st.button("닫기"):
         st.session_state.show_full_content = False
-        st.experimental_rerun()
+        st.rerun()
 
 def display_references():
     st.markdown("### 참고문헌")
@@ -1489,7 +1489,7 @@ def view_and_copy_full_content():
     with col2:
         if st.button("닫기"):
             st.session_state.show_full_content = False
-            st.experimental_rerun()
+            st.rerun()
 
     st.markdown("### 섹션별 복사")
     for section in RESEARCH_SECTIONS:
@@ -1604,7 +1604,7 @@ def chat_interface():
       # 사이드바에 전체 내용 미리보기 버튼 추가
         if st.sidebar.button("전체 내용 미리보기"):
             st.session_state.show_full_content = True
-            st.experimental_rerun()
+            st.rerun()
 
             # 전체 내용 표시
         if st.session_state.get('show_full_content', False):
