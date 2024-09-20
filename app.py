@@ -9,6 +9,7 @@ import json
 import re
 import uuid
 import pyperclip
+import streamlit.components.v1 as components
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -1372,26 +1373,62 @@ def write_research_title():
             # write_research_title 함수 끝 부분에 추가
 
     if st.button("📄 전체 내용 보기"):
-        view_full_content()
+        full_content = view_full_content()
+        show_popup(full_content)
 
 # 새로운 함수 추가
 def view_full_content():
-    st.markdown("## 전체 연구계획서 내용")
+    content = ""
     
-    # 연구 과제명을 먼저 표시
+    # 1. 연구 과제명을 먼저 표시
     title_content = load_section_content("1. 연구 과제명")
     if title_content:
-        st.markdown("### 1. 연구 과제명")
-        st.markdown(title_content)
+        content += f"### 1. 연구 과제명\n{title_content}\n\n"
     
     for section in RESEARCH_SECTIONS[1:]:  # "1. 연구 과제명"을 제외한 나머지 섹션
-        content = load_section_content(section)
-        if content:
-            st.markdown(f"### {section}")
-            st.markdown(content)
+        section_content = load_section_content(section)
+        if section_content:
+            content += f"### {section}\n{section_content}\n\n"
     
-    # 참고문헌 표시
-    display_references()
+    # 참고문헌 추가
+    content += "### 참고문헌\n"
+    references = format_references(
+        st.session_state.get('pubmed_results', []),
+        st.session_state.get('scholar_results', []),
+        st.session_state.get('pdf_files', [])
+    )
+    for i, ref in enumerate(references, 1):
+        content += f"{i}. {ref}\n"
+    
+    return content
+
+def show_popup(content):
+    popup_html = f"""
+    <div id="popup" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background-color:white; z-index:100; padding:20px; overflow-y:scroll; border:1px solid black;">
+        <h2>전체 연구계획서 내용</h2>
+        <div id="content" style="white-space: pre-wrap;">{content}</div>
+        <button onclick="copyContent()">내용 복사</button>
+        <button onclick="closePopup()">닫기</button>
+    </div>
+    <script>
+        function showPopup() {{
+            document.getElementById('popup').style.display = 'block';
+        }}
+        function closePopup() {{
+            document.getElementById('popup').style.display = 'none';
+        }}
+        function copyContent() {{
+            var content = document.getElementById('content').innerText;
+            navigator.clipboard.writeText(content).then(function() {{
+                alert('내용이 클립보드에 복사되었습니다.');
+            }}, function(err) {{
+                console.error('복사 실패:', err);
+            }});
+        }}
+        showPopup();
+    </script>
+    """
+    components.html(popup_html, height=0)
 
 
 def display_references():
@@ -1454,20 +1491,22 @@ def format_title_option(option):
 def view_and_copy_full_content():
     st.markdown("## 전체 연구계획서 내용")
     
-    full_content = ""
-    for section in RESEARCH_SECTIONS:
-        content = load_section_content(section)
-        if content:
-            full_content += f"## {section}\n\n{content}\n\n"
-            st.markdown(f"### {section}")
-            st.markdown(content)
-            if st.button(f"{section} 복사", key=f"copy_{section}"):
-                pyperclip.copy(content)
-                st.success(f"{section} 내용이 클립보드에 복사되었습니다.")
+    full_content = view_full_content()
+    st.markdown(full_content)
+    
+    if st.button("팝업으로 보기"):
+        show_popup(full_content)
     
     if st.button("전체 내용 복사"):
         pyperclip.copy(full_content)
         st.success("전체 연구계획서 내용이 클립보드에 복사되었습니다.")
+
+    for section in RESEARCH_SECTIONS:
+        content = load_section_content(section)
+        if content:
+            if st.button(f"{section} 복사", key=f"copy_{section}"):
+                pyperclip.copy(content)
+                st.success(f"{section} 내용이 클립보드에 복사되었습니다.")
 
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
@@ -1567,11 +1606,10 @@ def chat_interface():
                             st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
                             st.rerun()
 
-        # 전체 내용 미리보기
+      # 사이드바에 전체 내용 미리보기 버튼 추가
         if st.sidebar.button("전체 내용 미리보기"):
-            for section in RESEARCH_SECTIONS:
-                st.markdown(f"### {section}")
-                st.markdown(load_section_content(section))
+            full_content = view_full_content()
+            show_popup(full_content)
 
         # 전체 내용 확인 및 복사 버튼
         if st.sidebar.button("전체 내용 확인 및 복사"):
