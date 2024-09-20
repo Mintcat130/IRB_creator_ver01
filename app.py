@@ -1425,7 +1425,7 @@ def show_popup(content):
                 console.error('복사 실패:', err);
             }});
         }}
-        showPopup();
+        window.addEventListener('load', showPopup);
     </script>
     """
     components.html(popup_html, height=0)
