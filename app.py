@@ -24,6 +24,9 @@ def reset_session_state():
     st.session_state.current_research_id = generate_research_id()
     st.session_state.section_contents = {}
 
+if 'show_full_content' not in st.session_state:
+    st.session_state.show_full_content = False
+
 # 섹션 내용 저장
 def save_section_content(section, content):
     if 'research_data' not in st.session_state:
@@ -1373,8 +1376,8 @@ def write_research_title():
             # write_research_title 함수 끝 부분에 추가
 
     if st.button("📄 전체 내용 보기"):
-        full_content = view_full_content()
-        show_popup(full_content)
+        st.session_state.show_full_content = True
+        st.experimental_rerun()
 
 # 새로운 함수 추가
 def view_full_content():
@@ -1402,34 +1405,16 @@ def view_full_content():
     
     return content
 
-def show_popup(content):
-    popup_html = f"""
-    <div id="popup" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background-color:white; z-index:100; padding:20px; overflow-y:scroll; border:1px solid black;">
-        <h2>전체 연구계획서 내용</h2>
-        <div id="content" style="white-space: pre-wrap;">{content}</div>
-        <button onclick="copyContent()">내용 복사</button>
-        <button onclick="closePopup()">닫기</button>
-    </div>
-    <script>
-        function showPopup() {{
-            document.getElementById('popup').style.display = 'block';
-        }}
-        function closePopup() {{
-            document.getElementById('popup').style.display = 'none';
-        }}
-        function copyContent() {{
-            var content = document.getElementById('content').innerText;
-            navigator.clipboard.writeText(content).then(function() {{
-                alert('내용이 클립보드에 복사되었습니다.');
-            }}, function(err) {{
-                console.error('복사 실패:', err);
-            }});
-        }}
-        window.addEventListener('load', showPopup);
-    </script>
-    """
-    components.html(popup_html, height=0)
-
+def show_full_content():
+    full_content = view_full_content()
+    st.markdown("## 전체 연구계획서 내용")
+    st.text_area("전체 내용", full_content, height=500)
+    if st.button("내용 복사"):
+        pyperclip.copy(full_content)
+        st.success("전체 내용이 클립보드에 복사되었습니다.")
+    if st.button("닫기"):
+        st.session_state.show_full_content = False
+        st.experimental_rerun()
 
 def display_references():
     st.markdown("### 참고문헌")
@@ -1492,21 +1477,31 @@ def view_and_copy_full_content():
     st.markdown("## 전체 연구계획서 내용")
     
     full_content = view_full_content()
-    st.markdown(full_content)
+    st.text_area("전체 내용", full_content, height=500)
     
-    if st.button("팝업으로 보기"):
-        show_popup(full_content)
+    col1, col2 = st.columns(2)
     
-    if st.button("전체 내용 복사"):
-        pyperclip.copy(full_content)
-        st.success("전체 연구계획서 내용이 클립보드에 복사되었습니다.")
+    with col1:
+        if st.button("전체 내용 복사"):
+            pyperclip.copy(full_content)
+            st.success("전체 연구계획서 내용이 클립보드에 복사되었습니다.")
+    
+    with col2:
+        if st.button("닫기"):
+            st.session_state.show_full_content = False
+            st.experimental_rerun()
 
+    st.markdown("### 섹션별 복사")
     for section in RESEARCH_SECTIONS:
         content = load_section_content(section)
         if content:
-            if st.button(f"{section} 복사", key=f"copy_{section}"):
-                pyperclip.copy(content)
-                st.success(f"{section} 내용이 클립보드에 복사되었습니다.")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**{section}**")
+            with col2:
+                if st.button(f"복사", key=f"copy_{section}"):
+                    pyperclip.copy(content)
+                    st.success(f"{section} 내용이 클립보드에 복사되었습니다.")
 
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
@@ -1608,8 +1603,13 @@ def chat_interface():
 
       # 사이드바에 전체 내용 미리보기 버튼 추가
         if st.sidebar.button("전체 내용 미리보기"):
-            full_content = view_full_content()
-            show_popup(full_content)
+            st.session_state.show_full_content = True
+            st.experimental_rerun()
+
+            # 전체 내용 표시
+        if st.session_state.get('show_full_content', False):
+            show_full_content()
+
 
         # 전체 내용 확인 및 복사 버튼
         if st.sidebar.button("전체 내용 확인 및 복사"):
