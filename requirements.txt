@@ -3,4 +3,3 @@ anthropic
 PyPDF2
 scholarly
 requests
-pdfminer.six
