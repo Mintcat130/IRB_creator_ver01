@@ -546,7 +546,7 @@ def write_research_background():
             
     # 검색 결과 표시
     if 'scholar_results' in st.session_state:
-        st.subheader("Google Scholar 검색 결과")
+        st.subheader("Google Scholar 검색 결과 (최대 15개)")
         for i, result in enumerate(st.session_state.scholar_results):
             col1, col2 = st.columns([3, 1])
             with col1:
