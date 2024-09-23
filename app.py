@@ -90,9 +90,9 @@ PREDEFINED_PROMPTS = {
     - 이 연구가 기반하는 이론적 틀을 제시한다.
     
     두 번째 문단: 선행 연구 및 결과
-    - 검색된 논문({papers})과 PDF 내용(pdf_content)을 중심으로 관련된 주요 선행 연구들을 요약한다.
+    - 제공된 PDF 파일의 내용을 바탕으로 관련된 주요 선행 연구들을 요약한다.
     - 선행 연구의 주요 발견과 한계점을 언급한다.
-    - 반드시 검색된 논문들을 인용하여 설명한다.
+    - 반드시 제공된 PDF 파일의 내용을 참고하여 설명한다. 인용 형식: [저자, 연도]
     
     세 번째 문단: 연구 배경과 연구의 정당성에 대한 설명
     - 현재 연구가 필요한 이유를 설명한다.
@@ -102,8 +102,8 @@ PREDEFINED_PROMPTS = {
     - 국내외 관련 연구의 현재 상태를 설명한다.
     - "국내"는 한국(South Korea)을 의미한다.
     - "국외"는 한국(South Korea)이 외 모든 나라를 의미한다.
-    - 검색된 논문과 pdf 내용 중 저자의 소속이 South Korea인 논문이 있다면, 이를 바탕으로 국내 연구 현황을 설명한다.
-    - 만약 South Korea 소속 저자의 논문이 없다면, 국내에서는 아직 이 주제에 대한 연구가 충분히 이루어지지 않았다는 점을 언급한다.
+    - 제공된 PDF 파일 내용 중 한국 소속 저자의 연구가 있다면, 이를 바탕으로 국내 연구 현황을 설명한다.
+    - 만약 한국 소속 저자의 연구가 없다면, 국내에서는 아직 이 주제에 대한 연구가 충분히 이루어지지 않았다는 점을 언급한다.
     - 본 연구가 기존 연구와 어떻게 다른지 또는 어떻게 기여할 수 있는지 설명한다.
     
     사용자 입력:
@@ -112,21 +112,20 @@ PREDEFINED_PROMPTS = {
     연구 목적:
     {research_purpose}
     
-    검색된 논문:
-    {papers}
-    
     PDF 내용:
     {pdf_content}
     
-    위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 특히 모든 PDF 파일의 내용을 적극적으로 활용하여 연구 배경 작성에 참고해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
+    위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 특히 제공된 PDF 파일의 내용을 적극적으로 활용하여 연구 배경 작성에 참고해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
     
     주의사항:
     1. 모든 문장은 반드시 '~다'로 끝나야 합니다. 존댓말 사용은 절대 금지입니다.
     2. 각 부분을 별도의 문단으로 작성하고, 제시된 순서를 반드시 지켜주세요.
     3. 문단에 번호를 매기지 말고, 자연스러운 줄글 형식으로 작성하세요.
     4. 각 문단의 내용이 명확히 구분되도록 작성해주세요.
-    5. 두 번째 문단에서는 반드시 검색된 논문들을 인용하여 설명해주세요.
+    5. 두 번째 문단에서는 반드시 제공된 PDF 파일의 내용을 참고하여 설명해주세요.
     6. 네 번째 문단에서는 국내 연구 현황을 정확히 파악하여 설명해주세요.
+    7. 선행 연구 내용은 제공된 PDF 내용만을 사용하여 작성하세요. 추가적인 정보를 임의로 만들어내지 마세요.
+    8. 각 PDF 파일의 내용을 적극적으로 활용하여 선행 연구를 요약하고 설명하세요.
     
     위 지침을 엄격히 따라 연구 배경을 작성해주세요.
     """,
@@ -575,23 +574,22 @@ def write_research_background():
 
     # 연구 배경 생성 버튼
     if st.button("해당 내용으로 연구배경 작성하기"):
-        if 'pubmed_results' in st.session_state or 'scholar_results' in st.session_state or 'pdf_texts' in st.session_state:
+        if 'pdf_texts' in st.session_state and st.session_state['pdf_texts']:
             research_purpose = load_section_content("2. 연구 목적")
             
-            papers = []
-            if 'pubmed_results' in st.session_state:
-                papers.extend([f"{r['title']} ({r['year']})" for r in st.session_state.pubmed_results])
-            if 'scholar_results' in st.session_state:
-                papers.extend([f"{r['title']} ({r['year']})" for r in st.session_state.scholar_results])
-            papers_text = "\n".join(papers)
+            pdf_contents = []
+            for i, pdf_text in enumerate(st.session_state['pdf_texts']):
+                pdf_contents.append({
+                    "file_name": st.session_state['pdf_files'][i].name,
+                    "content": pdf_text  # PDF 전체 내용 사용
+                })
             
-            pdf_content = "\n".join(st.session_state.get('pdf_texts', []))
+            pdf_content_json = json.dumps(pdf_contents)
             
             prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
                 user_input=keywords,
                 research_purpose=research_purpose,
-                papers=papers_text,
-                pdf_content=pdf_content
+                pdf_content=pdf_content_json
             )
             
             ai_response = generate_ai_response(prompt)
@@ -605,7 +603,7 @@ def write_research_background():
             st.session_state.show_modification_request_3 = False
             st.rerun()
         else:
-            st.warning("논문을 검색하거나 PDF를 업로드한 후 다시 시도해주세요.")
+            st.warning("PDF를 업로드한 후 다시 시도해주세요.")
 
     # AI 응답 표시
     content = load_section_content("3. 연구 배경")
