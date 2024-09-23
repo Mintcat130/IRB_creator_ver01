@@ -1433,43 +1433,17 @@ import re
 
 def extract_pdf_metadata(pdf_file):
     try:
-        # PyPDF2를 사용하여 메타데이터 추출 시도
         reader = PyPDF2.PdfReader(pdf_file)
         info = reader.metadata
-
-        title = info.get('/Title')
-        authors = info.get('/Author')
+        
+        title = info.get('/Title', 'Unknown Title')
+        authors = info.get('/Author', 'Unknown Author')
         year = info.get('/CreationDate', '')
-
-        # 메타데이터에서 년도 추출 시도
+        
+        # 년도 추출 (YYYY 형식)
         year_match = re.search(r'D:(\d{4})', year)
-        year = year_match.group(1) if year_match else None
-
-        # 메타데이터가 불완전한 경우 PDF 내용에서 추출
-        if not title or not authors or not year:
-            # 첫 페이지만 처리
-            page_layout = next(extract_pages(pdf_file))
-            
-            # 텍스트 요소를 font size에 따라 정렬
-            text_elements = sorted(
-                [element for element in page_layout if isinstance(element, LTTextContainer)],
-                key=lambda e: -sum(char.size for char in e if isinstance(char, LTChar)) / len(e)
-            )
-            
-            # 제목 추출 (가장 큰 font size를 가진 텍스트)
-            if not title:
-                title = text_elements[0].get_text().strip() if text_elements else "Unknown Title"
-            
-            # 저자 추출 (제목 다음으로 큰 font size를 가진 텍스트)
-            if not authors:
-                authors = text_elements[1].get_text().strip() if len(text_elements) > 1 else "Unknown Author"
-            
-            # 년도 추출
-            if not year:
-                year_pattern = r'\b(19|20)\d{2}\b'
-                year_matches = re.findall(year_pattern, page_layout.get_text())
-                year = year_matches[0] if year_matches else 'Unknown Year'
-
+        year = year_match.group(1) if year_match else 'Unknown Year'
+        
         return f"{authors}. {title}. {year}."
     except Exception as e:
         print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
