@@ -9,6 +9,8 @@ import re
 import uuid
 import streamlit.components.v1 as components
 from collections import defaultdict
+from pdfminer.high_level import extract_pages
+from pdfminer.layout import LTTextContainer, LTChar
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -1424,43 +1426,61 @@ def display_references():
     for i, ref in enumerate(references, 1):
         st.markdown(f"{i}. {ref}")
 
+from pdfminer.high_level import extract_pages
+from pdfminer.layout import LTTextContainer, LTChar
+import PyPDF2
+import re
+
 def extract_pdf_metadata(pdf_file):
     try:
+        # PyPDF2를 사용하여 메타데이터 추출 시도
         reader = PyPDF2.PdfReader(pdf_file)
         info = reader.metadata
-        
+
         title = info.get('/Title')
         authors = info.get('/Author')
         year = info.get('/CreationDate', '')
-        
-        # 메타데이터가 없는 경우 텍스트에서 추출
-        if not title or not authors:
-            first_page_text = reader.pages[0].extract_text()
-            lines = first_page_text.split('\n')
-            
-            # 제목 추출 (가장 긴 줄을 제목으로 가정)
-            if not title:
-                title = max(lines[:10], key=len).strip()  # 첫 10줄 중 가장 긴 줄
-            
-            # 저자 추출
-            if not authors:
-                author_pattern = r'\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)*(?:,\s[A-Z][a-z]+)+\b'
-                potential_authors = re.findall(author_pattern, first_page_text)
-                authors = ', '.join(potential_authors) if potential_authors else "Unknown Author"
-        
-        # 년도 추출 (YYYY 형식)
+
+        # 메타데이터에서 년도 추출 시도
         year_match = re.search(r'D:(\d{4})', year)
-        if not year_match:
-            year_pattern = r'\b(19|20)\d{2}\b'
-            year_matches = re.findall(year_pattern, first_page_text)
-            year = year_matches[0] if year_matches else 'Unknown Year'
-        else:
-            year = year_match.group(1)
-        
+        year = year_match.group(1) if year_match else None
+
+        # 메타데이터가 불완전한 경우 PDF 내용에서 추출
+        if not title or not authors or not year:
+            # 첫 페이지만 처리
+            page_layout = next(extract_pages(pdf_file))
+            
+            # 텍스트 요소를 font size에 따라 정렬
+            text_elements = sorted(
+                [element for element in page_layout if isinstance(element, LTTextContainer)],
+                key=lambda e: -sum(char.size for char in e if isinstance(char, LTChar)) / len(e)
+            )
+            
+            # 제목 추출 (가장 큰 font size를 가진 텍스트)
+            if not title:
+                title = text_elements[0].get_text().strip() if text_elements else "Unknown Title"
+            
+            # 저자 추출 (제목 다음으로 큰 font size를 가진 텍스트)
+            if not authors:
+                authors = text_elements[1].get_text().strip() if len(text_elements) > 1 else "Unknown Author"
+            
+            # 년도 추출
+            if not year:
+                year_pattern = r'\b(19|20)\d{2}\b'
+                year_matches = re.findall(year_pattern, page_layout.get_text())
+                year = year_matches[0] if year_matches else 'Unknown Year'
+
         return f"{authors}. {title}. {year}."
     except Exception as e:
         print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
         return f"Error extracting metadata from {pdf_file.name}"
+
+def confirm_metadata(extracted_info):
+    st.write("추출된 메타데이터:")
+    title = st.text_input("제목", value=extracted_info['title'])
+    authors = st.text_input("저자", value=extracted_info['authors'])
+    year = st.text_input("년도", value=extracted_info['year'])
+    return f"{authors}. {title}. {year}."
 
 def format_references(pdf_files):
     references = []
