@@ -9,8 +9,6 @@ import re
 import uuid
 import streamlit.components.v1 as components
 from collections import defaultdict
-from pdfminer.high_level import extract_pages
-from pdfminer.layout import LTTextContainer, LTChar
 
 #연구계획서 ID 생성
 def generate_research_id():
