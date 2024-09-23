@@ -356,31 +356,6 @@ def extract_text_from_pdf(pdf_file):
         print(f"Error extracting text from {pdf_file.name}: {str(e)}")
         return ""
 
-def extract_title_and_authors(text):
-    # 첫 페이지의 처음 몇 줄만 분석
-    first_page = text.split('\n')[:20]
-    
-    # 제목 추출 (일반적으로 가장 긴 줄이 제목)
-    title = max(first_page, key=len).strip()
-    
-    # 저자 추출 (제목 다음에 나오는 짧은 줄들)
-    authors = []
-    for line in first_page[first_page.index(title)+1:]:
-        if len(line.strip()) > 3 and len(line.strip()) < 50:
-            authors.append(line.strip())
-        if len(authors) >= 2:  # 저자를 최대 2명까지만 추출
-            break
-    
-    return title, ", ".join(authors)
-
-def extract_year(text):
-    # 년도 추출 (4자리 숫자 중 가장 최근 연도)
-    years = re.findall(r'\b(19|20)\d{2}\b', text)
-    if years:
-        return max(years)
-    return "Unknown Year"
-
-
 # Google Scholar 검색 함수 수정
 def search_google_scholar(query, max_results=15):
     search_query = scholarly.search_pubs(query)
@@ -1429,8 +1404,8 @@ def view_full_content():
 
     # 안내 텍스트 추가
     st.markdown("""
-    내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 참고 문헌을 다시 한번 확인하세요. 논문의 제목, 저자, 연도 정보가 자동으로 추출되었지만, 
-일부 정보가 부정확할 수 있습니다. 내용을 복사한 후 최종 작성 시 필요한 경우 직접 수정하세요.
+    내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 참고 문헌 정보는 AI를 통해 자동으로 추출되었습니다. 대부분의 경우 정확하지만, 
+일부 정보가 부정확할 수 있습니다. 내용을 복사한 후 최종 작성 시 필요한 경우 직접 확인하고 수정하세요.
     """)
     
     with st.expander("전체 내용 보기/숨기기", expanded=True):
@@ -1487,26 +1462,36 @@ def extract_pdf_metadata(pdf_file):
     try:
         text = extract_text_from_pdf(pdf_file)
         
-        # 메타데이터에서 정보 추출
-        reader = PyPDF2.PdfReader(pdf_file)
-        info = reader.metadata
+        # 텍스트의 처음 부분만 사용 (API 토큰 제한을 고려)
+        text_sample = text[:5000]
         
-        title_meta = info.get('/Title', '')
-        authors_meta = info.get('/Author', '')
-        year_meta = info.get('/CreationDate', '')
+        prompt = f"""
+        다음은 학술 논문의 일부입니다. 이 논문의 제목, 저자들(최대 3명까지), 출판 연도를 추출해주세요.
+        결과는 다음 형식으로 작성해주세요:
+        제목: [논문 제목]
+        저자: [저자1], [저자2], [저자3]
+        연도: [출판 연도]
+
+        논문 내용:
+        {text_sample}
+        """
         
-        # 년도 추출 (YYYY 형식)
-        year_match = re.search(r'D:(\d{4})', year_meta)
-        year_meta = year_match.group(1) if year_match else ''
+        response = st.session_state.anthropic_client.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}]
+        )
         
-        # 텍스트 내용에서 정보 추출
-        title_text, authors_text = extract_title_and_authors(text)
-        year_text = extract_year(text)
+        result = response.content[0].text
         
-        # 메타데이터와 텍스트 추출 정보 중 더 나은 것 선택
-        title = title_meta if title_meta else title_text
-        authors = authors_meta if authors_meta else authors_text
-        year = year_meta if year_meta else year_text
+        # 결과 파싱
+        title = re.search(r'제목: (.+)', result)
+        authors = re.search(r'저자: (.+)', result)
+        year = re.search(r'연도: (.+)', result)
+        
+        title = title.group(1) if title else "Unknown Title"
+        authors = authors.group(1) if authors else "Unknown Authors"
+        year = year.group(1) if year else "Unknown Year"
         
         return f"{authors}. {title}. {year}."
     except Exception as e:
