@@ -552,6 +552,11 @@ def write_research_background():
             st.session_state.pdf_texts.append(pdf_text)
         st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
 
+    # 새로운 텍스트 추가
+    st.markdown("""
+    검색한 논문을 내용을 쉽게 한글 요약해서 보시려면 "병리 논문 요약하기📝 ver.2 (HJY)" 을 사용해보세요! [링크](https://journalsummaryver2.streamlit.app/)
+    """)
+
     # 연구 배경 생성 버튼
     if st.button("해당 내용으로 연구배경 작성하기"):
         if 'pubmed_results' in st.session_state or 'scholar_results' in st.session_state or 'pdf_texts' in st.session_state:
