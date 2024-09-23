@@ -1603,7 +1603,7 @@ def chat_interface():
                             st.rerun()
 
       # 사이드바에 전체 내용 미리보기 버튼 추가
-        if st.sidebar.button("전체 내용 미리보기") or st.button("📄 전체 내용 보기"):
+        if st.sidebar.button("전체 내용 미리보기"):
             st.session_state.show_full_content = True
             st.rerun()
 
