@@ -4,7 +4,6 @@ import PyPDF2
 import io
 import requests
 from scholarly import scholarly
-from Bio import Entrez
 import json
 import re
 import uuid
@@ -351,33 +350,6 @@ def extract_text_from_pdf(file):
         text += page.extract_text()
     return text
 
-# PubMed 검색 함수 (수정)
-def search_pubmed(query, max_results=10):
-    try:
-        # 이메일 주소 설정을 제거하거나 더미 값을 사용
-        # Entrez.email = "example@example.com"  # 이 줄을 제거하거나 주석 처리
-
-        handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
-        record = Entrez.read(handle)
-        handle.close()
-        
-        ids = record["IdList"]
-        results = []
-        for id in ids:
-            handle = Entrez.efetch(db="pubmed", id=id, rettype="medline", retmode="text")
-            record = Entrez.read(Entrez.parse(handle))
-            if record:
-                article = record[0]
-                title = article.get("TI", "No title")
-                year = article.get("DP", "")[:4]
-                authors = ", ".join(article.get("AU", []))[:50] + "..." if len(article.get("AU", [])) > 2 else ", ".join(article.get("AU", []))
-                link = f"https://pubmed.ncbi.nlm.nih.gov/{id}/"
-                results.append({"title": title, "year": year, "authors": authors, "link": link})
-            handle.close()
-        return results
-    except Exception as e:
-        st.error(f"PubMed 검색 중 오류 발생: {str(e)}")
-        return []
 
 # Google Scholar 검색 함수 수정
 def search_google_scholar(query, max_results=10):
@@ -399,17 +371,8 @@ def search_google_scholar(query, max_results=10):
     return results
 
 # 참고문헌 정리 함수 추가
-def format_references(pubmed_results, scholar_results, pdf_files):
+def format_references(scholar_results, pdf_files):
     references = []
-    
-    # PubMed 결과 처리
-    for i, result in enumerate(pubmed_results, start=1):
-        authors = result['authors'].split(', ')
-        if len(authors) > 6:
-            authors = authors[:6] + ['et al.']
-        author_string = ', '.join(authors)
-        reference = f"{i}. {author_string}. {result['title']} PubMed PMID: {result['link'].split('/')[-1]}."
-        references.append(reference)
     
     # Google Scholar 결과 처리
     for i, result in enumerate(scholar_results, start=len(references)+1):
@@ -559,27 +522,13 @@ def write_research_background():
             search_query = " ".join(keywords_list)
             
             with st.spinner("논문을 검색 중입니다..."):
-                pubmed_results = search_pubmed(search_query)
                 scholar_results = search_google_scholar(search_query)
-            
-            st.session_state.pubmed_results = pubmed_results
+                
             st.session_state.scholar_results = scholar_results
             st.success("검색이 완료되었습니다.")
             st.rerun()
             
     # 검색 결과 표시
-    if 'pubmed_results' in st.session_state:
-        st.subheader("PubMed 검색 결과")
-        for i, result in enumerate(st.session_state.pubmed_results):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
-                st.caption(f"저자: {result['authors']}")
-            with col2:
-                if st.button("삭제", key=f"del_pubmed_{i}"):
-                    del st.session_state.pubmed_results[i]
-                    st.rerun()
-    
     if 'scholar_results' in st.session_state:
         st.subheader("Google Scholar 검색 결과")
         for i, result in enumerate(st.session_state.scholar_results):
@@ -1366,7 +1315,6 @@ def view_full_content():
     # 참고문헌 추가
     content += "### 참고문헌\n"
     references = format_references(
-        st.session_state.get('pubmed_results', []),
         st.session_state.get('scholar_results', []),
         st.session_state.get('pdf_files', [])
     )
@@ -1391,7 +1339,6 @@ def show_full_content():
 def display_references():
     st.markdown("### 참고문헌")
     references = format_references(
-        st.session_state.get('pubmed_results', []),
         st.session_state.get('scholar_results', []),
         st.session_state.get('pdf_files', [])
     )
