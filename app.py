@@ -337,7 +337,7 @@ def generate_ai_response(prompt):
 
 # PDF 파일 업로드 함수
 def upload_pdf():
-    uploaded_file = st.file_uploader("PDF 파일을 업로드하세요", type="pdf")
+    uploaded_file = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요. **주의:** 검색 결과의 논문 내용은 자동으로 반영되지 않습니다. 검색된 논문들을 사용하시려면 각 웹페이지에서 PDF 파일을 다운 받은 후 여기에 업로드 하세요.", type="pdf")
     if uploaded_file is not None:
         return extract_text_from_pdf(uploaded_file)
     return None
@@ -555,7 +555,13 @@ def write_research_background():
                 if st.button("삭제", key=f"del_scholar_{i}"):
                     del st.session_state.scholar_results[i]
                     st.rerun()
-            
+
+
+    # 새로운 텍스트 추가
+    st.markdown("""
+    검색한 논문을 내용을 쉽게 한글 요약해서 보시려면 "병리 논문 요약하기📝 ver.2 (HJY)" 을 사용해보세요! [링크](https://journalsummaryver2.streamlit.app/)
+    """)
+    
     # PDF 파일 업로드 
     uploaded_files = st.file_uploader("PDF 파일을 업로드하세요 (여러 개 선택 가능)", type="pdf", accept_multiple_files=True)
     
@@ -567,10 +573,6 @@ def write_research_background():
             st.session_state.pdf_texts.append(pdf_text)
         st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
 
-    # 새로운 텍스트 추가
-    st.markdown("""
-    검색한 논문을 내용을 쉽게 한글 요약해서 보시려면 "병리 논문 요약하기📝 ver.2 (HJY)" 을 사용해보세요! [링크](https://journalsummaryver2.streamlit.app/)
-    """)
 
     # 연구 배경 생성 버튼
     if st.button("해당 내용으로 연구배경 작성하기"):
