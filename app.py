@@ -1240,6 +1240,45 @@ def write_research_title():
     if "1. 연구 과제명_history" not in st.session_state:
         st.session_state["1. 연구 과제명_history"] = []
 
+        # 안내 글 추가
+    st.markdown("""
+    연구 과제명을 직접 입력하거나, AI에게 추천받을 수 있습니다. 
+    AI 추천을 받으려면 '연구 과제명 추천받기' 버튼을 클릭하세요.
+    """)
+
+    content = load_section_content("1. 연구 과제명")
+
+    # 편집 기능 (항상 표시)
+    edited_content = st.text_area(
+        "연구 과제명을 직접 입력하거나 편집하세요:",
+        content if content else "",
+        height=150,
+        key="edit_content_1"
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("편집 내용 저장", key="save_edit_1"):
+            if edited_content:
+                # 현재 내용을 히스토리에 추가
+                if content:
+                    st.session_state["1. 연구 과제명_history"].append(content)
+                save_section_content("1. 연구 과제명", edited_content)
+                st.success("편집된 내용이 저장되었습니다.")
+                st.rerun()
+            else:
+                st.warning("저장할 내용을 입력해주세요.")
+
+    with col2:
+        if st.button("이전 버전으로 되돌리기", key="undo_edit_1"):
+            if st.session_state["1. 연구 과제명_history"]:
+                previous_content = st.session_state["1. 연구 과제명_history"].pop()
+                save_section_content("1. 연구 과제명", previous_content)
+                st.success("이전 버전으로 되돌렸습니다.")
+                st.rerun()
+            else:
+                st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+
     if st.button("연구 과제명 추천받기"):
         research_purpose = load_section_content("2. 연구 목적")
         research_background = load_section_content("3. 연구 배경")
@@ -1349,32 +1388,6 @@ def write_research_title():
                     st.rerun()
                 else:
                     st.warning("수정 요청 내용을 입력해주세요.")
-
-    # 편집 기능 (선택적으로 표시):
-        edited_content = st.text_area(
-            "연구 과제명을 직접 편집하세요:",
-            content,
-            height=300,
-            key="edit_content_1"
-        )
-
-        if st.button("편집 내용 저장", key="save_edit_1"):
-            # 현재 내용을 히스토리에 추가
-            st.session_state["1. 연구 과제명_history"].append(content)
-            save_section_content("1. 연구 과제명", edited_content)
-            st.success("편집된 내용이 저장되었습니다.")
-            st.rerun()
-
-    if st.button("이전 버전으로 되돌리기", key="undo_edit_1"):
-        if st.session_state["1. 연구 과제명_history"]:
-            # 히스토리에서 마지막 항목을 가져와 현재 내용으로 설정
-            previous_content = st.session_state["1. 연구 과제명_history"].pop()
-            save_section_content("1. 연구 과제명", previous_content)
-            st.success("이전 버전으로 되돌렸습니다.")
-            st.rerun()
-        else:
-            st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
-            # write_research_title 함수 끝 부분에 추가
 
     if st.button("📄 전체 내용 보기"):
         st.session_state.show_full_content = True
