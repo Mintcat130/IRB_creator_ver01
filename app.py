@@ -620,7 +620,7 @@ def write_research_background():
     """)
     
     # PDF 파일 업로드 
-    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요. /n **주의:** 검색 결과의 논문 내용은 자동으로 반영되지 않습니다. 검색된 논문들을 사용하시려면 각 웹페이지에서 PDF 파일을 다운 받은 후 여기에 업로드 하세요.", type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요. **주의:** 검색 결과의 논문 내용은 자동으로 반영되지 않습니다. 검색된 논문들을 사용하시려면 각 웹페이지에서 PDF 파일을 다운 받은 후 여기에 업로드 하세요.", type="pdf", accept_multiple_files=True)
     
     if uploaded_files:
         st.session_state.pdf_texts = []
