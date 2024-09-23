@@ -1389,9 +1389,6 @@ def write_research_title():
                 else:
                     st.warning("수정 요청 내용을 입력해주세요.")
 
-    if st.button("📄 전체 내용 보기"):
-        view_full_content()
-
 # 새로운 함수 추가
 def view_full_content():
     st.markdown("## 전체 연구계획서 내용")
@@ -1607,7 +1604,7 @@ def chat_interface():
                             st.rerun()
 
       # 사이드바에 전체 내용 미리보기 버튼 추가
-        if st.sidebar.button("전체 내용 미리보기") or st.button("📄 전체 내용 보기"):
+        if st.sidebar.button("전체 내용 미리보기"):
             st.session_state.show_full_content = True
             st.rerun()
 
