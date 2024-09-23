@@ -362,6 +362,10 @@ def search_google_scholar(query, max_results=15):
         if len(results['all_keywords']) + len(results['partial_keywords']) >= max_results:
             break
         try:
+            # 책 제외 로직 추가
+            if result['bib'].get('pub_type', '').lower() == 'book':
+                continue
+
             title = result['bib'].get('title', 'No title')
             year = result['bib'].get('pub_year', 'No year')
             authors = result['bib'].get('author', 'No author')
