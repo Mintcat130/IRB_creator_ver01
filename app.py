@@ -1391,7 +1391,7 @@ def view_full_content():
     # 2~7번 섹션 표시
     for section in RESEARCH_SECTIONS[1:]:  # "1. 연구 과제명"을 제외한 나머지 섹션
         section_content = load_section_content(section)
-        if section_content:
+        if section_content and section != "1. 연구 과제명":  # 1번 섹션 중복 방지
             content += f"### {section}\n{section_content}\n\n"
     
     # 참고문헌 추가
@@ -1429,9 +1429,23 @@ def extract_pdf_metadata(pdf_file):
         reader = PyPDF2.PdfReader(pdf_file)
         info = reader.metadata
         
-        title = info.get('/Title', 'Unknown Title')
-        authors = info.get('/Author', 'Unknown Author')
+        title = info.get('/Title')
+        authors = info.get('/Author')
         year = info.get('/CreationDate', '')
+        
+        # 메타데이터가 없는 경우 텍스트에서 추출
+        if not title or not authors:
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text()
+            
+            # 제목 추출 (첫 번째 줄을 제목으로 가정)
+            if not title:
+                title = text.strip().split('\n')[0]
+            
+            # 저자 추출 (두 번째 줄을 저자로 가정)
+            if not authors:
+                authors = text.strip().split('\n')[1] if len(text.strip().split('\n')) > 1 else "Unknown Author"
         
         # 년도 추출 (YYYY 형식)
         year_match = re.search(r'D:(\d{4})', year)
