@@ -114,6 +114,7 @@ PREDEFINED_PROMPTS = {
     
     PDF 내용:
     {pdf_content}
+    (각 PDF 파일의 초록(abstract), 서론(introduction), 결론(conclusion) 섹션이 포함되어 있습니다.)
     
     위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 특히 제공된 PDF 파일의 내용을 적극적으로 활용하여 연구 배경 작성에 참고해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
     
@@ -124,8 +125,8 @@ PREDEFINED_PROMPTS = {
     4. 각 문단의 내용이 명확히 구분되도록 작성해주세요.
     5. 두 번째 문단에서는 반드시 제공된 PDF 파일의 내용을 참고하여 설명해주세요.
     6. 네 번째 문단에서는 국내 연구 현황을 정확히 파악하여 설명해주세요.
-    7. 선행 연구 내용은 제공된 PDF 내용만을 사용하여 작성하세요. 추가적인 정보를 임의로 만들어내지 마세요.
-    8. 각 PDF 파일의 내용을 적극적으로 활용하여 선행 연구를 요약하고 설명하세요.
+    7. 선행 연구 내용은 제공된 PDF 내용(초록, 서론, 결론)만을 사용하여 작성하세요. 추가적인 정보를 임의로 만들어내지 마세요.
+    8. 각 PDF 파일의 초록, 서론, 결론 내용을 적극적으로 활용하여 선행 연구를 요약하고 설명하세요.
     
     위 지침을 엄격히 따라 연구 배경을 작성해주세요.
     """,
@@ -405,6 +406,30 @@ def format_references(scholar_results, pdf_files):
     
     return references
 
+# PDF에서 특정 섹션 추출하는 함수 
+def extract_sections(text):
+    sections = {
+        'abstract': '',
+        'introduction': '',
+        'conclusion': ''
+    }
+    
+    # Abstract 추출
+    abstract_match = re.search(r'(?i)abstract.*?(?=\n\n|\n[A-Z])', text, re.DOTALL)
+    if abstract_match:
+        sections['abstract'] = abstract_match.group(0)
+    
+    # Introduction 추출
+    intro_match = re.search(r'(?i)introduction.*?(?=\n\n|\n[A-Z])', text, re.DOTALL)
+    if intro_match:
+        sections['introduction'] = intro_match.group(0)
+    
+    # Conclusion 추출
+    conclusion_match = re.search(r'(?i)conclusion.*?(?=\n\n|\n[A-Z]|$)', text, re.DOTALL)
+    if conclusion_match:
+        sections['conclusion'] = conclusion_match.group(0)
+    
+    return sections
 
 def write_research_purpose():
     st.markdown("## 2. 연구 목적")
@@ -581,9 +606,12 @@ def write_research_background():
             
             pdf_contents = []
             for i, pdf_text in enumerate(st.session_state['pdf_texts']):
+                extracted_sections = extract_sections(pdf_text)
                 pdf_contents.append({
                     "file_name": st.session_state['pdf_files'][i].name,
-                    "content": pdf_text  # PDF 전체 내용 사용
+                    "abstract": extracted_sections['abstract'],
+                    "introduction": extracted_sections['introduction'],
+                    "conclusion": extracted_sections['conclusion']
                 })
             
             pdf_content_json = json.dumps(pdf_contents)
