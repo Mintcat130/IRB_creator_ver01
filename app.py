@@ -520,7 +520,7 @@ def write_research_purpose():
 
     # 편집 기능
     edited_content = st.text_area(
-        "생성된 내용을 편집하세요:",
+        "생성된 내용을 편집하거나 내용을 직접 입력하세요:",
         content,
         height=300,
         key="edit_content_2"
