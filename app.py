@@ -1398,6 +1398,13 @@ def write_research_title():
 # 새로운 함수 추가
 def view_full_content():
     st.markdown("## 전체 연구계획서 내용")
+
+    # 안내 텍스트 추가
+    st.markdown("""
+    내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 업로드한 논문 PDF 파일에 기본적으로 포함된 제목이나 저자 관련 메타데이터가 없다면 'Unknown'으로 표시됩니다. 
+    내용을 복사 한 후 최종 작성시 제목과 저자를 직접 수정하세요. 
+    *(메타데이터 없이 자동으로 제목과 저자를 수정하는 기능은 추후 개발할 예정입니다)*
+    """)
     
     with st.expander("전체 내용 보기/숨기기", expanded=True):
         content = ""
