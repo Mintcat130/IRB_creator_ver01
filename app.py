@@ -1426,10 +1426,10 @@ def display_references():
     for i, ref in enumerate(references, 1):
         st.markdown(f"{i}. {ref}")
 
-def format_references(pubmed_results, scholar_results, pdf_files):
+def format_references(scholar_results, pdf_files):
     references = []
     
-    for result in pubmed_results + scholar_results:
+    for result in scholar_results:
         authors = result['authors'].split(', ')
         if len(authors) > 6:
             authors = authors[:6] + ['et al.']
@@ -1441,9 +1441,6 @@ def format_references(pubmed_results, scholar_results, pdf_files):
         references.append(f"{pdf_file.name}")
     
     return references
-
-
-
 
 def parse_and_validate_titles(response):
     lines = response.split('\n')
