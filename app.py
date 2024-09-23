@@ -1418,6 +1418,10 @@ def view_full_content():
             content += f"{i}. {ref}\n"
         
         st.code(content, language="markdown")
+
+    if st.button("닫기"):
+            st.session_state.show_full_content = False
+            st.rerun()
     
 def show_full_content():
     full_content = view_full_content()
@@ -1603,13 +1607,13 @@ def chat_interface():
                             st.rerun()
 
       # 사이드바에 전체 내용 미리보기 버튼 추가
-        if st.sidebar.button("전체 내용 미리보기"):
+        if st.sidebar.button("전체 내용 미리보기") or st.button("📄 전체 내용 보기"):
             st.session_state.show_full_content = True
             st.rerun()
 
             # 전체 내용 표시
         if st.session_state.get('show_full_content', False):
-            show_full_content()
+            view_full_content()
 
             
             # 참고문헌 표시
