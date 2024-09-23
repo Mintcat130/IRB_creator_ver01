@@ -2,6 +2,5 @@ streamlit
 anthropic
 PyPDF2
 scholarly
-biopython
 requests
-pyperclip
+
