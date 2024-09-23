@@ -1425,10 +1425,6 @@ def display_references():
     for i, ref in enumerate(references, 1):
         st.markdown(f"{i}. {ref}")
 
-from pdfminer.high_level import extract_pages
-from pdfminer.layout import LTTextContainer, LTChar
-import PyPDF2
-import re
 
 def extract_pdf_metadata(pdf_file):
     try:
