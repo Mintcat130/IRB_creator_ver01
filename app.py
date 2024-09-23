@@ -1416,7 +1416,7 @@ def view_full_content():
         
         st.code(content, language="markdown")
 
-    if st.button("닫기"):
+    if st.button("미리보기 닫기"):
             st.session_state.show_full_content = False
             st.rerun()
     
@@ -1429,7 +1429,7 @@ def show_full_content():
     
     st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
     
-    if st.button("닫기"):
+    if st.button("미리보기 닫기"):
         st.session_state.show_full_content = False
         st.rerun()
 
