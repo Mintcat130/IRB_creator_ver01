@@ -1392,7 +1392,7 @@ def view_full_content():
     # 2~7번 섹션 표시
     for section in RESEARCH_SECTIONS[1:]:  # "1. 연구 과제명"을 제외한 나머지 섹션
         section_content = load_section_content(section)
-        if section_content and section != "1. 연구 과제명":  # 1번 섹션 중복 방지
+        if section_content:  # 내용이 있는 경우에만 추가
             content += f"### {section}\n{section_content}\n\n"
     
     # 참고문헌 추가
