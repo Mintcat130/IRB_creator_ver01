@@ -1435,21 +1435,27 @@ def extract_pdf_metadata(pdf_file):
         
         # 메타데이터가 없는 경우 텍스트에서 추출
         if not title or not authors:
-            text = ""
-            for page in reader.pages:
-                text += page.extract_text()
+            first_page_text = reader.pages[0].extract_text()
+            lines = first_page_text.split('\n')
             
-            # 제목 추출 (첫 번째 줄을 제목으로 가정)
+            # 제목 추출 (가장 긴 줄을 제목으로 가정)
             if not title:
-                title = text.strip().split('\n')[0]
+                title = max(lines[:10], key=len).strip()  # 첫 10줄 중 가장 긴 줄
             
-            # 저자 추출 (두 번째 줄을 저자로 가정)
+            # 저자 추출
             if not authors:
-                authors = text.strip().split('\n')[1] if len(text.strip().split('\n')) > 1 else "Unknown Author"
+                author_pattern = r'\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)*(?:,\s[A-Z][a-z]+)+\b'
+                potential_authors = re.findall(author_pattern, first_page_text)
+                authors = ', '.join(potential_authors) if potential_authors else "Unknown Author"
         
         # 년도 추출 (YYYY 형식)
         year_match = re.search(r'D:(\d{4})', year)
-        year = year_match.group(1) if year_match else 'Unknown Year'
+        if not year_match:
+            year_pattern = r'\b(19|20)\d{2}\b'
+            year_matches = re.findall(year_pattern, first_page_text)
+            year = year_matches[0] if year_matches else 'Unknown Year'
+        else:
+            year = year_match.group(1)
         
         return f"{authors}. {title}. {year}."
     except Exception as e:
