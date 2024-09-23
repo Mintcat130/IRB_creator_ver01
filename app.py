@@ -345,12 +345,40 @@ def upload_pdf():
     return None
 
 # PDF에서 텍스트 추출 함수
-def extract_text_from_pdf(file):
-    pdf_reader = PyPDF2.PdfReader(io.BytesIO(file.getvalue()))
-    text = ""
-    for page in pdf_reader.pages:
-        text += page.extract_text()
-    return text
+def extract_text_from_pdf(pdf_file):
+    try:
+        reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        return text
+    except Exception as e:
+        print(f"Error extracting text from {pdf_file.name}: {str(e)}")
+        return ""
+
+def extract_title_and_authors(text):
+    # 첫 페이지의 처음 몇 줄만 분석
+    first_page = text.split('\n')[:20]
+    
+    # 제목 추출 (일반적으로 가장 긴 줄이 제목)
+    title = max(first_page, key=len).strip()
+    
+    # 저자 추출 (제목 다음에 나오는 짧은 줄들)
+    authors = []
+    for line in first_page[first_page.index(title)+1:]:
+        if len(line.strip()) > 3 and len(line.strip()) < 50:
+            authors.append(line.strip())
+        if len(authors) >= 2:  # 저자를 최대 2명까지만 추출
+            break
+    
+    return title, ", ".join(authors)
+
+def extract_year(text):
+    # 년도 추출 (4자리 숫자 중 가장 최근 연도)
+    years = re.findall(r'\b(19|20)\d{2}\b', text)
+    if years:
+        return max(years)
+    return "Unknown Year"
 
 
 # Google Scholar 검색 함수 수정
@@ -1401,9 +1429,8 @@ def view_full_content():
 
     # 안내 텍스트 추가
     st.markdown("""
-    내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 업로드한 논문 PDF 파일에 기본적으로 포함된 제목이나 저자 관련 메타데이터가 없다면 'Unknown'으로 표시됩니다. 
-    내용을 복사 한 후 최종 작성시 제목과 저자를 직접 수정하세요. 
-    *(메타데이터 없이 자동으로 제목과 저자를 수정하는 기능은 추후 개발할 예정입니다)*
+    내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 참고 문헌을 다시 한번 확인하세요. 논문의 제목, 저자, 연도 정보가 자동으로 추출되었지만, 
+일부 정보가 부정확할 수 있습니다. 내용을 복사한 후 최종 작성 시 필요한 경우 직접 수정하세요.
     """)
     
     with st.expander("전체 내용 보기/숨기기", expanded=True):
@@ -1458,16 +1485,28 @@ def display_references():
 
 def extract_pdf_metadata(pdf_file):
     try:
+        text = extract_text_from_pdf(pdf_file)
+        
+        # 메타데이터에서 정보 추출
         reader = PyPDF2.PdfReader(pdf_file)
         info = reader.metadata
         
-        title = info.get('/Title', 'Unknown Title')
-        authors = info.get('/Author', 'Unknown Author')
-        year = info.get('/CreationDate', '')
+        title_meta = info.get('/Title', '')
+        authors_meta = info.get('/Author', '')
+        year_meta = info.get('/CreationDate', '')
         
         # 년도 추출 (YYYY 형식)
-        year_match = re.search(r'D:(\d{4})', year)
-        year = year_match.group(1) if year_match else 'Unknown Year'
+        year_match = re.search(r'D:(\d{4})', year_meta)
+        year_meta = year_match.group(1) if year_match else ''
+        
+        # 텍스트 내용에서 정보 추출
+        title_text, authors_text = extract_title_and_authors(text)
+        year_text = extract_year(text)
+        
+        # 메타데이터와 텍스트 추출 정보 중 더 나은 것 선택
+        title = title_meta if title_meta else title_text
+        authors = authors_meta if authors_meta else authors_text
+        year = year_meta if year_meta else year_text
         
         return f"{authors}. {title}. {year}."
     except Exception as e:
