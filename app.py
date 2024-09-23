@@ -1390,32 +1390,34 @@ def write_research_title():
                     st.warning("수정 요청 내용을 입력해주세요.")
 
     if st.button("📄 전체 내용 보기"):
-        st.session_state.show_full_content = True
-        st.rerun()
+        view_full_content()
 
 # 새로운 함수 추가
 def view_full_content():
-    content = ""
+    st.markdown("## 전체 연구계획서 내용")
     
-    # 1. 연구 과제명을 먼저 표시
-    title_content = load_section_content("1. 연구 과제명")
-    if title_content:
-        content += f"### 1. 연구 과제명\n{title_content}\n\n"
-    
-    # 2~7번 섹션 표시
-    for section in RESEARCH_SECTIONS:
-        if section != "1. 연구 과제명":  # 1번 섹션은 이미 처리했으므로 제외
-            section_content = load_section_content(section)
-            if section_content:  # 내용이 있는 경우에만 추가
-                content += f"### {section}\n{section_content}\n\n"
-    
-    # 참고문헌 추가
-    content += "### 참고문헌\n"
-    references = format_references(st.session_state.get('pdf_files', []))
-    for i, ref in enumerate(references, 1):
-        content += f"{i}. {ref}\n"
-    
-    return content
+    with st.expander("전체 내용 보기/숨기기", expanded=True):
+        content = ""
+        
+        # 1. 연구 과제명을 먼저 표시
+        title_content = load_section_content("1. 연구 과제명")
+        if title_content:
+            content += f"### 1. 연구 과제명\n{title_content}\n\n"
+        
+        # 2~7번 섹션 표시
+        for section in RESEARCH_SECTIONS:
+            if section != "1. 연구 과제명":  # 1번 섹션은 이미 처리했으므로 제외
+                section_content = load_section_content(section)
+                if section_content:  # 내용이 있는 경우에만 추가
+                    content += f"### {section}\n{section_content}\n\n"
+        
+        # 참고문헌 추가
+        content += "### 참고문헌\n"
+        references = format_references(st.session_state.get('pdf_files', []))
+        for i, ref in enumerate(references, 1):
+            content += f"{i}. {ref}\n"
+        
+        st.code(content, language="markdown")
     
 def show_full_content():
     full_content = view_full_content()
