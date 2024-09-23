@@ -442,7 +442,7 @@ def write_research_purpose():
     if "2. 연구 목적_history" not in st.session_state:
         st.session_state["2. 연구 목적_history"] = []
 
-    st.markdown("어떤 연구를 계획중인지, 연구에 대한 내용이나 키워드를 형식에 상관없이 자유롭게 입력해주세요. 기존에 작성한 초록이 있다면 입력해도 좋습니다. 입력 후 버튼을 누르면 AI 모델이 연구목적에 대한 줄글을 작성 해 줍니다.")
+    st.markdown("어떤 연구를 계획중인지, 연구에 대한 내용이나 키워드를 형식에 상관없이 자유롭게 입력해주세요. 기존에 작성한 초록이 있다면 입력해도 좋습니다. 입력 후 버튼을 누르면 AI 모델이 연구목적에 대한 줄글을 작성 해 줍니다.(500자 내외)")
     
     user_input = st.text_area("연구 주제 및 키워드:", height=150)
     
@@ -469,10 +469,10 @@ def write_research_purpose():
         st.markdown(content)
         
         char_count = len(content)
-        st.info(f"생성된 내용의 글자 수: {char_count}/1000")
+        st.info(f"생성된 내용의 글자 수: {char_count}/500")
         
-        if char_count > 1000:
-            st.warning("생성된 내용이 1000자를 초과했습니다. 수정이 필요할 수 있습니다.")
+        if char_count > 500:
+            st.warning("생성된 내용이 500자를 초과했습니다. 수정이 필요할 수 있습니다.")
 
         # 수정 요청 기능
         if st.button("수정 요청하기"):
@@ -592,7 +592,7 @@ def write_research_background():
     """)
     
     # PDF 파일 업로드 
-    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요. **주의:** 검색 결과의 논문 내용은 자동으로 반영되지 않습니다. 검색된 논문들을 사용하시려면 각 웹페이지에서 PDF 파일을 다운 받은 후 여기에 업로드 하세요.", type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요. /n **주의:** 검색 결과의 논문 내용은 자동으로 반영되지 않습니다. 검색된 논문들을 사용하시려면 각 웹페이지에서 PDF 파일을 다운 받은 후 여기에 업로드 하세요.", type="pdf", accept_multiple_files=True)
     
     if uploaded_files:
         st.session_state.pdf_texts = []
@@ -642,14 +642,14 @@ def write_research_background():
     # AI 응답 표시
     content = load_section_content("3. 연구 배경")
     if content:
-        st.markdown("### AI가 생성한 연구 배경:")
+        st.markdown("### AI가 생성한 연구 배경 (1000자 내외):")
         st.markdown(content)
         
         char_count = len(content)
-        st.info(f"생성된 내용의 글자 수: {char_count}/1500")
+        st.info(f"생성된 내용의 글자 수: {char_count}/1000")
         
-        if char_count > 1500:
-            st.warning("생성된 내용이 1500자를 초과했습니다. 수정이 필요할 수 있습니다.")
+        if char_count > 1000:
+            st.warning("생성된 내용이 1000자를 초과했습니다. 수정이 필요할 수 있습니다.")
 
         # 수정 요청 기능
         if st.button("수정 요청하기", key="request_modification_3"):
@@ -989,7 +989,7 @@ def write_data_analysis():
     # AI 응답 표시
     content = load_section_content("6. 자료분석과 통계적 방법")
     if content:
-        st.markdown("### AI가 추천한 자료분석과 통계적 방법:")
+        st.markdown("### AI가 추천한 자료분석과 통계적 방법 (1000자 내외):")
         st.markdown(content)
 
         # 수정 요청 기능
@@ -1069,9 +1069,9 @@ def write_data_analysis():
     # 글자 수 표시
     if content:
         char_count = len(content)
-        st.info(f"현재 글자 수: {char_count}/1500")
-        if char_count > 1500:
-            st.warning("글자 수가 1500자를 초과했습니다. 내용을 줄여주세요.")
+        st.info(f"현재 글자 수: {char_count}/1000")
+        if char_count > 1000:
+            st.warning("글자 수가 1000자를 초과했습니다. 내용을 줄여주세요.")
 
 #7. 연구방법 정리 함수
 def write_research_method():
@@ -1199,9 +1199,9 @@ def write_research_method():
     # 글자 수 표시
     if content:
         char_count = len(content)
-        st.info(f"현재 글자 수: {char_count}/1000")
-        if char_count > 1000:
-            st.warning("글자 수가 1000자를 초과했습니다. 내용을 줄여주세요.")
+        st.info(f"현재 글자 수: {char_count}/500")
+        if char_count > 500:
+            st.warning("글자 수가 500자를 초과했습니다. 내용을 줄여주세요.")
 
 # 연구 과제명 작성 함수
 def write_research_title():
