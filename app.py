@@ -42,7 +42,7 @@ def load_section_content(section):
 
 
 # 페이지 설정을 코드 최상단에 추가
-st.set_page_config(page_title="📖연구계획서 작성 도우미", page_icon="📖")
+st.set_page_config(page_title="📖IRB 연구계획서 도우미", page_icon="📖")
 
 # 시스템 프롬프트
 SYSTEM_PROMPT = """
@@ -435,7 +435,7 @@ def write_research_purpose():
     if "2. 연구 목적_history" not in st.session_state:
         st.session_state["2. 연구 목적_history"] = []
 
-    st.markdown("어떤 연구를 계획중인지, 연구에 대한 내용이나 키워드를 형식에 상관없이 자유롭게 입력해주세요. 입력 후 버튼을 누르면 AI 모델이 연구목적에 대한 줄글을 작성 해 줍니다.")
+    st.markdown("어떤 연구를 계획중인지, 연구에 대한 내용이나 키워드를 형식에 상관없이 자유롭게 입력해주세요. 기존에 작성한 초록이 있다면 입력해도 좋습니다. 입력 후 버튼을 누르면 AI 모델이 연구목적에 대한 줄글을 작성 해 줍니다.")
     
     user_input = st.text_area("연구 주제 및 키워드:", height=150)
     
