@@ -1333,6 +1333,7 @@ def write_research_title():
             if st.button("선택한 연구 과제명 저장"):
                 save_section_content("1. 연구 과제명", selected_option)
                 st.success("선택한 연구 과제명이 저장되었습니다.")
+                st.info("IRB 연구 계획서 작성이 완료되었습니다! 사이드바의 '전체 내용 미리보기' 버튼을 눌러 전체 내용을 확인하고 클립보드에 복사할 수 있습니다.")
                 st.rerun()
         else:
             st.error("유효한 연구 과제명 옵션이 없습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
