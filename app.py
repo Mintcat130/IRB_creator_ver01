@@ -8,6 +8,7 @@ import json
 import re
 import uuid
 import streamlit.components.v1 as components
+from collections import defaultdict
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -352,11 +353,13 @@ def extract_text_from_pdf(file):
 
 
 # Google Scholar 검색 함수 수정
-def search_google_scholar(query, max_results=10):
+def search_google_scholar(query, max_results=15):
     search_query = scholarly.search_pubs(query)
-    results = []
-    for i, result in enumerate(search_query):
-        if i >= max_results:
+    results = defaultdict(list)
+    keywords = query.lower().split()
+
+    for result in search_query:
+        if len(results['all_keywords']) + len(results['partial_keywords']) >= max_results:
             break
         try:
             title = result['bib'].get('title', 'No title')
@@ -365,10 +368,23 @@ def search_google_scholar(query, max_results=10):
             if isinstance(authors, list):
                 authors = ", ".join(authors[:2]) + "..." if len(authors) > 2 else ", ".join(authors)
             link = result.get('pub_url', '#')
-            results.append({"title": title, "year": year, "authors": authors, "link": link})
+            
+            # 키워드 포함 여부 확인
+            title_lower = title.lower()
+            if all(keyword in title_lower for keyword in keywords):
+                results['all_keywords'].append({"title": title, "year": year, "authors": authors, "link": link})
+            elif any(keyword in title_lower for keyword in keywords):
+                results['partial_keywords'].append({"title": title, "year": year, "authors": authors, "link": link})
         except AttributeError:
-            continue  # 결과를 건너뛰고 다음 결과로 진행
-    return results
+            continue
+
+    # 각 그룹 내에서 최신 순으로 정렬
+    for key in results:
+        results[key].sort(key=lambda x: x['year'], reverse=True)
+
+    # 모든 키워드 포함 결과를 먼저, 그 다음 부분 키워드 포함 결과 반환
+    final_results = results['all_keywords'] + results['partial_keywords']
+    return final_results[:max_results]
 
 # 참고문헌 정리 함수 추가
 def format_references(scholar_results, pdf_files):
