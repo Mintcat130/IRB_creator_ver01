@@ -1388,6 +1388,7 @@ def view_full_content():
     if title_content:
         content += f"### 1. 연구 과제명\n{title_content}\n\n"
     
+    # 2~7번 섹션 표시
     for section in RESEARCH_SECTIONS[1:]:  # "1. 연구 과제명"을 제외한 나머지 섹션
         section_content = load_section_content(section)
         if section_content:
@@ -1395,15 +1396,12 @@ def view_full_content():
     
     # 참고문헌 추가
     content += "### 참고문헌\n"
-    references = format_references(
-        st.session_state.get('scholar_results', []),
-        st.session_state.get('pdf_files', [])
-    )
+    references = format_references(st.session_state.get('pdf_files', []))
     for i, ref in enumerate(references, 1):
         content += f"{i}. {ref}\n"
     
     return content
-
+    
 def show_full_content():
     full_content = view_full_content()
     st.markdown("## 전체 연구계획서 내용")
@@ -1426,19 +1424,30 @@ def display_references():
     for i, ref in enumerate(references, 1):
         st.markdown(f"{i}. {ref}")
 
-def format_references(scholar_results, pdf_files):
+def extract_pdf_metadata(pdf_file):
+    try:
+        reader = PyPDF2.PdfReader(pdf_file)
+        info = reader.metadata
+        
+        title = info.get('/Title', 'Unknown Title')
+        authors = info.get('/Author', 'Unknown Author')
+        year = info.get('/CreationDate', '')
+        
+        # 년도 추출 (YYYY 형식)
+        year_match = re.search(r'D:(\d{4})', year)
+        year = year_match.group(1) if year_match else 'Unknown Year'
+        
+        return f"{authors}. {title}. {year}."
+    except Exception as e:
+        print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
+        return f"Error extracting metadata from {pdf_file.name}"
+
+def format_references(pdf_files):
     references = []
     
-    for result in scholar_results:
-        authors = result['authors'].split(', ')
-        if len(authors) > 6:
-            authors = authors[:6] + ['et al.']
-        author_string = ', '.join(authors)
-        reference = f"{author_string}. {result['title']} {result.get('journal', '')} {result.get('year', '')}."
-        references.append(reference)
-    
     for pdf_file in pdf_files:
-        references.append(f"{pdf_file.name}")
+        reference = extract_pdf_metadata(pdf_file)
+        references.append(reference)
     
     return references
 
