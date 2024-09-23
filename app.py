@@ -362,8 +362,8 @@ def search_google_scholar(query, max_results=15):
         if len(results['all_keywords']) + len(results['partial_keywords']) >= max_results:
             break
         try:
-            # 책 제외 로직 추가
-            if result['bib'].get('pub_type', '').lower() == 'book':
+            # 논문 여부 확인 로직
+            if not is_likely_paper(result):
                 continue
 
             title = result['bib'].get('title', 'No title')
@@ -389,6 +389,34 @@ def search_google_scholar(query, max_results=15):
     # 모든 키워드 포함 결과를 먼저, 그 다음 부분 키워드 포함 결과 반환
     final_results = results['all_keywords'] + results['partial_keywords']
     return final_results[:max_results]
+
+def is_likely_paper(result):
+    # 논문일 가능성이 높은지 확인하는 함수
+    bib = result.get('bib', {})
+    
+    # 1. 출판 유형 확인
+    if bib.get('pub_type', '').lower() == 'book':
+        return False
+    
+    # 2. 저널 정보 확인
+    if 'journal' in bib or 'conference' in bib:
+        return True
+    
+    # 3. 페이지 정보 확인 (논문은 대개 페이지 정보가 있음)
+    if 'pages' in bib:
+        return True
+    
+    # 4. 제목에 논문을 나타내는 키워드 확인
+    title = bib.get('title', '').lower()
+    paper_keywords = ['study', 'analysis', 'investigation', 'research', 'paper', 'article']
+    if any(keyword in title for keyword in paper_keywords):
+        return True
+    
+    # 5. 출판사 정보가 없으면 논문일 가능성이 높음 (책은 대개 출판사 정보가 있음)
+    if 'publisher' not in bib:
+        return True
+    
+    return False
 
 # 참고문헌 정리 함수 추가
 def format_references(scholar_results, pdf_files):
