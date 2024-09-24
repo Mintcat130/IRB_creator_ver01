@@ -671,17 +671,20 @@ def write_research_background():
             
             pdf_content_json = json.dumps(pdf_contents)
             
-            prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
+           prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
                 user_input=user_input,
                 keywords=keywords,
                 research_purpose=research_purpose,
                 pdf_content=pdf_content_json
             )
-
+            
             # 추출된 참고문헌 정보 추가
             prompt += "\n\n다음은 제공된 PDF 파일들의 정확한 참고문헌 정보입니다. 연구 배경 작성 시 반드시 이 정보만을 사용하여 인용해주세요:\n"
             for metadata in st.session_state.pdf_metadata:
-                prompt += f"[{metadata[0]}] {', '.join(metadata)}\n"
+                if metadata:  # metadata가 비어있지 않은 경우에만 처리
+                    author = metadata[0][0] if metadata[0] else "Unknown"
+                    year = metadata[0][1] if len(metadata[0]) > 1 else "Unknown"
+                    prompt += f"[{author}, {year}]\n"
             
             ai_response = generate_ai_response(prompt)
 
@@ -794,16 +797,17 @@ def verify_and_correct_references(response, correct_metadata):
     
     # 추출된 참고문헌과 원본 메타데이터 비교 및 수정
     for ref in cited_references:
-        if ref not in [m[0] for m in correct_metadata]:
+        ref_str = ', '.join(ref)
+        if not any(ref == m for m in correct_metadata):
             # 잘못된 참고문헌 찾아 수정
-            correct_ref = find_closest_match(ref, correct_metadata)
-            response = response.replace(f"[{ref}]", f"[{correct_ref}]")
+            correct_ref = find_closest_match(ref_str, correct_metadata)
+            response = response.replace(f"[{ref_str}]", f"[{correct_ref}]")
     
     return response
 
 def find_closest_match(ref, correct_metadata):
     # 간단한 문자열 유사도 비교로 가장 가까운 참고문헌 찾기
-    return max(correct_metadata, key=lambda x: similarity(ref, x[0]))[0]
+    return max(correct_metadata, key=lambda x: similarity(ref, ', '.join(x)))[0]
 
 def similarity(a, b):
     # 간단한 유사도 계산 (예: 레벤슈타인 거리 사용)
@@ -1614,7 +1618,8 @@ def format_title_option(option):
 def extract_references(text):
     # [저자, 연도] 형식의 참고문헌을 추출
     references = re.findall(r'\[([^\]]+)\]', text)
-    return list(set(references))  # 중복 제거
+    # 각 참고문헌을 [저자, 연도] 형식의 리스트로 변환
+    return [ref.split(',') for ref in set(references)]
 
 # 여기에 chat_interface 함수가 이어집니다.
 def chat_interface():
