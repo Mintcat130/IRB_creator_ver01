@@ -1281,7 +1281,34 @@ def write_research_title():
     # 사용자 입력 받기
     user_input = st.text_area("연구 과제명에 대해 AI에게 알려줄 추가 정보나 고려사항이 있다면 입력해주세요. 없다면 빈칸으로 두어도 됩니다. 빈칸이라면 자동으로 이전 섹션들의 내용을 종합하여 알맞은 제목을 추천합니다.:", height=150)
 
-    content = load_section_content("1. 연구 과제명")
+    # "연구 과제명 추천받기" 버튼을 여기로 이동
+    if st.button("연구 과제명 추천받기"):
+        research_purpose = load_section_content("2. 연구 목적")
+        research_background = load_section_content("3. 연구 배경")
+        selection_criteria = load_section_content("4. 선정기준, 제외기준")
+        sample_size = load_section_content("5. 대상자 수 및 산출근거")
+        data_analysis = load_section_content("6. 자료분석과 통계적 방법")
+        research_method = load_section_content("7. 연구방법")
+        
+        prompt = PREDEFINED_PROMPTS["1. 연구 과제명"].format(
+            user_input=user_input,
+            research_purpose=research_purpose,
+            research_background=research_background,
+            selection_criteria=selection_criteria,
+            sample_size=sample_size,
+            data_analysis=data_analysis,
+            research_method=research_method
+        )
+        
+        ai_response = generate_ai_response(prompt)
+        
+        # 현재 내용을 히스토리에 추가
+        current_content = load_section_content("1. 연구 과제명")
+        if current_content:
+            st.session_state["1. 연구 과제명_history"].append(current_content)
+        
+        save_section_content("1. 연구 과제명", ai_response)
+        st.rerun()
 
     content = load_section_content("1. 연구 과제명")
 
@@ -1315,34 +1342,7 @@ def write_research_title():
                 st.rerun()
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
-
-    if st.button("연구 과제명 AI에게 추천받기"):
-        research_purpose = load_section_content("2. 연구 목적")
-        research_background = load_section_content("3. 연구 배경")
-        selection_criteria = load_section_content("4. 선정기준, 제외기준")
-        sample_size = load_section_content("5. 대상자 수 및 산출근거")
-        data_analysis = load_section_content("6. 자료분석과 통계적 방법")
-        research_method = load_section_content("7. 연구방법")
-        
-        prompt = PREDEFINED_PROMPTS["1. 연구 과제명"].format(
-            user_input=user_input,
-            research_purpose=research_purpose,
-            research_background=research_background,
-            selection_criteria=selection_criteria,
-            sample_size=sample_size,
-            data_analysis=data_analysis,
-            research_method=research_method
-        )
-        
-        ai_response = generate_ai_response(prompt)
-        
-        # 현재 내용을 히스토리에 추가
-        current_content = load_section_content("1. 연구 과제명")
-        if current_content:
-            st.session_state["1. 연구 과제명_history"].append(current_content)
-        
-        save_section_content("1. 연구 과제명", ai_response)
-        st.rerun()
+    
 
         # AI 응답 파싱 및 검증
         options = parse_and_validate_titles(ai_response)
