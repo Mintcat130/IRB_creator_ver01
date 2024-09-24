@@ -600,37 +600,38 @@ def write_research_background():
     # 사용자 입력 받기
     user_input = st.text_area("연구 배경에 대해 작성하고 싶은 내용이나 AI 모델이 참고 해야할 내용이 있다면 입력해주세요. 없으면 빈칸으로 두고 진행해도 됩니다. 빈칸으로 둘 경우 `2.연구목적` 섹션의 내용과 업로드된 PDF를 기준으로 내용을 작성합니다.:", height=150)
     
-    # 키워드 입력
-    keywords = st.text_input("참조 논문 검색하기 - 참조논문 검색에 사용할 키워드를 입력하세요 (최대 10개, 쉼표로 구분):")
-    keywords_list = [k.strip() for k in keywords.split(',') if k.strip()][:10]
-    
-    if keywords_list:
-        st.write("입력된 키워드:", ", ".join(keywords_list))
+     # 참조논문 검색 부분을 expander로 감싸기
+    with st.expander("참조논문 검색하기", expanded=False):
+        # 키워드 입력
+        keywords = st.text_input("연구 배경 작성을 위한 참조논문 검색에 사용할 키워드를 입력하세요 (최대 10개, 쉼표로 구분):")
+        keywords_list = [k.strip() for k in keywords.split(',') if k.strip()][:10]
         
-    if st.button("논문 검색"):
         if keywords_list:
-            search_query = " ".join(keywords_list)
+            st.write("입력된 키워드:", ", ".join(keywords_list))
             
-            with st.spinner("논문을 검색 중입니다..."):
-                scholar_results = search_google_scholar(search_query)
+        if st.button("논문 검색"):
+            if keywords_list:
+                search_query = " ".join(keywords_list)
                 
-            st.session_state.scholar_results = scholar_results
-            st.success("검색이 완료되었습니다.")
-            st.rerun()
-            
-    # 검색 결과 표시
-    if 'scholar_results' in st.session_state:
-        st.subheader("Google Scholar 검색 결과 (최대 15개)")
-        for i, result in enumerate(st.session_state.scholar_results):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
-                st.caption(f"저자: {result['authors']}")
-            with col2:
-                if st.button("삭제", key=f"del_scholar_{i}"):
-                    del st.session_state.scholar_results[i]
-                    st.rerun()
-
+                with st.spinner("논문을 검색 중입니다..."):
+                    scholar_results = search_google_scholar(search_query)
+                    
+                st.session_state.scholar_results = scholar_results
+                st.success("검색이 완료되었습니다.")
+                st.rerun()
+                
+        # 검색 결과 표시
+        if 'scholar_results' in st.session_state:
+            st.subheader("Google Scholar 검색 결과 (최대 15개)")
+            for i, result in enumerate(st.session_state.scholar_results):
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"[{result['title']} ({result['year']})]({result['link']})")
+                    st.caption(f"저자: {result['authors']}")
+                with col2:
+                    if st.button("삭제", key=f"del_scholar_{i}"):
+                        del st.session_state.scholar_results[i]
+                        st.rerun()
 
     # 새로운 텍스트 추가
     st.markdown("""
