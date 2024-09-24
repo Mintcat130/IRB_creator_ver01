@@ -127,6 +127,7 @@ PREDEFINED_PROMPTS = {
     6. 네 번째 문단에서는 국내 연구 현황을 정확히 파악하여 설명해주세요.
     7. 선행 연구 내용은 제공된 PDF 내용(초록, 서론, 결론)만을 사용하여 작성하세요. 추가적인 정보를 임의로 만들어내지 마세요.
     8. 각 PDF 파일의 초록, 서론, 결론 내용을 적극적으로 활용하여 선행 연구를 요약하고 설명하세요.
+    9. 사용자가 입력한 추가 정보나 키워드를 적절히 반영하여 연구 배경을 보완하세요.
     
     위 지침을 엄격히 따라 연구 배경을 작성해주세요.
     """,
@@ -578,16 +579,19 @@ def write_research_purpose():
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
 
-# 연구 배경 작성 함수 (수정)
+# 3. 연구 배경 작성 함수
 def write_research_background():
     st.markdown("## 3. 연구 배경")
 
     # 히스토리 초기화
     if "3. 연구 배경_history" not in st.session_state:
         st.session_state["3. 연구 배경_history"] = []
+
+    # 사용자 입력 받기
+    user_input = st.text_area("연구 배경에 대해 작성하고 싶은 내용이나 AI 모델이 참고 해야할 내용이 있다면 입력해주세요. 없으면 빈칸으로 두고 진행해도 됩니다. 빈칸으로 둘 경우 `2.연구목적` 섹션의 내용과 업로드된 PDF를 기준으로 내용을 작성합니다.:", height=150)
     
     # 키워드 입력
-    keywords = st.text_input("연구 배경 작성을 위한 참조논문 검색에 사용할 키워드를 입력하세요 (최대 10개, 쉼표로 구분):")
+    keywords = st.text_input("참조 논문 검색하기 - 참조논문 검색에 사용할 키워드를 입력하세요 (최대 10개, 쉼표로 구분):")
     keywords_list = [k.strip() for k in keywords.split(',') if k.strip()][:10]
     
     if keywords_list:
@@ -653,7 +657,8 @@ def write_research_background():
             pdf_content_json = json.dumps(pdf_contents)
             
             prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
-                user_input=keywords,
+                user_input=user_input,  # 사용자 입력 추가
+                keywords=keywords,
                 research_purpose=research_purpose,
                 pdf_content=pdf_content_json
             )
