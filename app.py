@@ -671,7 +671,7 @@ def write_research_background():
             
             pdf_content_json = json.dumps(pdf_contents)
             
-           prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
+            prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
                 user_input=user_input,
                 keywords=keywords,
                 research_purpose=research_purpose,
