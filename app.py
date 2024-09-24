@@ -204,6 +204,10 @@ PREDEFINED_PROMPTS = {
        - 유의수준
        - 결과제시와 결과 도출 방안
 
+    사용자 입력:
+    {user_input}
+
+
     연구 목적:
     {research_purpose}
 
@@ -1007,6 +1011,9 @@ def write_data_analysis():
     if "6. 자료분석과 통계적 방법_history" not in st.session_state:
         st.session_state["6. 자료분석과 통계적 방법_history"] = []
 
+    # 사용자 입력 받기
+    user_input = st.text_area("자료분석과 통계적 방법에 대해 AI에게 알려줄 추가 정보나 고려사항이 있다면 입력해주세요. 특별히 없다면 빈칸으로 두어도 됩니다. 빈칸이라면 이전 섹션들의 내용을 기반으로 선정기준, 제외기준을 제안합니다:", height=150)
+
     if st.button("자료분석 및 통계방법 AI에게 추천받기"):
         research_purpose = load_section_content("2. 연구 목적")
         research_background = load_section_content("3. 연구 배경")
@@ -1014,6 +1021,7 @@ def write_data_analysis():
         sample_size = load_section_content("5. 대상자 수 및 산출근거")
         
         prompt = PREDEFINED_PROMPTS["6. 자료분석과 통계적 방법"].format(
+            user_input=user_input,
             research_purpose=research_purpose,
             research_background=research_background,
             selection_criteria=selection_criteria,
