@@ -797,17 +797,21 @@ def verify_and_correct_references(response, correct_metadata):
     
     # 추출된 참고문헌과 원본 메타데이터 비교 및 수정
     for ref in cited_references:
-        ref_str = ', '.join(ref)
-        if not any(ref == m for m in correct_metadata):
+        ref_str = ', '.join(ref) if isinstance(ref, (list, tuple)) else str(ref)
+        if ref_str not in [', '.join(map(str, m)) for m in correct_metadata]:
             # 잘못된 참고문헌 찾아 수정
             correct_ref = find_closest_match(ref_str, correct_metadata)
-            response = response.replace(f"[{ref_str}]", f"[{correct_ref}]")
+            response = response.replace(ref_str, ', '.join(map(str, correct_ref)))
     
     return response
 
 def find_closest_match(ref, correct_metadata):
-    # 간단한 문자열 유사도 비교로 가장 가까운 참고문헌 찾기
-    return max(correct_metadata, key=lambda x: similarity(ref, ', '.join(x)))[0]
+    def format_metadata(x):
+        if isinstance(x, (list, tuple)):
+            return ', '.join(str(item) for item in x)
+        return str(x)
+    
+    return max(correct_metadata, key=lambda x: similarity(ref, format_metadata(x)))[0]
 
 def similarity(a, b):
     # 간단한 유사도 계산 (예: 레벤슈타인 거리 사용)
