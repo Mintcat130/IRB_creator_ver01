@@ -644,10 +644,13 @@ def write_research_background():
     
     if uploaded_files:
         st.session_state.pdf_texts = []
-        st.session_state.pdf_files = uploaded_files  # PDF 파일 정보 저장
+        st.session_state.pdf_files = uploaded_files
+        st.session_state.pdf_metadata = []
         for uploaded_file in uploaded_files:
             pdf_text = extract_text_from_pdf(uploaded_file)
             st.session_state.pdf_texts.append(pdf_text)
+            metadata = extract_references(pdf_text)
+            st.session_state.pdf_metadata.append(metadata)
         st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
 
 
@@ -669,13 +672,23 @@ def write_research_background():
             pdf_content_json = json.dumps(pdf_contents)
             
             prompt = PREDEFINED_PROMPTS["3. 연구 배경"].format(
-                user_input=user_input,  # 사용자 입력 추가
+                user_input=user_input,
                 keywords=keywords,
                 research_purpose=research_purpose,
                 pdf_content=pdf_content_json
             )
+
+            # 추출된 참고문헌 정보 추가
+            prompt += "\n\n다음은 제공된 PDF 파일들의 정확한 참고문헌 정보입니다. 연구 배경 작성 시 반드시 이 정보만을 사용하여 인용해주세요:\n"
+            for metadata in st.session_state.pdf_metadata:
+                prompt += f"[{metadata[0]}] {', '.join(metadata)}\n"
             
             ai_response = generate_ai_response(prompt)
+
+            # AI 응답 검증 및 수정
+            verified_response = verify_and_correct_references(ai_response, st.session_state.pdf_metadata)
+            
+            save_section_content("3. 연구 배경", verified_response)
             
             # 현재 내용을 히스토리에 추가
             current_content = load_section_content("3. 연구 배경")
@@ -774,6 +787,43 @@ def write_research_background():
                 st.rerun()
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
+
+def verify_and_correct_references(response, correct_metadata):
+    # 응답에서 참고문헌 추출
+    cited_references = extract_references(response)
+    
+    # 추출된 참고문헌과 원본 메타데이터 비교 및 수정
+    for ref in cited_references:
+        if ref not in [m[0] for m in correct_metadata]:
+            # 잘못된 참고문헌 찾아 수정
+            correct_ref = find_closest_match(ref, correct_metadata)
+            response = response.replace(f"[{ref}]", f"[{correct_ref}]")
+    
+    return response
+
+def find_closest_match(ref, correct_metadata):
+    # 간단한 문자열 유사도 비교로 가장 가까운 참고문헌 찾기
+    return max(correct_metadata, key=lambda x: similarity(ref, x[0]))[0]
+
+def similarity(a, b):
+    # 간단한 유사도 계산 (예: 레벤슈타인 거리 사용)
+    return 1 - (levenshtein_distance(a, b) / max(len(a), len(b)))
+
+def levenshtein_distance(s1, s2):
+    if len(s1) < len(s2):
+        return levenshtein_distance(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    return previous_row[-1]
 
 # 4. 선정기준, 제외기준 작성 함수
 def write_selection_criteria():
