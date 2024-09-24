@@ -848,7 +848,7 @@ def write_selection_criteria():
     
     # 편집 기능
     edited_content = st.text_area(
-        "선정기준, 제외기준을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        "생성된 내용을 편집하세요:",
         content,
         height=300,
         key="edit_content_4"
