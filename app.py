@@ -750,7 +750,7 @@ def write_research_background():
 
     # 편집 기능
     edited_content = st.text_area(
-        "생성된 내용을 편집하세요:",
+        "생성된 내용을 편집하세요 (논문 저자 관련 문제는 차후 업데이트 하겠습니다):",
         content,
         height=300,
         key="edit_content_3"
