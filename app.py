@@ -274,6 +274,9 @@ PREDEFINED_PROMPTS = {
 [완전한 영문 제목]
 [완전한 한글 제목]
 
+사용자 입력:
+{user_input}
+
 연구 목적: {research_purpose}
 연구 배경: {research_background}
 선정기준, 제외기준: {selection_criteria}
@@ -1271,9 +1274,14 @@ def write_research_title():
 
         # 안내 글 추가
     st.markdown("""
-    연구 과제명을 직접 입력하거나, AI에게 추천받을 수 있습니다. 
+    연구 과제명을 직접 입력하거나, AI에게 추천받을 수 있습니다. AI 추천은 기본적으로 3쌍의 영문/한글 제목을 제시합니다.
     AI 추천을 받으려면 '연구 과제명 추천받기' 버튼을 클릭하세요.
     """)
+
+    # 사용자 입력 받기
+    user_input = st.text_area("연구 과제명에 대해 AI에게 알려줄 추가 정보나 고려사항이 있다면 입력해주세요. 없다면 빈칸으로 두어도 됩니다. 빈칸이라면 자동으로 이전 섹션들의 내용을 종합하여 알맞은 제목을 추천합니다.:", height=150)
+
+    content = load_section_content("1. 연구 과제명")
 
     content = load_section_content("1. 연구 과제명")
 
@@ -1308,7 +1316,7 @@ def write_research_title():
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
-    if st.button("연구 과제명 추천받기"):
+    if st.button("연구 과제명 AI에게 추천받기"):
         research_purpose = load_section_content("2. 연구 목적")
         research_background = load_section_content("3. 연구 배경")
         selection_criteria = load_section_content("4. 선정기준, 제외기준")
@@ -1317,6 +1325,7 @@ def write_research_title():
         research_method = load_section_content("7. 연구방법")
         
         prompt = PREDEFINED_PROMPTS["1. 연구 과제명"].format(
+            user_input=user_input,
             research_purpose=research_purpose,
             research_background=research_background,
             selection_criteria=selection_criteria,
