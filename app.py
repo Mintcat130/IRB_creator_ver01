@@ -46,56 +46,37 @@ st.set_page_config(page_title="📖IRB 연구계획서 도우미", page_icon="�
 
 # 시스템 프롬프트
 SYSTEM_PROMPT = """
-You are an AI assistant acting as an expert in pathology research. Your role is to help users write research proposals. Users will provide information about specific sections of the research proposal, and you should write these sections based on the information provided.
+당신은 병리학 분야의 연구 전문가로서 행동하는 AI 조수입니다. 당신의 역할은 사용자가 연구계획서를 작성하는 데 도움을 주는 것입니다. 사용자는 연구계획서의 특정 항목에 대한 정보를 제공할 것이며, 당신은 이를 바탕으로 해당 항목을 작성해야 합니다.
 
-Please follow these guidelines:
+사용자가 제공한 정보를 주의 깊게 분석하고, 당신의 병리학 연구에 대한 전문 지식을 활용하여 요청된 연구계획서 섹션을 작성하세요. 다음 지침을 따르세요:
 
-1. Carefully analyze the information provided by the user.
-2. Use your expert knowledge in pathology research to complement the information when necessary.
-3. Maintain appropriate structure and format for each research proposal section.
-4. Use clear and professional language.
-5. Include appropriate references or citations when necessary.
-6. Prioritize the protection of patients' rights in your writing.
-7. Include appropriate content regarding data security and information protection.
-8. Avoid being too specific about research methods and content. Maintain flexibility to allow for potential changes in methods or statistical techniques during the research.
+1. 사용자가 제공한 정보를 최대한 활용하세요.
+2. 필요한 경우, 병리학 연구에 대한 당신의 지식을 사용하여 정보를 보완하세요.
+3. 연구계획서 섹션의 구조와 형식을 적절히 유지하세요.
+4. 명확하고 전문적인 언어를 사용하세요.
+5. 필요한 경우 적절한 참고문헌이나 인용을 포함하세요.
+6. 환자의 권익 보호를 최우선으로 고려하여 작성하세요.
+7. 자료 보안 및 정보 보호에 대한 내용을 적절히 포함시키세요.
+8. 연구방법 및 내용을 너무 구체적으로 작성하지 마세요. 연구 진행 중 방법이나 통계 기법의 변경이 가능하도록 유연성을 유지하세요.
 
-Write your response in English first. Then, translate it into Korean. For medical or statistical terms, include the original English term in parentheses after the Korean translation. For proper nouns that cannot be translated into Korean, use the English term as is. 
-
-For example: "엽상종양(Phyllodes tumor)", "스튜던트 T-검정(Student's t-test)".
-
-Ensure that the final output maintains the meaning and nuance of the original English text while being natural and fluent in Korean.
+한국어로 작성하되 의학 용어나 통계용어는 괄호 안에 영어 원문을 포함시키세요. 한국어로 번역이 불가능한 고유명사는 영어 그대로 적으세요. 예를 들어, "엽상종양(Phyllodes tumor)", "Student T-검정(Student T-test)"과 같은 형식으로 작성하세요.
 """
 
 # PREDEFINED_PROMPTS 수정
 PREDEFINED_PROMPTS = {
     "2. 연구 목적": """
-    Based on the research topic and keywords provided by the user, write the research purpose and hypothesis in English. Then, translate it into natural, fluent Korean, keeping it within 500 characters. 
+    사용자가 제공한 연구 주제와 키워드를 바탕으로, 연구 목적과 가설을 500자 이내의 줄글로 작성하세요. 어미는 반말 문어체로 합니다. (예: ~하였다. ~있다. ~있었다)
+    다음 사항을 포함해야 합니다:
+    1. 연구의 주요 목적
+    2. 연구로 인해 의도하는 가설
+    3. 가설을 입증하기 위한 구체적인 설명
+    4. 연구의 중요성과 예상되는 결과
+    5. 이 연구가 향후 진단과 치료에 있어 환자들에게 어떤 방식으로 이득이 될 것인지에 대한 설명
 
-    Crucial: Use formal written language in Korean with the following specific endings: 
-    - ~이다. ~였다. ~일 것이다. ~하였다. ~있다. ~있었다.
-    Do not use polite forms like ~입니다, ~습니다, ~였습니다.
-
-    Include the following:
-    1. The main purpose of the research
-    2. The intended hypothesis of the research
-    3. Specific explanation to prove the hypothesis
-    4. The importance of the research and expected results
-    5. Explanation of how this research will benefit patients in future diagnosis and treatment
-
-    User input:
+    사용자 입력:
     {user_input}
 
-    Based on the above content, please elaborate on the research purpose and hypothesis. Particularly, clearly describe the practical benefits that the research results can provide to patients, to help with IRB (Institutional Review Board) approval.
-
-    After writing in English, translate to Korean with the following guidelines:
-    1. Ensure the Korean text reads as if it was originally written by a native Korean speaker, using the formal written style specified above.
-    2. Avoid literal translations that may sound unnatural in Korean.
-    3. For medical or statistical terms, use the appropriate Korean term followed by the English term in parentheses. For example: "엽상종양(Phyllodes tumor)", "스튜던트 T-검정(Student's t-test)".
-    4. For proper nouns that cannot be translated into Korean, use the English term as is.
-    5. Adjust the sentence structure and expression to sound natural in Korean while maintaining the original meaning.
-    6. Consistently use the formal written style endings throughout the text.
-
-    Output only the final Korean version, without including the English original. Double-check that all sentences end with the specified formal written style endings before finalizing the output.
+    위의 내용을 바탕으로 연구 목적과 가설을 구체화하여 작성해주세요. 특히, 연구 결과가 환자들에게 제공할 수 있는 실질적인 이익을 명확히 기술하여 IRB(기관 윤리위원회) 승인에 도움이 되도록 해주세요.
     """,
     
     "3. 연구 배경": """
