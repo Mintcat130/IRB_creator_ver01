@@ -973,7 +973,7 @@ def write_sample_size():
     
     # 편집 기능
     edited_content = st.text_area(
-        "대상자 수 및 산출근거를 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        "생성된 내용을 편집하세요:",
         content,
         height=300,
         key="edit_content_5"
