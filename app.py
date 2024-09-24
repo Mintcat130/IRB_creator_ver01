@@ -1092,7 +1092,7 @@ def write_data_analysis():
     
     # 편집 기능
     edited_content = st.text_area(
-        "자료분석과 통계적 방법을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 추천을 받으세요. 생성된 내용을 편집하세요:",
+        "생성된 내용을 편집하세요:",
         content,
         height=400,
         key="edit_content_6"
