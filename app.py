@@ -1266,13 +1266,13 @@ def write_research_title():
     if "1. 연구 과제명_history" not in st.session_state:
         st.session_state["1. 연구 과제명_history"] = []
 
-        # 완료 메시지 표시 (있는 경우)
+    # 완료 메시지 표시 (있는 경우)
     if 'completion_message' in st.session_state:
         st.success(st.session_state.completion_message)
         st.info("사이드바의 '전체 내용 미리보기' 버튼을 눌러 전체 내용을 확인하고 클립보드에 복사할 수 있습니다.")
         del st.session_state.completion_message
 
-        # 안내 글 추가
+    # 안내 글 추가
     st.markdown("""
     연구 과제명을 직접 입력하거나, AI에게 추천받을 수 있습니다. AI 추천은 기본적으로 3쌍의 영문/한글 제목을 제시합니다.
     AI 추천을 받으려면 '연구 과제명 추천받기' 버튼을 클릭하세요.
@@ -1282,7 +1282,7 @@ def write_research_title():
     user_input = st.text_area("연구 과제명에 대해 AI에게 알려줄 추가 정보나 고려사항이 있다면 입력해주세요. 없다면 빈칸으로 두어도 됩니다. 빈칸이라면 자동으로 이전 섹션들의 내용을 종합하여 알맞은 제목을 추천합니다.:", height=150)
 
     # "연구 과제명 추천받기" 버튼을 여기로 이동
-    if st.button("연구 과제명 추천받기"):
+    if st.button("연구 과제명 AI에게 추천받기"):
         research_purpose = load_section_content("2. 연구 목적")
         research_background = load_section_content("3. 연구 배경")
         selection_criteria = load_section_content("4. 선정기준, 제외기준")
@@ -1302,13 +1302,14 @@ def write_research_title():
         
         ai_response = generate_ai_response(prompt)
         
-        # 현재 내용을 히스토리에 추가
-        current_content = load_section_content("1. 연구 과제명")
-        if current_content:
-            st.session_state["1. 연구 과제명_history"].append(current_content)
+        # AI 응답 파싱 및 검증
+        options = parse_and_validate_titles(ai_response)
         
-        save_section_content("1. 연구 과제명", ai_response)
-        st.rerun()
+        if options:
+            save_section_content("1. 연구 과제명", "\n\n".join(options))
+            st.rerun()
+        else:
+            st.error("AI가 올바른 형식의 연구 과제명을 생성하지 못했습니다. 다시 시도해주세요.")
 
     content = load_section_content("1. 연구 과제명")
 
@@ -1342,18 +1343,7 @@ def write_research_title():
                 st.rerun()
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
-    
 
-        # AI 응답 파싱 및 검증
-        options = parse_and_validate_titles(ai_response)
-        
-        if options:
-            save_section_content("1. 연구 과제명", "\n\n".join(options))
-            st.rerun()
-        else:
-            st.error("AI가 올바른 형식의 연구 과제명을 생성하지 못했습니다. 다시 시도해주세요.")
-
-    content = load_section_content("1. 연구 과제명")
     if content:
         options = content.split("\n\n")
         valid_options = [opt for opt in options if is_valid_title_option(opt)]
@@ -1375,57 +1365,56 @@ def write_research_title():
         else:
             st.error("유효한 연구 과제명 옵션이 없습니다. '연구 과제명 추천받기' 버튼을 다시 클릭해주세요.")
 
+    # 수정 요청 기능
+    if st.button("수정 요청하기", key="request_modification_1"):
+        st.session_state.show_modification_request_1 = True
+        st.rerun()
 
-        # 수정 요청 기능
-        if st.button("수정 요청하기", key="request_modification_1"):
-            st.session_state.show_modification_request_1 = True
-            st.rerun()
+    if st.session_state.get('show_modification_request_1', False):
+        modification_request = st.text_area(
+            "수정을 원하는 부분과 수정 방향을 설명해주세요:",
+            height=150,
+            key="modification_request_1"
+        )
+        if st.button("수정 요청 제출", key="submit_modification_1"):
+            if modification_request:
+                current_content = load_section_content("1. 연구 과제명")
+                # 현재 내용을 히스토리에 추가
+                st.session_state["1. 연구 과제명_history"].append(current_content)
+                
+                prompt = f"""
+                현재 연구 과제명 옵션들:
+                {current_content}
 
-        if st.session_state.get('show_modification_request_1', False):
-            modification_request = st.text_area(
-                "수정을 원하는 부분과 수정 방향을 설명해주세요:",
-                height=150,
-                key="modification_request_1"
-            )
-            if st.button("수정 요청 제출", key="submit_modification_1"):
-                if modification_request:
-                    current_content = load_section_content("1. 연구 과제명")
-                    # 현재 내용을 히스토리에 추가
-                    st.session_state["1. 연구 과제명_history"].append(current_content)
-                    
-                    prompt = f"""
-                    현재 연구 과제명 옵션들:
-                    {current_content}
+                사용자의 수정 요청:
+                {modification_request}
 
-                    사용자의 수정 요청:
-                    {modification_request}
+                위의 수정 요청을 반영하여 연구 과제명을 수정해주세요. 다음 지침을 따라주세요:
+                1. 영문 제목과 한글 제목을 각각 작성해주세요.
+                2. 총 3가지의 제목 옵션을 제시해주세요.
+                3. 각 옵션은 영문 제목과 한글 제목이 한 쌍을 이루어야 합니다.
+                4. 제목은 연구의 핵심 내용을 간결하고 명확하게 표현해야 합니다.
+                5. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
+                6. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
+                7. 수정 요청을 최대한 반영하되, 전체적인 일관성을 유지하세요.
+                
+                수정된 3가지 연구 과제명 옵션을 작성해주세요. 각 옵션은 다음과 같은 형식으로 작성해주세요:
+                [영문 제목]
+                [한글 제목]
 
-                    위의 수정 요청을 반영하여 연구 과제명을 수정해주세요. 다음 지침을 따라주세요:
-                    1. 영문 제목과 한글 제목을 각각 작성해주세요.
-                    2. 총 3가지의 제목 옵션을 제시해주세요.
-                    3. 각 옵션은 영문 제목과 한글 제목이 한 쌍을 이루어야 합니다.
-                    4. 제목은 연구의 핵심 내용을 간결하고 명확하게 표현해야 합니다.
-                    5. 제목은 연구의 목적, 대상, 방법 등을 포함할 수 있습니다.
-                    6. 영문 제목은 첫 글자만 대문자로 작성하세요. (예: Effect of...)
-                    7. 수정 요청을 최대한 반영하되, 전체적인 일관성을 유지하세요.
-                    
-                    수정된 3가지 연구 과제명 옵션을 작성해주세요. 각 옵션은 다음과 같은 형식으로 작성해주세요:
-                    [영문 제목]
-                    [한글 제목]
+                [영문 제목]
+                [한글 제목]
 
-                    [영문 제목]
-                    [한글 제목]
-
-                    [영문 제목]
-                    [한글 제목]
-                    """
-                    modified_response = generate_ai_response(prompt)
-                    
-                    save_section_content("1. 연구 과제명", modified_response)
-                    st.session_state.show_modification_request_1 = False
-                    st.rerun()
-                else:
-                    st.warning("수정 요청 내용을 입력해주세요.")
+                [영문 제목]
+                [한글 제목]
+                """
+                modified_response = generate_ai_response(prompt)
+                
+                save_section_content("1. 연구 과제명", modified_response)
+                st.session_state.show_modification_request_1 = False
+                st.rerun()
+            else:
+                st.warning("수정 요청 내용을 입력해주세요.")
 
 # 새로운 함수 추가
 def view_full_content():
