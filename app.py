@@ -479,7 +479,7 @@ def write_research_purpose():
     
     user_input = st.text_area("연구 주제 및 키워드:", height=150)
     
-    if st.button("연구 목적 생성"):
+    if st.button("연구 목적 AI 생성"):
         if user_input:
             prompt = PREDEFINED_PROMPTS["2. 연구 목적"].format(user_input=user_input)
             ai_response = generate_ai_response(prompt)
@@ -640,7 +640,7 @@ def write_research_background():
 
 
     # 연구 배경 생성 버튼
-    if st.button("해당 내용으로 연구배경 작성하기"):
+    if st.button("연구배경 AI 생성 요청하기"):
         if 'pdf_texts' in st.session_state and st.session_state['pdf_texts']:
             research_purpose = load_section_content("2. 연구 목적")
             
