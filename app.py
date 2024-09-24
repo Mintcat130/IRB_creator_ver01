@@ -69,7 +69,11 @@ Ensure that the final output maintains the meaning and nuance of the original En
 # PREDEFINED_PROMPTS 수정
 PREDEFINED_PROMPTS = {
     "2. 연구 목적": """
-    Based on the research topic and keywords provided by the user, write the research purpose and hypothesis in English. Then, translate it into natural, fluent Korean, keeping it within 500 characters. Use formal written language in Korean (예: ~하였다. ~있다. ~있었다).
+    Based on the research topic and keywords provided by the user, write the research purpose and hypothesis in English. Then, translate it into natural, fluent Korean, keeping it within 500 characters. 
+
+    Crucial: Use formal written language in Korean with the following specific endings: 
+    - ~이다. ~였다. ~일 것이다. ~하였다. ~있다. ~있었다.
+    Do not use polite forms like ~입니다, ~습니다, ~였습니다.
 
     Include the following:
     1. The main purpose of the research
@@ -84,13 +88,14 @@ PREDEFINED_PROMPTS = {
     Based on the above content, please elaborate on the research purpose and hypothesis. Particularly, clearly describe the practical benefits that the research results can provide to patients, to help with IRB (Institutional Review Board) approval.
 
     After writing in English, translate to Korean with the following guidelines:
-    1. Ensure the Korean text reads as if it was originally written by a native Korean speaker.
+    1. Ensure the Korean text reads as if it was originally written by a native Korean speaker, using the formal written style specified above.
     2. Avoid literal translations that may sound unnatural in Korean.
     3. For medical or statistical terms, use the appropriate Korean term followed by the English term in parentheses. For example: "엽상종양(Phyllodes tumor)", "스튜던트 T-검정(Student's t-test)".
     4. For proper nouns that cannot be translated into Korean, use the English term as is.
     5. Adjust the sentence structure and expression to sound natural in Korean while maintaining the original meaning.
+    6. Consistently use the formal written style endings throughout the text.
 
-    Output only the final Korean version, without including the English original.
+    Output only the final Korean version, without including the English original. Double-check that all sentences end with the specified formal written style endings before finalizing the output.
     """,
     
     "3. 연구 배경": """
