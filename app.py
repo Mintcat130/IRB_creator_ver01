@@ -139,6 +139,9 @@ PREDEFINED_PROMPTS = {
     3. 제외기준 예시: 40세 이하 혹은 60세 이상, 검진 당시 치매 진단 과거력 있는 수검자, 누락된 변수 정보가 있는 수검자
     4. 이외 다른 말은 하지 말것.
 
+    사용자 입력:
+    {user_input}
+
     연구 목적:
     {research_purpose}
 
@@ -764,7 +767,7 @@ def write_research_background():
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
-# 선정기준, 제외기준 작성 함수
+# 4. 선정기준, 제외기준 작성 함수
 def write_selection_criteria():
     st.markdown("## 4. 선정기준, 제외기준")
     
@@ -772,11 +775,15 @@ def write_selection_criteria():
     if "4. 선정기준, 제외기준_history" not in st.session_state:
         st.session_state["4. 선정기준, 제외기준_history"] = []
 
+    # 사용자 입력 받기
+    user_input = st.text_area("선정기준과 제외기준에 대해 AI에게 알려 줄 추가 정보나 고려사항이 있다면 입력해주세요. 특별히 없다면 빈칸으로 두어도 됩니다. 빈칸이라면 이전 섹션들의 내용을 기반으로 선정기준, 제외기준을 제안합니다:", height=150)
+
     if st.button("선정, 제외기준 AI에게 추천받기"):
         research_purpose = load_section_content("2. 연구 목적")
         research_background = load_section_content("3. 연구 배경")
         
         prompt = PREDEFINED_PROMPTS["4. 선정기준, 제외기준"].format(
+            user_input=user_input,
             research_purpose=research_purpose,
             research_background=research_background
         )
