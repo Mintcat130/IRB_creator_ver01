@@ -685,7 +685,7 @@ def write_research_background():
                 user_input=user_input,
                 keywords=keywords,
                 research_purpose=research_purpose,
-                pdf_content=pdf_content_json
+                pdf_content=pdf_content_json,
                 korean_authors=korean_authors
             )
             
