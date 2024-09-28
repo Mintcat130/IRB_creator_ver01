@@ -1505,8 +1505,8 @@ def view_full_content():
         # 참고문헌 추가
         content += "### 참고문헌\n"
         references = format_references(st.session_state.get('pdf_files', []))
-        for i, ref in enumerate(references, 1):
-            content += f"{i}. {ref}\n"
+        for ref in references:
+            content += f"{ref}\n"
         
         st.code(content, language="markdown")
 
@@ -1568,14 +1568,18 @@ def extract_pdf_metadata(pdf_file):
         authors = re.search(r'저자: (.+)', result)
         year = re.search(r'연도: (.+)', result)
         
-        title = title.group(1) if title else "Unknown Title"
-        authors = authors.group(1) if authors else "Unknown Authors"
-        year = year.group(1) if year else "Unknown Year"
-        
-        return f"{authors}. {title}. {year}."
+        return {
+            'title': title.group(1) if title else "Unknown Title",
+            'authors': authors.group(1) if authors else "Unknown Authors",
+            'year': year.group(1) if year else "Unknown Year"
+        }
     except Exception as e:
         print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
-        return f"Error extracting metadata from {pdf_file.name}"
+        return {
+            'title': "Unknown Title",
+            'authors': "Unknown Authors",
+            'year': "Unknown Year"
+        }
 
 def confirm_metadata(extracted_info):
     st.write("추출된 메타데이터:")
@@ -1586,11 +1590,10 @@ def confirm_metadata(extracted_info):
 
 def format_references(pdf_files):
     references = []
-    
-    for pdf_file in pdf_files:
-        reference = extract_pdf_metadata(pdf_file)
+    for i, pdf_file in enumerate(pdf_files, start=1):
+        metadata = extract_pdf_metadata(pdf_file)
+        reference = f"{i}. {metadata['authors']}. {metadata['title']}. {metadata['year']}."
         references.append(reference)
-    
     return references
 
 def parse_and_validate_titles(response):
