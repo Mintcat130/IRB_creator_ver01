@@ -98,7 +98,7 @@ PREDEFINED_PROMPTS = {
     - "국내"는 한국(Korea)을 의미한다.
     - "국외"는 한국(Korea)이 외 모든 나라를 의미한다.
     - 제공된 PDF 파일 내용 중 한국 소속 저자의 연구가 있다면, 이를 바탕으로 국내 연구 현황을 설명한다.
-    - 만약 한국 소속 저자의 연구가 없다면, 국내에서는 아직 이 주제에 대한 연구가 충분히 이루어지지 않았다는 점을 언급한다.
+    - 만약 한국 소속 저자의 연구가 없다면, 국내에서는 아직 이 주제에 대한 연구가 충분히 이루어지지 않았다는 점을 언급하고 본 연구의 필요성을 강조한다.
     
     세 번째 문단: 연구 배경과 연구의 정당성에 대한 설명
     - 현재 연구가 필요한 이유를 설명한다.
@@ -115,6 +115,9 @@ PREDEFINED_PROMPTS = {
     PDF 내용:
     {pdf_content}
     (각 PDF 파일의 초록(abstract), 서론(introduction), 결론(conclusion) 섹션이 포함되어 있습니다.)
+
+    한국 소속 저자 포함 여부:
+    {korean_authors}
     
     위의 내용을 바탕으로 연구 배경을 구체화하여 작성해주세요. 특히 제공된 PDF 파일의 내용을 적극적으로 활용하여 연구 배경 작성에 참고해주세요. 참고문헌을 인용할 때는 [저자, 연도] 형식으로 표기해주세요.
     
@@ -124,7 +127,7 @@ PREDEFINED_PROMPTS = {
     3. 문단에 번호를 매기지 말고, 자연스러운 줄글 형식으로 작성하세요.
     4. 각 문단의 내용이 명확히 구분되도록 작성해주세요.
     5. 두 번째 문단에서는 반드시 제공된 PDF 파일의 내용을 참고하여 설명해주세요.
-    6. 두 번째 문단에서는 국내 연구 현황을 정확히 파악하여 설명해주세요.
+    6. 두 번째 문단에서는 국내 연구 현황을 정확히 파악하여 설명해주세요. 한국 소속 저자의 연구가 있다면 반드시 포함시키세요.
     7. 선행 연구 내용은 제공된 PDF 내용(초록, 서론, 결론)만을 사용하여 작성하세요. 추가적인 정보를 임의로 만들어내지 마세요.
     8. 각 PDF 파일의 초록, 서론, 결론 내용을 적극적으로 활용하여 선행 연구를 요약하고 설명하세요.
     9. 사용자가 입력한 추가 정보나 키워드를 적절히 반영하여 연구 배경을 보완하세요.
@@ -663,14 +666,18 @@ def write_research_background():
             research_purpose = load_section_content("2. 연구 목적")
             
             pdf_contents = []
+            korean_authors = False
             for i, pdf_text in enumerate(st.session_state['pdf_texts']):
                 extracted_sections = extract_sections(pdf_text)
+                metadata = st.session_state['pdf_metadata'][i]
                 pdf_contents.append({
                     "file_name": st.session_state['pdf_files'][i].name,
                     "abstract": extracted_sections['abstract'],
                     "introduction": extracted_sections['introduction'],
                     "conclusion": extracted_sections['conclusion']
                 })
+                if metadata['is_korean']:
+                    korean_authors = True
             
             pdf_content_json = json.dumps(pdf_contents)
             
@@ -679,6 +686,7 @@ def write_research_background():
                 keywords=keywords,
                 research_purpose=research_purpose,
                 pdf_content=pdf_content_json
+                korean_authors=korean_authors
             )
             
             # 추출된 참고문헌 정보 추가
@@ -1546,10 +1554,11 @@ def extract_pdf_metadata(pdf_file):
         text_sample = text[:5000]
         
         prompt = f"""
-        다음은 학술 논문의 일부입니다. 이 논문의 제목, 저자들(최대 3명까지), 출판 연도를 추출해주세요.
+        다음은 학술 논문의 일부입니다. 이 논문의 제목, 저자들(최대 3명까지), 저자들의 소속 기관(특히 한국 소속 여부), 출판 연도를 추출해주세요.
         결과는 다음 형식으로 작성해주세요:
         제목: [논문 제목]
         저자: [저자1], [저자2], [저자3]
+        소속: [소속1], [소속2], [소속3] (한국 소속이 있다면 'Korean' 태그를 추가)
         연도: [출판 연도]
 
         논문 내용:
@@ -1567,19 +1576,26 @@ def extract_pdf_metadata(pdf_file):
         # 결과 파싱
         title = re.search(r'제목: (.+)', result)
         authors = re.search(r'저자: (.+)', result)
+        affiliations = re.search(r'소속: (.+)', result)
         year = re.search(r'연도: (.+)', result)
+        
+        is_korean = 'Korean' in result
         
         return {
             'title': title.group(1) if title else "Unknown Title",
             'authors': authors.group(1) if authors else "Unknown Authors",
-            'year': year.group(1) if year else "Unknown Year"
+            'affiliations': affiliations.group(1) if affiliations else "Unknown Affiliations",
+            'year': year.group(1) if year else "Unknown Year",
+            'is_korean': is_korean
         }
     except Exception as e:
         print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
         return {
             'title': "Unknown Title",
             'authors': "Unknown Authors",
-            'year': "Unknown Year"
+            'affiliations': "Unknown Affiliations",
+            'year': "Unknown Year",
+            'is_korean': False
         }
 
 def confirm_metadata(extracted_info):
