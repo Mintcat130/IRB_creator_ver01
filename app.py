@@ -606,7 +606,7 @@ def write_research_background():
 
     # 사용자 입력 받기
     user_input = st.text_area("연구 배경에 대해 작성하고 싶은 내용이나 AI 모델이 참고 해야할 내용이 있다면 입력해주세요. 없으면 빈칸으로 두고 진행해도 됩니다. 빈칸으로 둘 경우 `2.연구목적` 섹션의 내용과 업로드된 PDF를 기준으로 내용을 작성합니다.:", height=150)
-    
+
      # 참조논문 검색 부분을 expander로 감싸기
     with st.expander("참조논문 검색하기", expanded=False):
         # 키워드 입력
@@ -669,14 +669,24 @@ def write_research_background():
             korean_authors = False
             for i, pdf_text in enumerate(st.session_state['pdf_texts']):
                 extracted_sections = extract_sections(pdf_text)
-                metadata = st.session_state['pdf_metadata'][i]
+                metadata = st.session_state.get('pdf_metadata', [])
+                if i < len(metadata):
+                    current_metadata = metadata[i]
+                    if isinstance(current_metadata, dict):
+                        is_korean = current_metadata.get('is_korean', False)
+                    else:
+                        is_korean = False
+                else:
+                    is_korean = False
+
                 pdf_contents.append({
                     "file_name": st.session_state['pdf_files'][i].name,
                     "abstract": extracted_sections['abstract'],
                     "introduction": extracted_sections['introduction'],
-                    "conclusion": extracted_sections['conclusion']
+                    "conclusion": extracted_sections['conclusion'],
+                    "is_korean": is_korean
                 })
-                if metadata.get('is_korean', False):  # 'is_korean' 키가 없을 경우 False를 반환
+                if is_korean:
                     korean_authors = True
             
             pdf_content_json = json.dumps(pdf_contents)
