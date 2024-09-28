@@ -676,7 +676,7 @@ def write_research_background():
                     "introduction": extracted_sections['introduction'],
                     "conclusion": extracted_sections['conclusion']
                 })
-                if metadata['is_korean']:
+                if metadata.get('is_korean', False):  # 'is_korean' 키가 없을 경우 False를 반환
                     korean_authors = True
             
             pdf_content_json = json.dumps(pdf_contents)
@@ -1578,15 +1578,14 @@ def extract_pdf_metadata(pdf_file):
         authors = re.search(r'저자: (.+)', result)
         affiliations = re.search(r'소속: (.+)', result)
         year = re.search(r'연도: (.+)', result)
-        
-        is_korean = 'Korean' in result
+        is_korean = re.search(r'한국 소속 여부: (.+)', result)
         
         return {
             'title': title.group(1) if title else "Unknown Title",
             'authors': authors.group(1) if authors else "Unknown Authors",
             'affiliations': affiliations.group(1) if affiliations else "Unknown Affiliations",
             'year': year.group(1) if year else "Unknown Year",
-            'is_korean': is_korean
+            'is_korean': is_korean.group(1).lower() == '예' if is_korean else False
         }
     except Exception as e:
         print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
