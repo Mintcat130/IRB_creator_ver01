@@ -36,8 +36,11 @@ def save_section_content(section, content):
 
 # 섹션 내용 로드
 def load_section_content(section):
-    if 'research_data' in st.session_state and st.session_state.current_research_id in st.session_state.research_data:
-        return st.session_state.research_data[st.session_state.current_research_id].get(section, "")
+    try:
+        if 'research_data' in st.session_state and st.session_state.current_research_id in st.session_state.research_data:
+            return st.session_state.research_data[st.session_state.current_research_id].get(section, "")
+    except Exception as e:
+        st.error(f"섹션 내용을 불러오는 중 오류가 발생했습니다: {e}")
     return ""
 
 
@@ -1496,56 +1499,6 @@ def write_research_title():
             else:
                 st.warning("수정 요청 내용을 입력해주세요.")
 
-# 새로운 함수 추가
-def view_full_content():
-    st.markdown("## 전체 연구계획서 내용")
-
-    # 안내 텍스트 추가
-    st.markdown("""
-    내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 참고 문헌 정보는 AI를 통해 자동으로 추출되었습니다. 대부분의 경우 정확하지만, 
-일부 정보가 부정확할 수 있습니다. 내용을 복사한 후 최종 작성 시 필요한 경우 직접 확인하고 수정하세요.
-    """)
-    
-    with st.expander("전체 내용 보기/숨기기", expanded=True):
-        content = ""
-        
-        # 1. 연구 과제명을 먼저 표시
-        title_content = load_section_content("1. 연구 과제명")
-        if title_content:
-            content += f"### 1. 연구 과제명\n{title_content}\n\n"
-        
-        # 2~7번 섹션 표시
-        for section in RESEARCH_SECTIONS:
-            if section != "1. 연구 과제명":  # 1번 섹션은 이미 처리했으므로 제외
-                section_content = load_section_content(section)
-                if section_content:  # 내용이 있는 경우에만 추가
-                    content += f"### {section}\n{section_content}\n\n"
-        
-        # 참고문헌 추가
-        content += "### 참고문헌\n"
-        references = format_references(st.session_state.get('pdf_files', []))
-        for ref in references:
-            content += f"{ref}\n"
-        
-        st.code(content, language="markdown")
-
-    if st.button("미리보기 닫기"):
-            st.session_state.show_full_content = False
-            st.rerun()
-    
-def show_full_content():
-    full_content = view_full_content()
-    st.markdown("## 전체 연구계획서 내용")
-    
-    # st.code()를 사용하여 전체 내용 표시 및 복사 버튼 제공
-    st.code(full_content, language="plaintext")
-    
-    st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
-    
-    if st.button("미리보기 닫기"):
-        st.session_state.show_full_content = False
-        st.rerun()
-
 def display_references():
     st.markdown("### 참고문헌")
     references = format_references(
@@ -1656,12 +1609,15 @@ def extract_references(text):
     # 각 참고문헌을 [저자, 연도] 형식의 리스트로 변환
     return [ref.split(',') for ref in set(references)]
 
-# 여기에 chat_interface 함수가 이어집니다.
+# 전체 인터페이스
 def chat_interface():
     st.subheader("IRB 연구계획서 작성 도우미✏️ ver.01 (by HJY)")
 
     if 'current_research_id' not in st.session_state:
         st.session_state.current_research_id = generate_research_id()
+
+    if 'view_mode' not in st.session_state:
+        st.session_state.view_mode = 'edit'
 
     # API 키 입력 및 확인 로직
     if 'api_key' not in st.session_state or not st.session_state.api_key:
@@ -1684,7 +1640,7 @@ def chat_interface():
                 st.rerun()
             else:
                 st.warning("먼저 API 키를 입력하고 확인해주세요.")
-    
+
     # API 키가 설정된 후의 메인 인터페이스
     else:
         st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
@@ -1699,16 +1655,28 @@ def chat_interface():
             st.success("새로운 연구계획서를 시작합니다.")
             st.rerun()
 
+        # 전체 내용 미리보기 버튼 추가
+        if st.sidebar.button("전체 내용 미리보기"):
+            st.session_state.view_mode = 'preview'
+            st.rerun()
+
         if 'current_section' not in st.session_state:
             st.session_state.current_section = 'home'
 
-        # 홈 화면 표시
-        if st.session_state.current_section == 'home':
-            st.markdown("## 연구계획서 작성을 시작합니다")
-            st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요. 각 파트만 선택해서 작성도 가능하지만, 최상의 결과를 위해서는 연구 목적 세션부터 시작하여 어플이 제공하는 순서대로 작성하는 것을 가장 추천합니다.")
-            
-            for section in RESEARCH_SECTIONS:
-                if st.button(f"{section} 작성하기"):
+        # 조건부 렌더링
+        if st.session_state.view_mode == 'edit':
+            render_edit_mode()
+        else:
+            render_preview_mode()
+
+def render_edit_mode():
+    # 홈 화면 표시
+    if st.session_state.current_section == 'home':
+        st.markdown("## 연구계획서 작성을 시작합니다")
+        st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요. 각 파트만 선택해서 작성도 가능하지만, 최상의 결과를 위해서는 연구 목적 세션부터 시작하여 어플이 제공하는 순서대로 작성하는 것을 가장 추천합니다.")
+        
+        for section in RESEARCH_SECTIONS:
+            if st.button(f"{section} 작성하기"):
                     st.session_state.current_section = section
                     st.rerun()
         
@@ -1749,22 +1717,43 @@ def chat_interface():
                             st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
                             st.rerun()
 
-      # 사이드바에 전체 내용 미리보기 버튼 추가
-        if st.sidebar.button("전체 내용 미리보기"):
-            st.session_state.show_full_content = True
-            st.rerun()
+def render_preview_mode():
+    st.markdown("## 전체 연구계획서 미리보기")
+    
+    # 안내 텍스트 추가
+    st.markdown("""
+    내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 참고 문헌 정보는 AI를 통해 자동으로 추출되었습니다. 대부분의 경우 정확하지만, 
+    일부 정보가 부정확할 수 있습니다. 내용을 복사한 후 최종 작성 시 필요한 경우 직접 확인하고 수정하세요.
+    """)
+    
+    with st.expander("전체 내용 보기/숨기기", expanded=True):
+        content = ""
+        
+        # 1. 연구 과제명을 먼저 표시
+        title_content = load_section_content("1. 연구 과제명")
+        if title_content:
+            content += f"### 1. 연구 과제명\n{title_content}\n\n"
+        
+        # 2~7번 섹션 표시
+        for section in RESEARCH_SECTIONS:
+            if section != "1. 연구 과제명":  # 1번 섹션은 이미 처리했으므로 제외
+                section_content = load_section_content(section)
+                if section_content:  # 내용이 있는 경우에만 추가
+                    content += f"### {section}\n{section_content}\n\n"
+        
+        # 참고문헌 추가
+        content += "### 참고문헌\n"
+        references = format_references(st.session_state.get('pdf_files', []))
+        for ref in references:
+            content += f"{ref}\n"
+        
+        st.code(content, language="markdown")
 
-            # 전체 내용 표시
-        if st.session_state.get('show_full_content', False):
-            view_full_content()
+    st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
 
-            
-            # 참고문헌 표시
-            references = st.session_state.get('references', [])
-            if references:
-                st.markdown("### 참고문헌")
-                for ref in references:
-                    st.markdown(f"- {ref}")
+    if st.button("편집 모드로 돌아가기"):
+        st.session_state.view_mode = 'edit'
+        st.rerun()
 
     # CSS 스타일
     st.markdown("""
@@ -1779,7 +1768,7 @@ def chat_interface():
     </style>
     """, unsafe_allow_html=True)
 
-
+# 메인 함수 호출
 if __name__ == "__main__":
     chat_interface()
 
