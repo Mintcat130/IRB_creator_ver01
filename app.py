@@ -1670,52 +1670,61 @@ def chat_interface():
             render_preview_mode()
 
 def render_edit_mode():
-    # 홈 화면 표시
     if st.session_state.current_section == 'home':
-        st.markdown("## 연구계획서 작성을 시작합니다")
-        st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요. 각 파트만 선택해서 작성도 가능하지만, 최상의 결과를 위해서는 연구 목적 세션부터 시작하여 어플이 제공하는 순서대로 작성하는 것을 가장 추천합니다.")
-        
-        for section in RESEARCH_SECTIONS:
-            if st.button(f"{section} 작성하기"):
-                    st.session_state.current_section = section
-                    st.rerun()
-        
-        else:
-            # 현재 섹션에 따른 작성 인터페이스 표시
-            if st.session_state.current_section == "1. 연구 과제명":
-                write_research_title()
-            elif st.session_state.current_section == "2. 연구 목적":
-                write_research_purpose()
-            elif st.session_state.current_section == "3. 연구 배경":
-                write_research_background()
-            elif st.session_state.current_section == "4. 선정기준, 제외기준":
-                write_selection_criteria()
-            elif st.session_state.current_section == "5. 대상자 수 및 산출근거":
-                write_sample_size()
-            elif st.session_state.current_section == "6. 자료분석과 통계적 방법":
-                write_data_analysis()
-            elif st.session_state.current_section == "7. 연구방법":
-                write_research_method()
+        render_home_page()
+    else:
+        render_section_page()
 
-            # 이전 섹션과 다음 섹션 버튼
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                if st.button("⬅️이전 섹션"):
-                    current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
-                    if current_index > 0:
-                        st.session_state.current_section = RESEARCH_SECTIONS[current_index - 1]
-                    else:
-                        st.session_state.current_section = 'home'
+def render_home_page():
+    st.markdown("## 연구계획서 작성을 시작합니다")
+    st.markdown("아래 버튼을 클릭하여 각 섹션을 작성하세요. 각 파트만 선택해서 작성도 가능하지만, 최상의 결과를 위해서는 연구 목적 세션부터 시작하여 어플이 제공하는 순서대로 작성하는 것을 가장 추천합니다.")
+    
+    for section in RESEARCH_SECTIONS:
+        if st.button(f"{section} 작성하기"):
+            st.session_state.current_section = section
+            st.rerun()
+
+def render_section_page():
+    # 현재 섹션에 따른 작성 인터페이스 표시
+    if st.session_state.current_section == "1. 연구 과제명":
+        write_research_title()
+    elif st.session_state.current_section == "2. 연구 목적":
+        write_research_purpose()
+    elif st.session_state.current_section == "3. 연구 배경":
+        write_research_background()
+    elif st.session_state.current_section == "4. 선정기준, 제외기준":
+        write_selection_criteria()
+    elif st.session_state.current_section == "5. 대상자 수 및 산출근거":
+        write_sample_size()
+    elif st.session_state.current_section == "6. 자료분석과 통계적 방법":
+        write_data_analysis()
+    elif st.session_state.current_section == "7. 연구방법":
+        write_research_method()
+
+    # 이전 섹션과 다음 섹션 버튼
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("⬅️이전 섹션"):
+            current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
+            if current_index > 0:
+                st.session_state.current_section = RESEARCH_SECTIONS[current_index - 1]
+            else:
+                st.session_state.current_section = 'home'
+            st.rerun()
+
+    with col2:
+        if st.session_state.current_section != RESEARCH_SECTIONS[-1]:
+            if st.button("다음 섹션➡️"):
+                current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
+                if current_index < len(RESEARCH_SECTIONS) - 1:
+                    st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
                     st.rerun()
 
-            with col2:
-                if st.session_state.current_section != "1. 연구 과제명":
-                    if st.button("다음 섹션➡️"):
-                        current_index = RESEARCH_SECTIONS.index(st.session_state.current_section)
-                        if current_index < len(RESEARCH_SECTIONS) - 1:
-                            st.session_state.current_section = RESEARCH_SECTIONS[current_index + 1]
-                            st.rerun()
+    # 홈으로 돌아가기 버튼
+    if st.button("홈으로 돌아가기"):
+        st.session_state.current_section = 'home'
+        st.rerun()
 
 def render_preview_mode():
     st.markdown("## 전체 연구계획서 미리보기")
