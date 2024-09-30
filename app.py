@@ -9,6 +9,9 @@ import re
 import uuid
 import streamlit.components.v1 as components
 from collections import defaultdict
+from docx import Document
+from io import BytesIO
+from difflib import SequenceMatcher
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -1737,19 +1740,35 @@ def render_section_page():
 def render_preview_mode():
     st.markdown("## 전체 연구계획서 미리보기")
     
-    # 안내 텍스트 추가
-    st.markdown("""
-    각 섹션의 내용을 개별적으로 확인하고 복사할 수 있습니다. 
-    참고 문헌 정보는 AI를 통해 자동으로 추출되었으므로, 필요한 경우 직접 확인하고 수정하세요.
-    """)
-
-    with st.spinner('전체 내용을 불러오는 중입니다...'):
-        sections_content = generate_full_content()
+    sections_content = generate_full_content()
     
     for section, content in sections_content.items():
         st.subheader(section)
         st.code(content, language="markdown")
-        st.info(f"{section} 내용을 복사하려면 위 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
+    
+    uploaded_file = st.file_uploader("IRB 연구계획서 DOCX 템플릿을 업로드하세요", type="docx")
+    
+    if uploaded_file is not None:
+        doc = Document(uploaded_file)
+        if st.button("DOCX 파일 생성"):
+            matching_results = {}
+            for section in sections_content.keys():
+                match = find_best_match(doc, section)
+                matching_results[section] = match.text if match else "Not found"
+
+            st.subheader("섹션 매칭 결과")
+            for section, match in matching_results.items():
+                st.write(f"{section}: {match}")
+
+            if st.button("매칭 결과 확인 및 DOCX 생성"):
+                filled_doc = fill_docx_template(doc, sections_content)
+                docx_file = download_docx(filled_doc)
+                st.download_button(
+                    label="완성된 DOCX 파일 다운로드",
+                    data=docx_file,
+                    file_name="완성된_연구계획서.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
 
     if st.button("편집 모드로 돌아가기"):
         st.session_state.view_mode = 'edit'
@@ -1775,6 +1794,60 @@ def generate_full_content():
     sections_content["참고문헌"] = "\n".join(references)
         
     return sections_content
+
+# IRB 템플릿 docx 파일 업로드
+def upload_docx_template():
+    uploaded_file = st.file_uploader("IRB 연구계획서 DOCX 템플릿을 업로드하세요", type="docx")
+    if uploaded_file is not None:
+        return Document(uploaded_file)
+    return None
+
+def normalize_text(text):
+    # 대소문자 구분 제거, 공백 및 특수 문자 제거
+    return re.sub(r'\W+', '', text.lower())
+
+def similarity_score(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+def find_best_match(doc, section_title):
+    normalized_section = normalize_text(section_title)
+    best_match = None
+    best_score = 0
+
+    for paragraph in doc.paragraphs:
+        normalized_para = normalize_text(paragraph.text)
+        
+        # 완전 일치 시 즉시 반환
+        if normalized_section == normalized_para:
+            return paragraph
+        
+        # 부분 일치 확인
+        if normalized_section in normalized_para:
+            score = similarity_score(normalized_section, normalized_para)
+            if score > best_score:
+                best_score = score
+                best_match = paragraph
+
+    # 유사도 임계값 (예: 0.7)
+    if best_score > 0.7:
+        return best_match
+    
+    return None
+
+def insert_content_after_section(doc, section_title, content):
+    section_para = find_best_match(doc, section_title)
+    if section_para:
+        new_para = section_para.insert_paragraph_after(content)
+        return new_para
+    return None
+
+def fill_docx_template(doc, sections_content):
+    for section, content in sections_content.items():
+        inserted = insert_content_after_section(doc, section, content)
+        if not inserted:
+            print(f"Warning: Section '{section}' not found in the template.")
+    return doc
+
 
     # CSS 스타일
     st.markdown("""
