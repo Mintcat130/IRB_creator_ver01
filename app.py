@@ -1732,43 +1732,42 @@ def render_preview_mode():
     
     # 안내 텍스트 추가
     st.markdown("""
-    내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 참고 문헌 정보는 AI를 통해 자동으로 추출되었습니다. 대부분의 경우 정확하지만, 
-    일부 정보가 부정확할 수 있습니다. 내용을 복사한 후 최종 작성 시 필요한 경우 직접 확인하고 수정하세요.
+    각 섹션의 내용을 개별적으로 확인하고 복사할 수 있습니다. 
+    참고 문헌 정보는 AI를 통해 자동으로 추출되었으므로, 필요한 경우 직접 확인하고 수정하세요.
     """)
 
     with st.spinner('전체 내용을 불러오는 중입니다...'):
-        content = generate_full_content()
+        sections_content = generate_full_content()
     
-    st.code(content, language="markdown")
-
-    st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
+    for section, content in sections_content.items():
+        st.subheader(section)
+        st.code(content, language="markdown")
+        st.info(f"{section} 내용을 복사하려면 위 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
 
     if st.button("편집 모드로 돌아가기"):
         st.session_state.view_mode = 'edit'
         st.rerun()
 
 def generate_full_content():
-    content = ""
+    sections_content = {}
         
     # 1. 연구 과제명을 먼저 표시
     title_content = load_section_content("1. 연구 과제명")
     if title_content:
-        content += f"### 1. 연구 과제명\n{title_content}\n\n"
+        sections_content["1. 연구 과제명"] = title_content
     
     # 2~7번 섹션 표시
     for section in RESEARCH_SECTIONS:
         if section != "1. 연구 과제명":  # 1번 섹션은 이미 처리했으므로 제외
             section_content = load_section_content(section)
             if section_content:  # 내용이 있는 경우에만 추가
-                content += f"### {section}\n{section_content}\n\n"
+                sections_content[section] = section_content
     
     # 참고문헌 추가
-    content += "### 참고문헌\n"
     references = format_references(st.session_state.get('pdf_files', []))
-    for ref in references:
-        content += f"{ref}\n"
+    sections_content["참고문헌"] = "\n".join(references)
         
-    return content
+    return sections_content
 
     # CSS 스타일
     st.markdown("""
