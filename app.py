@@ -1768,7 +1768,7 @@ def generate_full_content():
     for ref in references:
         content += f"{ref}\n"
         
-    st.code(content, language="markdown")
+    return content
 
     # CSS 스타일
     st.markdown("""
