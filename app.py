@@ -1511,7 +1511,7 @@ def chat_interface():
     # API 키가 설정된 후의 메인 인터페이스
     if 'api_key' in st.session_state and 'pubmed_email' in st.session_state:
         st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
-        st.sidebar.text(f"PubMed 이메일: {st.session_state.pubmed_email}")
+        st.sidebar.text(f"이메일: {st.session_state.pubmed_email}")
 
         if st.sidebar.button("🔄 초기화면으로"):
             for key in list(st.session_state.keys()):
