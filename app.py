@@ -1758,22 +1758,28 @@ def render_preview_mode():
                 match = find_best_match(st.session_state.doc, section)
                 st.session_state.matching_results[section] = match.text if match else "Not found"
 
-            st.subheader("섹션 매칭 결과")
-            for section, match in st.session_state.matching_results.items():
-                st.write(f"{section}: {match}")
 
+            st.subheader("섹션 매칭 결과")
+            for section, match_text in st.session_state.matching_results.items():
+                st.write(f"{section}: {match_text}")
+        
             st.session_state.show_confirm_button = True
 
         if st.session_state.get('show_confirm_button', False):
             if st.button("DOCX 파일 생성"):
-                filled_doc = fill_docx_template(st.session_state.doc, sections_content)
-                docx_file = download_docx(filled_doc)
-                st.download_button(
-                    label="완성된 DOCX 파일 다운로드",
-                    data=docx_file,
-                    file_name="완성된_연구계획서.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
+                try:
+                    filled_doc = fill_docx_template(st.session_state.doc, sections_content)
+                    docx_file = download_docx(filled_doc)
+                    st.download_button(
+                        label="완성된 DOCX 파일 다운로드",
+                        data=docx_file,
+                        file_name="완성된_연구계획서.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    )
+                except Exception as e:
+                    st.error(f"DOCX 파일 생성 중 오류가 발생했습니다: {str(e)}")
+                    st.error("자세한 오류 정보:")
+                    st.exception(e)
 
     if st.button("편집 모드로 돌아가기"):
         st.session_state.view_mode = 'edit'
@@ -1842,7 +1848,8 @@ def find_best_match(doc, section_title):
 def insert_content_after_section(doc, section_title, content):
     section_para = find_best_match(doc, section_title)
     if section_para:
-        new_para = section_para.insert_paragraph_after(content)
+        new_para = section_para.insert_paragraph_after()
+        new_para.text = content
         return new_para
     return None
 
