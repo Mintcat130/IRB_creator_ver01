@@ -1469,38 +1469,40 @@ def chat_interface():
     if 'view_mode' not in st.session_state:
         st.session_state.view_mode = 'edit'
 
-    # API 키 입력 및 확인 로직
-    if 'api_key' not in st.session_state or not st.session_state.api_key:
-        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
-        
-        if st.button("API 키 확인"):
-            client = initialize_anthropic_client(api_key)
-            if client:
-                st.success("유효한 API 키입니다. 연구계획서 작성하기 버튼을 눌러 시작하세요.")
-                st.session_state.temp_api_key = api_key
-            else:
-                st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
+    # API 키와 이메일이 설정되지 않은 경우에만 입력 필드와 버튼을 표시
+    if 'api_key' not in st.session_state or 'pubmed_email' not in st.session_state:
+        # API 키 입력 및 확인 로직
+        if 'api_key' not in st.session_state:
+            api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
+            
+            if st.button("API 키 확인"):
+                client = initialize_anthropic_client(api_key)
+                if client:
+                    st.success("유효한 API 키입니다. 이메일도 입력해주세요.")
+                    st.session_state.temp_api_key = api_key
+                else:
+                    st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
 
-       # PubMed API를 위한 이메일 입력 로직
-    if 'pubmed_email' not in st.session_state:
-        pubmed_email = st.text_input("PubMed API 사용을 위해 이메일 주소를 입력해주세요. 사용 가능한 아무 이메일 주소를 적어주세요:")
-        if st.button("이메일 확인"):
-            if '@' in pubmed_email and '.' in pubmed_email:
-                st.session_state.pubmed_email = pubmed_email
-                st.success(f"이메일이 설정되었습니다: {pubmed_email}")
+           # PubMed API를 위한 이메일 입력 로직
+        if 'pubmed_email' not in st.session_state:
+            pubmed_email = st.text_input("PubMed API 사용을 위해 이메일 주소를 입력해주세요. 사용 가능한 아무 이메일 주소를 적어주세요:")
+            if st.button("이메일 확인"):
+                if '@' in pubmed_email and '.' in pubmed_email:
+                    st.session_state.pubmed_email = pubmed_email
+                    st.success(f"이메일이 설정되었습니다: {pubmed_email}")
+                else:
+                    st.error("유효한 이메일 주소를 입력해주세요.")
+            
+        if st.button("연구계획서 작성하기✏️"):
+            if 'temp_api_key' in st.session_state:
+                st.session_state.api_key = st.session_state.temp_api_key
+                st.session_state.anthropic_client = initialize_anthropic_client(st.session_state.api_key)
+                del st.session_state.temp_api_key
+                st.success("API 키가 설정되었습니다!")
+                st.session_state.current_section = 'home'  # 홈 화면으로 이동
+                st.rerun()  # 페이지 새로고침
             else:
-                st.error("유효한 이메일 주소를 입력해주세요.")
-        
-    if st.button("연구계획서 작성하기✏️"):
-        if 'temp_api_key' in st.session_state:
-            st.session_state.api_key = st.session_state.temp_api_key
-            st.session_state.anthropic_client = initialize_anthropic_client(st.session_state.api_key)
-            del st.session_state.temp_api_key
-            st.success("API 키가 설정되었습니다!")
-            st.session_state.current_section = 'home'  # 홈 화면으로 이동
-            st.rerun()  # 페이지 새로고침
-        else:
-            st.warning("먼저 API 키를 입력하고 확인해주세요.")
+                st.warning("먼저 API 키를 입력하고 확인해주세요.")
 
     # API 키가 설정된 후의 메인 인터페이스
     if 'api_key' in st.session_state and 'pubmed_email' in st.session_state:
@@ -1531,12 +1533,6 @@ def chat_interface():
             render_edit_mode()
         else:
             render_preview_mode()
-
-     # API 키와 이메일이 모두 설정되었는지 확인
-    if 'api_key' in st.session_state and 'pubmed_email' in st.session_state:
-        st.success("API 키와 이메일이 모두 설정되었습니다. 이제 연구계획서 작성을 시작할 수 있습니다.")
-    else:
-        st.warning("연구계획서 작성을 시작하려면 API 키와 이메일을 모두 입력해주세요.")
 
 def render_edit_mode():
     if st.session_state.current_section == 'home':
