@@ -488,6 +488,7 @@ def extract_sections(text):
     
     return sections
 
+# 2. 연구목적 작성 함수
 def write_research_purpose():
     st.markdown("## 2. 연구 목적")
     
@@ -575,7 +576,7 @@ def write_research_purpose():
     edited_content = st.text_area(
         "생성된 내용을 편집하거나 내용을 직접 입력하세요:",
         content,
-        height=300,
+        height=200,
         key="edit_content_2"
     )
     st.warning("다음 섹션으로 넘어가기 전에 편집내용 저장 버튼을 누르세요.")
@@ -940,7 +941,7 @@ def write_selection_criteria():
     edited_content = st.text_area(
         "생성된 내용을 편집하세요:",
         content,
-        height=300,
+        height=200,
         key="edit_content_4"
     )
 
@@ -1180,7 +1181,7 @@ def write_data_analysis():
     edited_content = st.text_area(
         "생성된 내용을 편집하세요:",
         content,
-        height=400,
+        height=300,
         key="edit_content_6"
     )
 
@@ -1310,7 +1311,7 @@ def write_research_method():
     edited_content = st.text_area(
         "연구방법을 직접 여기에 작성하거나, 위 버튼을 눌러 AI의 정리를 받으세요. 생성된 내용을 편집하세요:",
         content,
-        height=400,
+        height=150,
         key="edit_content_7"
     )
 
