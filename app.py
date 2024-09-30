@@ -635,38 +635,41 @@ def write_research_background():
     st.markdown("""
     검색한 논문을 내용을 쉽게 한글 요약해서 보시려면 "병리 논문 요약하기📝 ver.2 (HJY)" 을 사용해보세요! [링크](https://journalsummaryver2.streamlit.app/)
     """)
+            
+   # PDF 파일 업로드 
+    if 'pdfs_processed' not in st.session_state:
+        uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요.", type="pdf", accept_multiple_files=True)
         
-     # PDF 파일 업로드 
-    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요.", type="pdf", accept_multiple_files=True)
-    
-    if uploaded_files:
-        if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
-            st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
-        else:
-            with st.spinner("PDF 파일 처리 중..."):
-                progress_bar = st.progress(0)
-                total_files = len(uploaded_files)
-                
-                st.session_state.pdf_texts = []
-                st.session_state.pdf_files = uploaded_files
-                st.session_state.pdf_metadata = []
-    
-                # 비동기 처리
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                metadata_list = loop.run_until_complete(process_pdfs(uploaded_files, progress_bar, total_files))
-    
-                st.session_state.pdf_metadata = metadata_list
-            
-            # PDF 텍스트 추출 및 저장
-            for uploaded_file in uploaded_files:
-                pdf_text = extract_text_from_pdf(uploaded_file)
-                st.session_state.pdf_texts.append(pdf_text)
-            
-            st.success(f"{total_files}개의 PDF 파일이 성공적으로 처리되었습니다.")
-            st.session_state.pdfs_processed = True  # 새로운 플래그 추가
+        if uploaded_files:
+            if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
+                st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
+            else:
+                with st.spinner("PDF 파일 처리 중..."):
+                    progress_bar = st.progress(0)
+                    total_files = len(uploaded_files)
+                    
+                    st.session_state.pdf_texts = []
+                    st.session_state.pdf_files = uploaded_files
+                    st.session_state.pdf_metadata = []
 
-    # 연구 배경 생성 버튼
+                    # 비동기 처리
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    metadata_list = loop.run_until_complete(process_pdfs(uploaded_files, progress_bar, total_files))
+
+                    st.session_state.pdf_metadata = metadata_list
+                    
+                    # PDF 텍스트 추출 및 저장
+                    for uploaded_file in uploaded_files:
+                        pdf_text = extract_text_from_pdf(uploaded_file)
+                        st.session_state.pdf_texts.append(pdf_text)
+                    
+                    st.success(f"{total_files}개의 PDF 파일이 성공적으로 처리되었습니다.")
+                    st.session_state.pdfs_processed = True
+    else:
+        st.info(f"{len(st.session_state.pdf_files)}개의 PDF 파일이 이미 처리되었습니다.")
+
+   # 연구 배경 생성 버튼
     if st.button("연구배경 AI 생성 요청하기"):
         if 'pdfs_processed' in st.session_state and st.session_state.pdfs_processed:
             research_purpose = load_section_content("2. 연구 목적")
@@ -677,7 +680,7 @@ def write_research_background():
                 extracted_sections = extract_sections(pdf_text)
                 metadata = st.session_state.pdf_metadata[i] if i < len(st.session_state.pdf_metadata) else {}
                 is_korean = metadata.get('is_korean', False)
-    
+
                 pdf_contents.append({
                     "file_name": st.session_state.pdf_files[i].name,
                     "abstract": extracted_sections['abstract'],
@@ -719,7 +722,7 @@ def write_research_background():
             st.session_state.show_modification_request_3 = False
             st.rerun()
         else:
-            st.warning("PDF를 업로드한 후 다시 시도해주세요.")
+            st.warning("PDF를 업로드하고 처리가 완료된 후 다시 시도해주세요.")
 
     # AI 응답 표시
     content = load_section_content("3. 연구 배경")
