@@ -1491,16 +1491,16 @@ def chat_interface():
             else:
                 st.error("유효한 이메일 주소를 입력해주세요.")
         
-        if st.button("연구계획서 작성하기✏️"):
-            if 'temp_api_key' in st.session_state:
-                st.session_state.api_key = st.session_state.temp_api_key
-                st.session_state.anthropic_client = initialize_anthropic_client(st.session_state.api_key)
-                del st.session_state.temp_api_key
-                st.success("API 키가 설정되었습니다!")
-                st.session_state.current_section = 'home'  # 홈 화면으로 이동
-                st.rerun()  # 페이지 새로고침
-            else:
-                st.warning("먼저 API 키를 입력하고 확인해주세요.")
+    if st.button("연구계획서 작성하기✏️"):
+        if 'temp_api_key' in st.session_state:
+            st.session_state.api_key = st.session_state.temp_api_key
+            st.session_state.anthropic_client = initialize_anthropic_client(st.session_state.api_key)
+            del st.session_state.temp_api_key
+            st.success("API 키가 설정되었습니다!")
+            st.session_state.current_section = 'home'  # 홈 화면으로 이동
+            st.rerun()  # 페이지 새로고침
+        else:
+            st.warning("먼저 API 키를 입력하고 확인해주세요.")
 
     # API 키가 설정된 후의 메인 인터페이스
     if 'api_key' in st.session_state and 'pubmed_email' in st.session_state:
