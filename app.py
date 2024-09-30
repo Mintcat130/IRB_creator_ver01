@@ -1525,6 +1525,8 @@ def extract_pdf_metadata(pdf_file):
         소속: [소속1], [소속2], [소속3] (한국 소속이 있다면 'Korean' 태그를 추가, Seoul도 한국으로 간주)
         연도: [출판 연도]
         
+        정보를 찾을 수 없는 경우 'Unknown'으로 표시해주세요.
+        
         논문 내용:
         {text_sample}
         """
@@ -1537,7 +1539,7 @@ def extract_pdf_metadata(pdf_file):
         
         result = response.content[0].text
         
-        # 결과 파싱
+       # 결과 파싱
         title = re.search(r'제목: (.+)', result)
         authors = re.search(r'저자: (.+)', result)
         affiliations = re.search(r'소속: (.+)', result)
@@ -1545,22 +1547,22 @@ def extract_pdf_metadata(pdf_file):
         is_korean = re.search(r'한국 소속 여부: (.+)', result)
         
         return {
-            'title': title.group(1) if title else "Unknown Title",
-            'authors': authors.group(1) if authors else "Unknown Authors",
-            'affiliations': affiliations.group(1) if affiliations else "Unknown Affiliations",
-            'year': year.group(1) if year else "Unknown Year",
+            'title': title.group(1) if title else "Unknown title",
+            'authors': authors.group(1) if authors else "Unknown authors",
+            'affiliations': affiliations.group(1) if affiliations else "Unknown affiliations",
+            'year': year.group(1) if year else "Unknown year",
             'is_korean': is_korean.group(1).lower() == '예' if is_korean else False
         }
     except Exception as e:
         print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
         return {
-            'title': "Unknown Title",
-            'authors': "Unknown Authors",
-            'affiliations': "Unknown Affiliations",
-            'year': "Unknown Year",
+            'title': "Unknown title",
+            'authors': "Unknown authors",
+            'affiliations': "Unknown affiliations",
+            'year': "Unknown year",
             'is_korean': False
         }
-
+        
 def confirm_metadata(extracted_info):
     st.write("추출된 메타데이터:")
     title = st.text_input("제목", value=extracted_info['title'])
