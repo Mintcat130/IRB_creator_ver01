@@ -1525,7 +1525,11 @@ def extract_pdf_metadata(pdf_file):
         소속: [소속1], [소속2], [소속3] (한국 소속이 있다면 'Korean' 태그를 추가, Seoul도 한국으로 간주)
         연도: [출판 연도]
         
-        정보를 찾을 수 없는 경우 'Unknown'으로 표시해주세요.
+        정보를 찾을 수 없는 경우 다음과 같이 구체적으로 표시해주세요:
+        - 제목을 찾을 수 없는 경우: "Unknown title"
+        - 저자를 찾을 수 없는 경우: "Unknown authors"
+        - 소속을 찾을 수 없는 경우: "Unknown affiliations"
+        - 연도를 찾을 수 없는 경우: "Unknown year"
         
         논문 내용:
         {text_sample}
