@@ -633,19 +633,23 @@ def write_research_background():
     검색한 논문을 내용을 쉽게 한글 요약해서 보시려면 "병리 논문 요약하기📝 ver.2 (HJY)" 을 사용해보세요! [링크](https://journalsummaryver2.streamlit.app/)
     """)
     
-    # PDF 파일 업로드 
-    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요. **주의:** 검색 결과의 논문 내용은 자동으로 반영되지 않습니다. 검색된 논문들을 사용하시려면 각 웹페이지에서 PDF 파일을 다운 받은 후 여기에 업로드 하세요.", type="pdf", accept_multiple_files=True)
-    
-    if uploaded_files:
-        st.session_state.pdf_texts = []
-        st.session_state.pdf_files = uploaded_files
-        st.session_state.pdf_metadata = []
-        for uploaded_file in uploaded_files:
-            pdf_text = extract_text_from_pdf(uploaded_file)
-            st.session_state.pdf_texts.append(pdf_text)
-            metadata = extract_pdf_metadata(uploaded_file)
-            st.session_state.pdf_metadata.append(metadata)
-        st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
+ # PDF 파일 업로드 
+uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요. **주의:** 검색 결과의 논문 내용은 자동으로 반영되지 않습니다. 검색된 논문들을 사용하시려면 각 웹페이지에서 PDF 파일을 다운 받은 후 여기에 업로드 하세요.", type="pdf", accept_multiple_files=True)
+
+if uploaded_files:
+        if not st.session_state.get('user_email'):
+            st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
+        else:
+            st.session_state.pdf_texts = []
+            st.session_state.pdf_files = uploaded_files
+            st.session_state.pdf_metadata = []
+            for uploaded_file in uploaded_files:
+                pdf_text = extract_text_from_pdf(uploaded_file)
+                st.session_state.pdf_texts.append(pdf_text)
+                metadata = extract_pdf_metadata(uploaded_file)
+                if metadata:
+                    st.session_state.pdf_metadata.append(metadata)
+            st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
 
     # 연구 배경 생성 버튼
     if st.button("연구배경 AI 생성 요청하기"):
@@ -1482,24 +1486,23 @@ def chat_interface():
 
            # PubMed API를 위한 이메일 입력 로직
         if 'pubmed_email' not in st.session_state:
-            pubmed_email = st.text_input("PubMed API 사용을 위해 이메일 주소를 입력해주세요. 사용 가능한 아무 이메일 주소를 적어주세요:")
-            if st.button("이메일 확인"):
-                if '@' in pubmed_email and '.' in pubmed_email:
-                    st.session_state.pubmed_email = pubmed_email
-                    st.success(f"이메일이 설정되었습니다: {pubmed_email}")
-                else:
-                    st.error("유효한 이메일 주소를 입력해주세요.")
+            pubmed_email = get_user_email()
+            if pubmed_email:
+                st.session_state.pubmed_email = pubmed_email
             
         if st.button("연구계획서 작성하기✏️"):
-            if 'temp_api_key' in st.session_state:
+            if 'temp_api_key' in st.session_state and 'pubmed_email' in st.session_state:
                 st.session_state.api_key = st.session_state.temp_api_key
                 st.session_state.anthropic_client = initialize_anthropic_client(st.session_state.api_key)
                 del st.session_state.temp_api_key
-                st.success("API 키가 설정되었습니다!")
+                st.success("API 키와 이메일이 설정되었습니다!")
                 st.session_state.current_section = 'home'  # 홈 화면으로 이동
                 st.rerun()  # 페이지 새로고침
             else:
-                st.warning("먼저 API 키를 입력하고 확인해주세요.")
+                if 'temp_api_key' not in st.session_state:
+                    st.warning("먼저 API 키를 입력하고 확인해주세요.")
+                if 'pubmed_email' not in st.session_state:
+                    st.warning("PubMed API 사용을 위한 이메일을 입력해주세요.")
 
     # API 키가 설정된 후의 메인 인터페이스
     if 'api_key' in st.session_state and 'pubmed_email' in st.session_state:
@@ -1634,12 +1637,11 @@ def generate_full_content():
 Entrez.email = "your_email@example.com"  # 여기에 실제 이메일 주소를 입력하세요
 
 def search_pubmed(query, max_results=10):
-    user_email = get_user_email()
-    if not user_email:
+    if not st.session_state.get('user_email'):
         st.warning("PubMed API 사용을 위해 이메일 주소를 입력해주세요.")
         return []
     
-    Entrez.email = user_email
+    Entrez.email = st.session_state.user_email
     handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
     record = Entrez.read(handle)
     handle.close()
@@ -1704,6 +1706,10 @@ def search_and_extract_metadata(pdf_text):
 # PDF 메타데이터 추출 함수 수정
 def extract_pdf_metadata(pdf_file):
     try:
+        if not st.session_state.get('user_email'):
+            st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
+            return None
+        
         text = extract_text_from_pdf(pdf_file)
         return search_and_extract_metadata(text)
     except Exception as e:
@@ -1737,6 +1743,7 @@ def get_user_email():
     
     if user_email != st.session_state.user_email:
         st.session_state.user_email = user_email
+        Entrez.email = user_email
         st.rerun()
     
     return user_email
