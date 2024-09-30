@@ -1750,25 +1750,25 @@ def render_preview_mode():
 def generate_full_content():
     content = ""
         
-        # 1. 연구 과제명을 먼저 표시
-        title_content = load_section_content("1. 연구 과제명")
-        if title_content:
-            content += f"### 1. 연구 과제명\n{title_content}\n\n"
-        
-        # 2~7번 섹션 표시
-        for section in RESEARCH_SECTIONS:
-            if section != "1. 연구 과제명":  # 1번 섹션은 이미 처리했으므로 제외
-                section_content = load_section_content(section)
-                if section_content:  # 내용이 있는 경우에만 추가
-                    content += f"### {section}\n{section_content}\n\n"
-        
-        # 참고문헌 추가
-        content += "### 참고문헌\n"
-        references = format_references(st.session_state.get('pdf_files', []))
-        for ref in references:
-            content += f"{ref}\n"
-        
-        st.code(content, language="markdown")
+    # 1. 연구 과제명을 먼저 표시
+    title_content = load_section_content("1. 연구 과제명")
+    if title_content:
+        content += f"### 1. 연구 과제명\n{title_content}\n\n"
+    
+    # 2~7번 섹션 표시
+    for section in RESEARCH_SECTIONS:
+        if section != "1. 연구 과제명":  # 1번 섹션은 이미 처리했으므로 제외
+            section_content = load_section_content(section)
+            if section_content:  # 내용이 있는 경우에만 추가
+                content += f"### {section}\n{section_content}\n\n"
+    
+    # 참고문헌 추가
+    content += "### 참고문헌\n"
+    references = format_references(st.session_state.get('pdf_files', []))
+    for ref in references:
+        content += f"{ref}\n"
+    
+    st.code(content, language="markdown")
 
     # CSS 스타일
     st.markdown("""
