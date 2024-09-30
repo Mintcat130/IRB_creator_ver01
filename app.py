@@ -657,29 +657,29 @@ def write_research_background():
                 metadata_list = loop.run_until_complete(process_pdfs(uploaded_files, progress_bar, total_files))
     
                 st.session_state.pdf_metadata = metadata_list
-                st.success(f"{total_files}개의 PDF 파일이 성공적으로 처리되었습니다.")
+            
+            # PDF 텍스트 추출 및 저장
+            for uploaded_file in uploaded_files:
+                pdf_text = extract_text_from_pdf(uploaded_file)
+                st.session_state.pdf_texts.append(pdf_text)
+            
+            st.success(f"{total_files}개의 PDF 파일이 성공적으로 처리되었습니다.")
+            st.session_state.pdfs_processed = True  # 새로운 플래그 추가
 
     # 연구 배경 생성 버튼
     if st.button("연구배경 AI 생성 요청하기"):
-        if 'pdf_texts' in st.session_state and st.session_state['pdf_texts']:
+        if 'pdfs_processed' in st.session_state and st.session_state.pdfs_processed:
             research_purpose = load_section_content("2. 연구 목적")
             
             pdf_contents = []
             korean_authors = False
-            for i, pdf_text in enumerate(st.session_state['pdf_texts']):
+            for i, pdf_text in enumerate(st.session_state.pdf_texts):
                 extracted_sections = extract_sections(pdf_text)
-                metadata = st.session_state.get('pdf_metadata', [])
-                if i < len(metadata):
-                    current_metadata = metadata[i]
-                    if isinstance(current_metadata, dict):
-                        is_korean = current_metadata.get('is_korean', False)
-                    else:
-                        is_korean = False
-                else:
-                    is_korean = False
-
+                metadata = st.session_state.pdf_metadata[i] if i < len(st.session_state.pdf_metadata) else {}
+                is_korean = metadata.get('is_korean', False)
+    
                 pdf_contents.append({
-                    "file_name": st.session_state['pdf_files'][i].name,
+                    "file_name": st.session_state.pdf_files[i].name,
                     "abstract": extracted_sections['abstract'],
                     "introduction": extracted_sections['introduction'],
                     "conclusion": extracted_sections['conclusion'],
