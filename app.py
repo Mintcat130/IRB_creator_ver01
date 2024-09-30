@@ -1767,8 +1767,6 @@ def generate_full_content():
     references = format_references(st.session_state.get('pdf_files', []))
     for ref in references:
         content += f"{ref}\n"
-    
-    st.code(content, language="markdown")
 
     # CSS 스타일
     st.markdown("""
