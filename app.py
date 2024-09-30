@@ -9,6 +9,8 @@ import re
 import uuid
 import streamlit.components.v1 as components
 from collections import defaultdict
+import xml.etree.ElementTree as ET
+from Bio import Entrez
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -443,25 +445,7 @@ def is_likely_paper(result):
     
     return False
 
-# 참고문헌 정리 함수 추가
-def format_references(scholar_results, pdf_files):
-    references = []
-    
-    # Google Scholar 결과 처리
-    for i, result in enumerate(scholar_results, start=len(references)+1):
-        authors = result['authors'].split(', ')
-        if len(authors) > 6:
-            authors = authors[:6] + ['et al.']
-        author_string = ', '.join(authors)
-        reference = f"{i}. {author_string}. {result['title']} URL: {result['link']}."
-        references.append(reference)
-    
-    # PDF 파일 처리
-    for i, pdf_file in enumerate(pdf_files, start=len(references)+1):
-        reference = f"{i}. {pdf_file.name}"
-        references.append(reference)
-    
-    return references
+
 
 # PDF에서 특정 섹션 추출하는 함수 
 def extract_sections(text):
@@ -659,10 +643,9 @@ def write_research_background():
         for uploaded_file in uploaded_files:
             pdf_text = extract_text_from_pdf(uploaded_file)
             st.session_state.pdf_texts.append(pdf_text)
-            metadata = extract_references(pdf_text)
+            metadata = extract_pdf_metadata(uploaded_file)
             st.session_state.pdf_metadata.append(metadata)
         st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
-
 
     # 연구 배경 생성 버튼
     if st.button("연구배경 AI 생성 요청하기"):
@@ -816,47 +799,6 @@ def write_research_background():
             else:
                 st.warning("더 이상 되돌릴 수 있는 버전이 없습니다.")
 
-def verify_and_correct_references(response, correct_metadata):
-    # 응답에서 참고문헌 추출
-    cited_references = extract_references(response)
-    
-    # 추출된 참고문헌과 원본 메타데이터 비교 및 수정
-    for ref in cited_references:
-        ref_str = ', '.join(ref) if isinstance(ref, (list, tuple)) else str(ref)
-        if ref_str not in [', '.join(map(str, m)) for m in correct_metadata]:
-            # 잘못된 참고문헌 찾아 수정
-            correct_ref = find_closest_match(ref_str, correct_metadata)
-            response = response.replace(ref_str, ', '.join(map(str, correct_ref)))
-    
-    return response
-
-def find_closest_match(ref, correct_metadata):
-    def format_metadata(x):
-        if isinstance(x, (list, tuple)):
-            return ', '.join(str(item) for item in x)
-        return str(x)
-    
-    return max(correct_metadata, key=lambda x: similarity(ref, format_metadata(x)))[0]
-
-def similarity(a, b):
-    # 간단한 유사도 계산 (예: 레벤슈타인 거리 사용)
-    return 1 - (levenshtein_distance(a, b) / max(len(a), len(b)))
-
-def levenshtein_distance(s1, s2):
-    if len(s1) < len(s2):
-        return levenshtein_distance(s2, s1)
-    if len(s2) == 0:
-        return len(s1)
-    previous_row = range(len(s2) + 1)
-    for i, c1 in enumerate(s1):
-        current_row = [i + 1]
-        for j, c2 in enumerate(s2):
-            insertions = previous_row[j + 1] + 1
-            deletions = current_row[j] + 1
-            substitutions = previous_row[j] + (c1 != c2)
-            current_row.append(min(insertions, deletions, substitutions))
-        previous_row = current_row
-    return previous_row[-1]
 
 # 4. 선정기준, 제외기준 작성 함수
 def write_selection_criteria():
@@ -1509,58 +1451,6 @@ def display_references():
     for i, ref in enumerate(references, 1):
         st.markdown(f"{i}. {ref}")
 
-
-def extract_pdf_metadata(pdf_file):
-    try:
-        text = extract_text_from_pdf(pdf_file)
-        
-        # 텍스트의 처음 부분만 사용 (API 토큰 제한을 고려)
-        text_sample = text[:5000]
-        
-        prompt = f"""
-        다음은 학술 논문의 일부입니다. 이 논문의 제목, 저자들(최대 3명까지), 저자들의 소속 기관(특히 한국 소속 여부), 출판 연도를 추출해주세요.
-        결과는 다음 형식으로 작성해주세요:
-        제목: [논문 제목]
-        저자: [저자1], [저자2], [저자3]
-        소속: [소속1], [소속2], [소속3] (한국 소속이 있다면 'Korean' 태그를 추가, Seoul도 한국으로 간주)
-        연도: [출판 연도]
-        
-        논문 내용:
-        {text_sample}
-        """
-        
-        response = st.session_state.anthropic_client.messages.create(
-            model="claude-3-5-sonnet-20240620",
-            max_tokens=300,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        
-        result = response.content[0].text
-        
-        # 결과 파싱
-        title = re.search(r'제목: (.+)', result)
-        authors = re.search(r'저자: (.+)', result)
-        affiliations = re.search(r'소속: (.+)', result)
-        year = re.search(r'연도: (.+)', result)
-        is_korean = re.search(r'한국 소속 여부: (.+)', result)
-        
-        return {
-            'title': title.group(1) if title else "Unknown Title",
-            'authors': authors.group(1) if authors else "Unknown Authors",
-            'affiliations': affiliations.group(1) if affiliations else "Unknown Affiliations",
-            'year': year.group(1) if year else "Unknown Year",
-            'is_korean': is_korean.group(1).lower() == '예' if is_korean else False
-        }
-    except Exception as e:
-        print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
-        return {
-            'title': "Unknown Title",
-            'authors': "Unknown Authors",
-            'affiliations': "Unknown Affiliations",
-            'year': "Unknown Year",
-            'is_korean': False
-        }
-
 def confirm_metadata(extracted_info):
     st.write("추출된 메타데이터:")
     title = st.text_input("제목", value=extracted_info['title'])
@@ -1568,47 +1458,6 @@ def confirm_metadata(extracted_info):
     year = st.text_input("년도", value=extracted_info['year'])
     return f"{authors}. {title}. {year}."
 
-def format_references(pdf_files):
-    references = []
-    for i, pdf_file in enumerate(pdf_files, start=1):
-        metadata = extract_pdf_metadata(pdf_file)
-        reference = f"{i}. {metadata['authors']}. {metadata['title']}. {metadata['year']}."
-        references.append(reference)
-    return references
-
-def parse_and_validate_titles(response):
-    lines = response.split('\n')
-    options = []
-    current_option = []
-    
-    for line in lines:
-        if line.strip().startswith(('1.', '2.', '3.')):
-            if current_option:
-                options.append('\n'.join(current_option))
-                current_option = []
-        current_option.append(line.strip())
-    
-    if current_option:
-        options.append('\n'.join(current_option))
-    
-    return [opt for opt in options if is_valid_title_option(opt)]
-
-def is_valid_title_option(option):
-    lines = option.split('\n')
-    return len(lines) >= 2 and lines[0].strip() and lines[1].strip()
-
-def format_title_option(option):
-    lines = option.split('\n')
-    if len(lines) >= 2:
-        return f"<p><strong>영문:</strong> {lines[0]}<br><strong>한글:</strong> {lines[1]}</p>"
-    return f"<p>{option}</p>"
-            
-
-def extract_references(text):
-    # [저자, 연도] 형식의 참고문헌을 추출
-    references = re.findall(r'\[([^\]]+)\]', text)
-    # 각 참고문헌을 [저자, 연도] 형식의 리스트로 변환
-    return [ref.split(',') for ref in set(references)]
 
 # 전체 인터페이스
 def chat_interface():
@@ -1642,9 +1491,21 @@ def chat_interface():
             else:
                 st.warning("먼저 API 키를 입력하고 확인해주세요.")
 
+    # PubMed API를 위한 이메일 입력 로직
+    if 'pubmed_email' not in st.session_state:
+        pubmed_email = st.text_input("PubMed API 사용을 위해 이메일 주소를 입력해주세요. 사용 가능한 아무 이메일 주소를 적어주세요:")
+        if st.button("이메일 확인"):
+            if '@' in pubmed_email and '.' in pubmed_email:
+                st.session_state.pubmed_email = pubmed_email
+                st.success(f"이메일이 설정되었습니다: {pubmed_email}")
+                st.rerun()
+            else:
+                st.error("유효한 이메일 주소를 입력해주세요.")
+
     # API 키가 설정된 후의 메인 인터페이스
-    else:
-        st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
+    if 'api_key' in st.session_state and 'pubmed_email' in st.session_state:
+            st.sidebar.text(f"현재 API 키: {st.session_state.api_key[:5]}...")
+            st.sidebar.text(f"PubMed 이메일: {st.session_state.pubmed_email}")
 
         if st.sidebar.button("🔄 초기화면으로"):
             for key in list(st.session_state.keys()):
@@ -1770,6 +1631,117 @@ def generate_full_content():
         
     return sections_content
 
+# PubMed API 설정
+Entrez.email = "your_email@example.com"  # 여기에 실제 이메일 주소를 입력하세요
+
+def search_pubmed(query, max_results=10):
+    user_email = get_user_email()
+    if not user_email:
+        st.warning("PubMed API 사용을 위해 이메일 주소를 입력해주세요.")
+        return []
+    
+    Entrez.email = user_email
+    handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
+    record = Entrez.read(handle)
+    handle.close()
+    return record["IdList"]
+
+def fetch_pubmed_details(id_list):
+    ids = ",".join(id_list)
+    handle = Entrez.efetch(db="pubmed", id=ids, retmode="xml")
+    results = Entrez.read(handle)
+    handle.close()
+    return results
+
+def extract_pubmed_metadata(article):
+    try:
+        title = article['MedlineCitation']['Article']['ArticleTitle']
+        authors = [author['LastName'] + ' ' + author['Initials'] for author in article['MedlineCitation']['Article']['AuthorList']]
+        year = article['MedlineCitation']['Article']['Journal']['JournalIssue']['PubDate'].get('Year', 'Unknown')
+        
+        affiliations = []
+        for author in article['MedlineCitation']['Article']['AuthorList']:
+            if 'AffiliationInfo' in author:
+                affiliations.extend([aff['Affiliation'] for aff in author['AffiliationInfo']])
+        
+        is_korean = any('korea' in aff.lower() or 'seoul' in aff.lower() for aff in affiliations)
+        
+        return {
+            'title': title,
+            'authors': ', '.join(authors[:3]),  # 최대 3명의 저자만 포함
+            'year': year,
+            'affiliations': ', '.join(affiliations),
+            'is_korean': is_korean
+        }
+    except KeyError:
+        return {
+            'title': "Unknown Title",
+            'authors': "Unknown Authors",
+            'year': "Unknown Year",
+            'affiliations': "Unknown Affiliations",
+            'is_korean': False
+        }
+
+def search_and_extract_metadata(pdf_text):
+    # PDF 텍스트에서 제목 추출 (간단한 예시, 실제로는 더 복잡할 수 있음)
+    title = pdf_text.split('\n')[0].strip()
+    
+    # PubMed 검색
+    id_list = search_pubmed(title)
+    if id_list:
+        results = fetch_pubmed_details(id_list)
+        if results['PubmedArticle']:
+            return extract_pubmed_metadata(results['PubmedArticle'][0])
+    
+    # PubMed에서 찾지 못한 경우 기본값 반환
+    return {
+        'title': title,
+        'authors': "Unknown Authors",
+        'year': "Unknown Year",
+        'affiliations': "Unknown Affiliations",
+        'is_korean': False
+    }
+
+# PDF 메타데이터 추출 함수 수정
+def extract_pdf_metadata(pdf_file):
+    try:
+        text = extract_text_from_pdf(pdf_file)
+        return search_and_extract_metadata(text)
+    except Exception as e:
+        print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
+        return {
+            'title': "Unknown Title",
+            'authors': "Unknown Authors",
+            'year': "Unknown Year",
+            'affiliations': "Unknown Affiliations",
+            'is_korean': False
+        }
+
+# 참고문헌 포맷 함수 수정
+def format_references(pdf_files):
+    references = []
+    for i, pdf_file in enumerate(pdf_files, start=1):
+        metadata = extract_pdf_metadata(pdf_file)
+        reference = f"{i}. {metadata['authors']}. {metadata['title']}. {metadata['year']}."
+        references.append(reference)
+    return references
+
+# PubMed API 설정을 위한 이메일 입력 함수
+def get_user_email():
+    if 'user_email' not in st.session_state:
+        st.session_state.user_email = ""
+    
+    user_email = st.text_input(
+        "PubMed API 사용을 위한 이메일 주소를 입력해주세요:",
+        value=st.session_state.user_email
+    )
+    
+    if user_email != st.session_state.user_email:
+        st.session_state.user_email = user_email
+        st.rerun()
+    
+    return user_email
+  
     # CSS 스타일
     st.markdown("""
     <style>
