@@ -640,25 +640,24 @@ def write_research_background():
     uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요.", type="pdf", accept_multiple_files=True)
     
     if uploaded_files:
-        if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
-            st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
-        else:
-            with st.spinner("PDF 파일 처리 중..."):
-                progress_bar = st.progress(0)
-                progress_bar.empty()
-                progress_bar = st.progress(0)
-                
-                st.session_state.pdf_texts = []
-                st.session_state.pdf_files = uploaded_files
-                st.session_state.pdf_metadata = []
+    if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
+        st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
+    else:
+        with st.spinner("PDF 파일 처리 중..."):
+            progress_bar = st.progress(0)
+            total_files = len(uploaded_files)
+            
+            st.session_state.pdf_texts = []
+            st.session_state.pdf_files = uploaded_files
+            st.session_state.pdf_metadata = []
 
-                # 비동기 처리
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                metadata_list = loop.run_until_complete(process_pdfs(uploaded_files, progress_bar))
+            # 비동기 처리
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            metadata_list = loop.run_until_complete(process_pdfs(uploaded_files, progress_bar, total_files))
 
-                st.session_state.pdf_metadata = metadata_list
-                st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 처리되었습니다.")
+            st.session_state.pdf_metadata = metadata_list
+            st.success(f"{total_files}개의 PDF 파일이 성공적으로 처리되었습니다.")
 
     # 연구 배경 생성 버튼
     if st.button("연구배경 AI 생성 요청하기"):
@@ -1740,15 +1739,15 @@ def search_and_extract_metadata(pdf_text):
     }
 
 # PDF 메타데이터 추출 함수 수정
-async def extract_pdf_metadata_async(pdf_file, progress_bar):
+async def extract_pdf_metadata_async(pdf_file, progress_bar, index, total_files):
     try:
         text = extract_text_from_pdf(pdf_file)
         metadata = await asyncio.to_thread(search_and_extract_metadata, text)
-        progress_bar.progress(progress_bar.value + 1)
+        progress_bar.progress((index + 1) / total_files)
         return metadata
     except Exception as e:
         print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
-        progress_bar.progress(progress_bar.value + 1)
+        progress_bar.progress((index + 1) / total_files)
         return {
             'title': "Unknown Title",
             'authors': "Unknown Authors",
@@ -1757,8 +1756,8 @@ async def extract_pdf_metadata_async(pdf_file, progress_bar):
             'is_korean': False
         }
 
-async def process_pdfs(uploaded_files, progress_bar):
-    tasks = [extract_pdf_metadata_async(file, progress_bar) for file in uploaded_files]
+async def process_pdfs(uploaded_files, progress_bar, total_files):
+    tasks = [extract_pdf_metadata_async(file, progress_bar, i, total_files) for i, file in enumerate(uploaded_files)]
     return await asyncio.gather(*tasks)
 
 # 참고문헌 포맷 함수 수정
