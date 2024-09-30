@@ -640,24 +640,24 @@ def write_research_background():
     uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요.", type="pdf", accept_multiple_files=True)
     
     if uploaded_files:
-    if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
-        st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
-    else:
-        with st.spinner("PDF 파일 처리 중..."):
-            progress_bar = st.progress(0)
-            total_files = len(uploaded_files)
-            
-            st.session_state.pdf_texts = []
-            st.session_state.pdf_files = uploaded_files
-            st.session_state.pdf_metadata = []
-
-            # 비동기 처리
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            metadata_list = loop.run_until_complete(process_pdfs(uploaded_files, progress_bar, total_files))
-
-            st.session_state.pdf_metadata = metadata_list
-            st.success(f"{total_files}개의 PDF 파일이 성공적으로 처리되었습니다.")
+        if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
+            st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
+        else:
+            with st.spinner("PDF 파일 처리 중..."):
+                progress_bar = st.progress(0)
+                total_files = len(uploaded_files)
+                
+                st.session_state.pdf_texts = []
+                st.session_state.pdf_files = uploaded_files
+                st.session_state.pdf_metadata = []
+    
+                # 비동기 처리
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                metadata_list = loop.run_until_complete(process_pdfs(uploaded_files, progress_bar, total_files))
+    
+                st.session_state.pdf_metadata = metadata_list
+                st.success(f"{total_files}개의 PDF 파일이 성공적으로 처리되었습니다.")
 
     # 연구 배경 생성 버튼
     if st.button("연구배경 AI 생성 요청하기"):
