@@ -1640,13 +1640,14 @@ def generate_full_content():
         
     return sections_content
 
-def search_pubmed(query, max_results=10):
+def search_pubmed(query, search_field=""):
     if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
         st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
         return []
     
     Entrez.email = st.session_state.pubmed_email
-    handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
+    search_term = f"{query}{search_field}" if search_field else query
+    handle = Entrez.esearch(db="pubmed", term=search_term, retmax=1)
     record = Entrez.read(handle)
     handle.close()
     return record["IdList"]
@@ -1687,20 +1688,39 @@ def extract_pubmed_metadata(article):
             'is_korean': False
         }
 
+def extract_title_and_doi(pdf_text):
+    # 제목 추출 (첫 번째 대문자로 시작하는 줄을 제목으로 가정)
+    title_match = re.search(r'^[A-Z].*$', pdf_text, re.MULTILINE)
+    title = title_match.group(0) if title_match else ""
+
+    # DOI 추출
+    doi_match = re.search(r'\b(10[.][0-9]{4,}(?:[.][0-9]+)*/(?:(?!["&\'<>])\S)+)\b', pdf_text)
+    doi = doi_match.group(0) if doi_match else ""
+
+    return title, doi
+
 def search_and_extract_metadata(pdf_text):
-    # PDF 텍스트에서 제목 추출 (간단한 예시, 실제로는 더 복잡할 수 있음)
-    title = pdf_text.split('\n')[0].strip()
+    title, doi = extract_title_and_doi(pdf_text)
     
-    # PubMed 검색
-    id_list = search_pubmed(title)
-    if id_list:
-        results = fetch_pubmed_details(id_list)
-        if results['PubmedArticle']:
-            return extract_pubmed_metadata(results['PubmedArticle'][0])
+    # DOI로 먼저 검색
+    if doi:
+        id_list = search_pubmed(f"{doi}[AID]")
+        if id_list:
+            results = fetch_pubmed_details(id_list)
+            if results['PubmedArticle']:
+                return extract_pubmed_metadata(results['PubmedArticle'][0])
     
-    # PubMed에서 찾지 못한 경우 기본값 반환
+    # DOI 검색 실패 시 제목으로 검색
+    if title:
+        id_list = search_pubmed(title)
+        if id_list:
+            results = fetch_pubmed_details(id_list)
+            if results['PubmedArticle']:
+                return extract_pubmed_metadata(results['PubmedArticle'][0])
+    
+    # 검색 실패 시 기본값 반환
     return {
-        'title': title,
+        'title': title or "Unknown Title",
         'authors': "Unknown Authors",
         'year': "Unknown Year",
         'affiliations': "Unknown Affiliations",
