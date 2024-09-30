@@ -1485,16 +1485,18 @@ def chat_interface():
                     st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
 
         # PubMed API를 위한 이메일 입력 로직
-        if 'pubmed_email' not in st.session_state:
-            pubmed_email = st.text_input("PubMed API 사용을 위해 이메일 주소를 입력해주세요. 사용 가능한 아무 이메일 주소를 적어주세요:")
+        if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
+            user_email = get_user_email()
             if st.button("이메일 확인"):
-                if '@' in pubmed_email and '.' in pubmed_email:
-                    st.session_state.pubmed_email = pubmed_email
-                    Entrez.email = pubmed_email  # Entrez 이메일 설정
-                    st.success(f"이메일이 설정되었습니다: {pubmed_email}")
+                if '@' in user_email and '.' in user_email:
+                    st.session_state.pubmed_email = user_email
+                    Entrez.email = user_email  # Entrez 이메일 설정
+                    st.success(f"이메일이 설정되었습니다: {user_email}")
                 else:
                     st.error("유효한 이메일 주소를 입력해주세요.")
-            
+        else:
+            st.success(f"설정된 이메일: {st.session_state.pubmed_email}")
+                    
         if st.button("연구계획서 작성하기✏️"):
             if 'temp_api_key' in st.session_state and 'pubmed_email' in st.session_state:
                 st.session_state.api_key = st.session_state.temp_api_key
@@ -1638,15 +1640,12 @@ def generate_full_content():
         
     return sections_content
 
-# PubMed API 설정
-Entrez.email = "your_email@example.com"  # 여기에 실제 이메일 주소를 입력하세요
-
 def search_pubmed(query, max_results=10):
-    if not st.session_state.get('user_email'):
-        st.warning("PubMed API 사용을 위해 이메일 주소를 입력해주세요.")
+    if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
+        st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
         return []
     
-    Entrez.email = st.session_state.user_email
+    Entrez.email = st.session_state.pubmed_email
     handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
     record = Entrez.read(handle)
     handle.close()
@@ -1711,11 +1710,11 @@ def search_and_extract_metadata(pdf_text):
 # PDF 메타데이터 추출 함수 수정
 def extract_pdf_metadata(pdf_file):
     try:
-        if 'pubmed_email' not in st.session_state:
+        if 'pubmed_email' not in st.session_state or not st.session_state.pubmed_email:
             st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
             return None
         
-        Entrez.email = st.session_state.pubmed_email  # 세션에서 이메일 가져와 설정
+        Entrez.email = st.session_state.pubmed_email
         
         text = extract_text_from_pdf(pdf_file)
         return search_and_extract_metadata(text)
@@ -1740,18 +1739,13 @@ def format_references(pdf_files):
 
 # PubMed API 설정을 위한 이메일 입력 함수
 def get_user_email():
-    if 'user_email' not in st.session_state:
-        st.session_state.user_email = ""
+    if 'pubmed_email' not in st.session_state:
+        st.session_state.pubmed_email = ""
     
     user_email = st.text_input(
         "PubMed API 사용을 위한 이메일 주소를 입력해주세요:",
-        value=st.session_state.user_email
+        value=st.session_state.pubmed_email
     )
-    
-    if user_email != st.session_state.user_email:
-        st.session_state.user_email = user_email
-        Entrez.email = user_email
-        st.rerun()
     
     return user_email
   
