@@ -1488,7 +1488,6 @@ def chat_interface():
             if '@' in pubmed_email and '.' in pubmed_email:
                 st.session_state.pubmed_email = pubmed_email
                 st.success(f"이메일이 설정되었습니다: {pubmed_email}")
-                st.rerun()
             else:
                 st.error("유효한 이메일 주소를 입력해주세요.")
         
@@ -1498,7 +1497,6 @@ def chat_interface():
                 st.session_state.anthropic_client = initialize_anthropic_client(st.session_state.api_key)
                 del st.session_state.temp_api_key
                 st.success("API 키가 설정되었습니다!")
-                st.rerun()
             else:
                 st.warning("먼저 API 키를 입력하고 확인해주세요.")
 
