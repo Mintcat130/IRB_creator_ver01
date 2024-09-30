@@ -1480,6 +1480,17 @@ def chat_interface():
                 st.session_state.temp_api_key = api_key
             else:
                 st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
+
+       # PubMed API를 위한 이메일 입력 로직
+    if 'pubmed_email' not in st.session_state:
+        pubmed_email = st.text_input("PubMed API 사용을 위해 이메일 주소를 입력해주세요. 사용 가능한 아무 이메일 주소를 적어주세요:")
+        if st.button("이메일 확인"):
+            if '@' in pubmed_email and '.' in pubmed_email:
+                st.session_state.pubmed_email = pubmed_email
+                st.success(f"이메일이 설정되었습니다: {pubmed_email}")
+                st.rerun()
+            else:
+                st.error("유효한 이메일 주소를 입력해주세요.")
         
         if st.button("연구계획서 작성하기✏️"):
             if 'temp_api_key' in st.session_state:
@@ -1490,17 +1501,6 @@ def chat_interface():
                 st.rerun()
             else:
                 st.warning("먼저 API 키를 입력하고 확인해주세요.")
-
-    # PubMed API를 위한 이메일 입력 로직
-    if 'pubmed_email' not in st.session_state:
-        pubmed_email = st.text_input("PubMed API 사용을 위해 이메일 주소를 입력해주세요. 사용 가능한 아무 이메일 주소를 적어주세요:")
-        if st.button("이메일 확인"):
-            if '@' in pubmed_email and '.' in pubmed_email:
-                st.session_state.pubmed_email = pubmed_email
-                st.success(f"이메일이 설정되었습니다: {pubmed_email}")
-                st.rerun()
-            else:
-                st.error("유효한 이메일 주소를 입력해주세요.")
 
     # API 키가 설정된 후의 메인 인터페이스
     if 'api_key' in st.session_state and 'pubmed_email' in st.session_state:
