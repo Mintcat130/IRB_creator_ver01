@@ -1619,7 +1619,12 @@ def render_preview_mode():
     """)
 
     with st.spinner('전체 내용을 불러오는 중입니다...'):
-        sections_content = generate_full_content()
+        # 비동기 함수 실행을 위한 래퍼 함수
+        async def async_generate_full_content():
+            return await generate_full_content()
+        
+        # 비동기 함수 실행
+        sections_content = asyncio.run(async_generate_full_content())
     
     for section, content in sections_content.items():
         st.subheader(section)
@@ -1630,7 +1635,7 @@ def render_preview_mode():
         st.session_state.view_mode = 'edit'
         st.rerun()
 
-def generate_full_content():
+async def generate_full_content():
     sections_content = {}
         
     # 1. 연구 과제명을 먼저 표시
@@ -1645,8 +1650,8 @@ def generate_full_content():
             if section_content:  # 내용이 있는 경우에만 추가
                 sections_content[section] = section_content
     
-    # 참고문헌 추가
-    references = format_references(st.session_state.get('pdf_files', []))
+    # 참고문헌 추가 (비동기 처리)
+    references = await format_references_async(st.session_state.get('pdf_files', []))
     sections_content["참고문헌"] = "\n".join(references)
         
     return sections_content
@@ -1746,11 +1751,13 @@ async def extract_pdf_metadata_async(pdf_file, progress_bar, index, total_files)
     try:
         text = extract_text_from_pdf(pdf_file)
         metadata = await asyncio.to_thread(search_and_extract_metadata, text)
-        progress_bar.progress((index + 1) / total_files)
+        if progress_bar:
+            progress_bar.progress((index + 1) / total_files)
         return metadata
     except Exception as e:
         print(f"Error extracting metadata from {pdf_file.name}: {str(e)}")
-        progress_bar.progress((index + 1) / total_files)
+        if progress_bar:
+            progress_bar.progress((index + 1) / total_files)
         return {
             'title': "Unknown Title",
             'authors': "Unknown Authors",
@@ -1764,10 +1771,10 @@ async def process_pdfs(uploaded_files, progress_bar, total_files):
     return await asyncio.gather(*tasks)
 
 # 참고문헌 포맷 함수 수정
-def format_references(pdf_files):
+async def format_references_async(pdf_files):
     references = []
     for i, pdf_file in enumerate(pdf_files, start=1):
-        metadata = extract_pdf_metadata(pdf_file)
+        metadata = await extract_pdf_metadata_async(pdf_file, None, i, len(pdf_files))
         reference = f"{i}. {metadata['authors']}. {metadata['title']}. {metadata['year']}."
         references.append(reference)
     return references
