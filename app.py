@@ -690,16 +690,13 @@ def write_research_background():
             prompt += "\n\n다음은 제공된 PDF 파일들의 정확한 참고문헌 정보입니다. 연구 배경 작성 시 반드시 이 정보만을 사용하여 인용해주세요:\n"
             for metadata in st.session_state.pdf_metadata:
                 if metadata:  # metadata가 비어있지 않은 경우에만 처리
-                    author = metadata[0][0] if metadata[0] else "Unknown"
-                    year = metadata[0][1] if len(metadata[0]) > 1 else "Unknown"
+                    author = metadata.get('authors', 'Unknown')
+                    year = metadata.get('year', 'Unknown')
                     prompt += f"[{author}, {year}]\n"
-            
+
             ai_response = generate_ai_response(prompt)
 
-            # AI 응답 검증 및 수정
-            verified_response = verify_and_correct_references(ai_response, st.session_state.pdf_metadata)
-            
-            save_section_content("3. 연구 배경", verified_response)
+            save_section_content("3. 연구 배경", ai_response)
             
             # 현재 내용을 히스토리에 추가
             current_content = load_section_content("3. 연구 배경")
