@@ -1868,6 +1868,14 @@ def fill_docx_template(doc, sections_content):
             print(f"Error inserting content for section '{section}': {str(e)}")
     return doc
 
+def download_docx(doc):
+# 메모리 상의 파일 객체 생성
+docx_file = BytesIO()
+# 문서를 메모리 상의 파일 객체에 저장
+doc.save(docx_file)
+# 파일 포인터를 처음으로 이동
+docx_file.seek(0)
+return docx_file
 
     # CSS 스타일
     st.markdown("""
