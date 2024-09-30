@@ -1768,8 +1768,17 @@ def render_preview_mode():
         if st.session_state.get('show_confirm_button', False):
             if st.button("DOCX 파일 생성"):
                 try:
-                    filled_doc = fill_docx_template(st.session_state.doc, sections_content)
-                    docx_file = download_docx(filled_doc)
+                    # 원본 템플릿의 복사본을 만듭니다
+                    filled_doc = Document(BytesIO(uploaded_file.getvalue()))
+                    
+                    # 복사본에 내용을 채웁니다
+                    filled_doc = fill_docx_template(filled_doc, sections_content)
+                    
+                    # 채워진 문서를 메모리에 저장합니다
+                    docx_file = BytesIO()
+                    filled_doc.save(docx_file)
+                    docx_file.seek(0)
+                    
                     st.download_button(
                         label="완성된 DOCX 파일 다운로드",
                         data=docx_file,
@@ -1861,8 +1870,13 @@ def insert_content_after_section(doc, section_title, content):
 def fill_docx_template(doc, sections_content):
     for section, content in sections_content.items():
         try:
-            inserted = insert_content_after_section(doc, section, content)
-            if not inserted:
+            section_para = find_best_match(doc, section)
+            if section_para:
+                new_para = section_para.insert_paragraph_after()
+                new_para.text = content
+                new_para.style = 'Normal'
+                print(f"Successfully inserted content for section '{section}'")
+            else:
                 print(f"Warning: Section '{section}' not found in the template.")
         except Exception as e:
             print(f"Error inserting content for section '{section}': {str(e)}")
