@@ -1776,6 +1776,7 @@ def render_preview_mode():
                         file_name="완성된_연구계획서.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     )
+                    st.success("DOCX 파일이 성공적으로 생성되었습니다.")
                 except Exception as e:
                     st.error(f"DOCX 파일 생성 중 오류가 발생했습니다: {str(e)}")
                     st.error("자세한 오류 정보:")
@@ -1848,16 +1849,23 @@ def find_best_match(doc, section_title):
 def insert_content_after_section(doc, section_title, content):
     section_para = find_best_match(doc, section_title)
     if section_para:
-        new_para = section_para.insert_paragraph_after()
+        # 현재 단락의 인덱스를 찾습니다
+        index = doc.paragraphs.index(section_para)
+        # 새 단락을 다음 인덱스에 추가합니다
+        new_para = doc.add_paragraph()
+        doc.paragraphs.insert(index + 1, new_para)
         new_para.text = content
         return new_para
     return None
 
 def fill_docx_template(doc, sections_content):
     for section, content in sections_content.items():
-        inserted = insert_content_after_section(doc, section, content)
-        if not inserted:
-            print(f"Warning: Section '{section}' not found in the template.")
+        try:
+            inserted = insert_content_after_section(doc, section, content)
+            if not inserted:
+                print(f"Warning: Section '{section}' not found in the template.")
+        except Exception as e:
+            print(f"Error inserting content for section '{section}': {str(e)}")
     return doc
 
 
