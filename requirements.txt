@@ -3,3 +3,4 @@ anthropic
 PyPDF2
 scholarly
 requests
+biopython
