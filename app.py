@@ -1749,19 +1749,24 @@ def render_preview_mode():
     uploaded_file = st.file_uploader("IRB 연구계획서 DOCX 템플릿을 업로드하세요", type="docx")
     
     if uploaded_file is not None:
-        doc = Document(uploaded_file)
-        if st.button("DOCX 파일 생성"):
-            matching_results = {}
+        if 'doc' not in st.session_state:
+            st.session_state.doc = Document(uploaded_file)
+        
+        if st.button("업로드한 파일의 섹션 확인하기"):
+            st.session_state.matching_results = {}
             for section in sections_content.keys():
-                match = find_best_match(doc, section)
-                matching_results[section] = match.text if match else "Not found"
+                match = find_best_match(st.session_state.doc, section)
+                st.session_state.matching_results[section] = match.text if match else "Not found"
 
             st.subheader("섹션 매칭 결과")
-            for section, match in matching_results.items():
+            for section, match in st.session_state.matching_results.items():
                 st.write(f"{section}: {match}")
 
-            if st.button("매칭 결과 확인 및 DOCX 생성"):
-                filled_doc = fill_docx_template(doc, sections_content)
+            st.session_state.show_confirm_button = True
+
+        if st.session_state.get('show_confirm_button', False):
+            if st.button("DOCX 파일 생성"):
+                filled_doc = fill_docx_template(st.session_state.doc, sections_content)
                 docx_file = download_docx(filled_doc)
                 st.download_button(
                     label="완성된 DOCX 파일 다운로드",
@@ -1803,8 +1808,8 @@ def upload_docx_template():
     return None
 
 def normalize_text(text):
-    # 대소문자 구분 제거, 공백 및 특수 문자 제거
-    return re.sub(r'\W+', '', text.lower())
+    # 숫자, 대소문자 구분 제거, 공백 및 특수 문자 제거
+    return re.sub(r'\W+|\d+', '', text.lower())
 
 def similarity_score(a, b):
     return SequenceMatcher(None, a, b).ratio()
