@@ -1657,8 +1657,9 @@ def chat_interface():
 
         # 전체 내용 미리보기 버튼 추가
         if st.sidebar.button("전체 내용 미리보기"):
-            st.session_state.view_mode = 'preview'
-            st.rerun()
+            with st.spinner('미리보기 모드로 전환 중...'):
+                st.session_state.view_mode = 'preview'
+                st.rerun()
 
         if 'current_section' not in st.session_state:
             st.session_state.current_section = 'home'
@@ -1734,9 +1735,20 @@ def render_preview_mode():
     내용 가장 아래에 적힌 참고 문헌을 다시 한번 확인하세요. 참고 문헌 정보는 AI를 통해 자동으로 추출되었습니다. 대부분의 경우 정확하지만, 
     일부 정보가 부정확할 수 있습니다. 내용을 복사한 후 최종 작성 시 필요한 경우 직접 확인하고 수정하세요.
     """)
+
+    with st.spinner('전체 내용을 불러오는 중입니다...'):
+        content = generate_full_content()
     
-    with st.expander("전체 내용 보기/숨기기", expanded=True):
-        content = ""
+    st.code(content, language="markdown")
+
+    st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
+
+    if st.button("편집 모드로 돌아가기"):
+        st.session_state.view_mode = 'edit'
+        st.rerun()
+
+def generate_full_content():
+    content = ""
         
         # 1. 연구 과제명을 먼저 표시
         title_content = load_section_content("1. 연구 과제명")
@@ -1757,12 +1769,6 @@ def render_preview_mode():
             content += f"{ref}\n"
         
         st.code(content, language="markdown")
-
-    st.info("내용을 복사하려면 코드 블록 우측 상단의 'Copy' 버튼을 클릭하세요.")
-
-    if st.button("편집 모드로 돌아가기"):
-        st.session_state.view_mode = 'edit'
-        st.rerun()
 
     # CSS 스타일
     st.markdown("""
