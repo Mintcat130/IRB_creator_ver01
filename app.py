@@ -1497,6 +1497,8 @@ def chat_interface():
                 st.session_state.anthropic_client = initialize_anthropic_client(st.session_state.api_key)
                 del st.session_state.temp_api_key
                 st.success("API 키가 설정되었습니다!")
+                st.session_state.current_section = 'home'  # 홈 화면으로 이동
+                st.rerun()  # 페이지 새로고침
             else:
                 st.warning("먼저 API 키를 입력하고 확인해주세요.")
 
@@ -1529,6 +1531,12 @@ def chat_interface():
             render_edit_mode()
         else:
             render_preview_mode()
+
+     # API 키와 이메일이 모두 설정되었는지 확인
+    if 'api_key' in st.session_state and 'pubmed_email' in st.session_state:
+        st.success("API 키와 이메일이 모두 설정되었습니다. 이제 연구계획서 작성을 시작할 수 있습니다.")
+    else:
+        st.warning("연구계획서 작성을 시작하려면 API 키와 이메일을 모두 입력해주세요.")
 
 def render_edit_mode():
     if st.session_state.current_section == 'home':
