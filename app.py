@@ -634,22 +634,22 @@ def write_research_background():
     """)
         
      # PDF 파일 업로드 
-    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요. **주의:** 검색 결과의 논문 내용은 자동으로 반영되지 않습니다. 검색된 논문들을 사용하시려면 각 웹페이지에서 PDF 파일을 다운 받은 후 여기에 업로드 하세요.", type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("연구 배경 작성에 참고할 선행연구 논문 PDF 파일을 업로드하세요.", type="pdf", accept_multiple_files=True)
     
     if uploaded_files:
-            if not st.session_state.get('user_email'):
-                st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
-            else:
-                st.session_state.pdf_texts = []
-                st.session_state.pdf_files = uploaded_files
-                st.session_state.pdf_metadata = []
-                for uploaded_file in uploaded_files:
-                    pdf_text = extract_text_from_pdf(uploaded_file)
-                    st.session_state.pdf_texts.append(pdf_text)
-                    metadata = extract_pdf_metadata(uploaded_file)
-                    if metadata:
-                        st.session_state.pdf_metadata.append(metadata)
-                st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
+        if 'pubmed_email' not in st.session_state:
+            st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
+        else:
+            st.session_state.pdf_texts = []
+            st.session_state.pdf_files = uploaded_files
+            st.session_state.pdf_metadata = []
+            for uploaded_file in uploaded_files:
+                pdf_text = extract_text_from_pdf(uploaded_file)
+                st.session_state.pdf_texts.append(pdf_text)
+                metadata = extract_pdf_metadata(uploaded_file)
+                if metadata:
+                    st.session_state.pdf_metadata.append(metadata)
+            st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
 
     # 연구 배경 생성 버튼
     if st.button("연구배경 AI 생성 요청하기"):
@@ -1490,6 +1490,7 @@ def chat_interface():
             if st.button("이메일 확인"):
                 if '@' in pubmed_email and '.' in pubmed_email:
                     st.session_state.pubmed_email = pubmed_email
+                    Entrez.email = pubmed_email  # Entrez 이메일 설정
                     st.success(f"이메일이 설정되었습니다: {pubmed_email}")
                 else:
                     st.error("유효한 이메일 주소를 입력해주세요.")
@@ -1710,9 +1711,11 @@ def search_and_extract_metadata(pdf_text):
 # PDF 메타데이터 추출 함수 수정
 def extract_pdf_metadata(pdf_file):
     try:
-        if not st.session_state.get('user_email'):
+        if 'pubmed_email' not in st.session_state:
             st.error("PubMed API 사용을 위한 이메일이 설정되지 않았습니다. 초기 화면으로 돌아가 이메일을 입력해주세요.")
             return None
+        
+        Entrez.email = st.session_state.pubmed_email  # 세션에서 이메일 가져와 설정
         
         text = extract_text_from_pdf(pdf_file)
         return search_and_extract_metadata(text)
