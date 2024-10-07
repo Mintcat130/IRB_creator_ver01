@@ -1874,15 +1874,27 @@ def fill_docx_template(doc, sections_content):
     st.text("fill_docx_template 함수가 호출되었습니다.")  # 함수 호출 확인
     for section, content in sections_content.items():
         try:
-            section_para = find_best_match(doc, section)
+            section_para = find_best_match(doc, section)  # 섹션 제목 단락 찾기
             if section_para:
                 st.text(f"섹션 '{section}'을(를) 찾았습니다.")
                 
-                # 섹션의 바로 다음 위치에 새 단락을 추가하지 않고, 새로운 단락을 문서 끝에 추가
-                new_para = doc.add_paragraph(content)  # 새로운 단락을 문서 끝에 추가
-                new_para.style = 'Normal'  # 스타일 설정
-                
-                st.text(f"'{section}' 섹션 아래에 내용이 추가되었습니다.")
+                # Paragraph의 위치를 찾고 새로운 단락을 해당 섹션 아래에 추가
+                # section_para의 위치를 찾은 후 새로운 단락을 그 위치에 삽입
+                paragraph_index = -1
+                for i, para in enumerate(doc.paragraphs):
+                    if para == section_para:
+                        paragraph_index = i
+                        break
+
+                if paragraph_index != -1:
+                    # 섹션 제목 아래에 새로운 단락 추가
+                    st.text(f"섹션 '{section}'의 위치를 찾았습니다: {paragraph_index}")
+                    # 새로운 단락을 섹션 제목 다음에 추가
+                    new_para = doc.paragraphs.insert(paragraph_index + 1, doc.add_paragraph(content))
+                    new_para.style = 'Normal'  # 스타일 설정
+                    st.text(f"'{section}' 섹션 아래에 내용이 추가되었습니다.")
+                else:
+                    st.warning(f"섹션 '{section}'의 위치를 찾을 수 없습니다.")
                 
             else:
                 st.warning(f"섹션 '{section}'을(를) 템플릿에서 찾을 수 없습니다.")
