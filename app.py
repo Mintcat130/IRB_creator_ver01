@@ -1874,31 +1874,18 @@ def fill_docx_template(doc, sections_content):
     st.text("fill_docx_template 함수가 호출되었습니다.")  # 함수 호출 확인
     for section, content in sections_content.items():
         try:
-            section_para = find_best_match(doc, section)  # 섹션 제목 단락 찾기
+            section_para = find_best_match(doc, section)
             if section_para:
                 st.text(f"섹션 '{section}'을(를) 찾았습니다.")
-
-                # 'section_para'가 'doc.paragraphs'에 포함되는지 확인하고 텍스트 기반으로 인덱스 찾기
-                paragraph_index = -1
-                for i, para in enumerate(doc.paragraphs):
-                    if para.text.strip() == section_para.text.strip():  # 텍스트를 기반으로 매칭 확인
-                        paragraph_index = i
-                        break
-
-                if paragraph_index != -1:
-                    st.text(f"섹션 '{section}'의 위치를 찾았습니다: {paragraph_index}")
-                    
-                    # 새로운 단락을 섹션 제목 아래에 추가
-                    new_para = doc.add_paragraph(content)  # 새로운 단락을 추가
-                    new_para.style = 'Normal'  # 스타일 설정
-                    
-                    # 섹션 제목 다음에 새 단락을 이동
-                    doc.paragraphs.insert(paragraph_index + 1, new_para)
-                    
-                    st.text(f"'{section}' 섹션 아래에 내용이 추가되었습니다.")
-                else:
-                    st.warning(f"섹션 '{section}'의 위치를 텍스트 기반으로 찾을 수 없습니다.")
                 
+                # 섹션 제목 바로 아래에 새로운 단락을 추가하기 위해 Run을 사용
+                st.text(f"섹션 '{section}' 아래에 내용 추가 시도 중...")
+                
+                # 기존 섹션 제목의 단락에 새로운 Run(텍스트 블록) 추가
+                new_run = section_para.add_run("\n" + content)
+                new_run.style = 'Normal'  # 스타일 설정
+                
+                st.text(f"'{section}' 섹션 아래에 내용이 성공적으로 추가되었습니다.")
             else:
                 st.warning(f"섹션 '{section}'을(를) 템플릿에서 찾을 수 없습니다.")
         except Exception as e:
