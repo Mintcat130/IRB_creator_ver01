@@ -12,6 +12,7 @@ from docx import Document
 from io import BytesIO
 from difflib import SequenceMatcher
 from pdfminer.high_level import extract_text
+import streamlit_copy_to_clipboard as clipboard
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -1740,31 +1741,12 @@ def render_preview_mode():
     
     sections_content = generate_full_content()
 
-    # HTML 및 JavaScript 코드 삽입
-    copy_script = """
-    <script>
-    function copyToClipboard(content) {
-        navigator.clipboard.writeText(content).then(function() {
-            alert('클립보드에 복사되었습니다!');
-        }, function(err) {
-            console.error('클립보드 복사 실패:', err);
-        });
-    }
-    </script>
-    """
-    components.html(copy_script, height=0)
-
     for section, content in sections_content.items():
         st.subheader(section)
         st.markdown(content)  # 코드 블럭 대신 일반 텍스트로 표시
-        
-        # 복사 버튼 추가
-        copy_button = f"""
-        <button onclick="copyToClipboard(`{content}`)" style="margin: 10px; padding: 8px; border-radius: 5px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
-        복사하기
-        </button>
-        """
-        components.html(copy_button, height=50)
+
+        # 클립보드 복사 버튼 추가
+        clipboard.copy_to_clipboard(content, f"복사하기: {section}")
 
     # 파일 업로드 및 다운로드 관련 코드 유지
     uploaded_file = st.file_uploader("IRB 연구계획서 DOCX 템플릿을 업로드하세요", type="docx")
