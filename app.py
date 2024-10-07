@@ -1878,10 +1878,11 @@ def fill_docx_template(doc, sections_content):
             if section_para:
                 st.text(f"섹션 '{section}'을(를) 찾았습니다.")
                 
-                # 새로운 단락을 섹션 제목 아래에 삽입
-                new_para = section_para.insert_paragraph_after()
-                new_para.text = content  # 새로운 단락에 내용 삽입
-                new_para.style = 'Normal'
+                # 섹션 제목 아래에 새로운 단락을 추가
+                # 섹션 제목 단락의 인덱스를 얻어 다음 인덱스에 단락 추가
+                index = doc.paragraphs.index(section_para)  # 현재 단락의 인덱스를 찾음
+                new_para = doc.paragraphs[index + 1].insert_paragraph_before(content)  # 새로운 단락 삽입
+                new_para.style = 'Normal'  # 스타일 설정
                 
                 st.text(f"'{section}' 섹션 아래에 내용이 추가되었습니다.")
                 
