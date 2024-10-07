@@ -1740,23 +1740,19 @@ def render_preview_mode():
     
     sections_content = generate_full_content()
 
-    # clipboard.js 연동을 위한 HTML과 JavaScript 코드 삽입
-    clipboard_js = """
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+    # HTML 및 JavaScript 코드 삽입
+    copy_script = """
     <script>
     function copyToClipboard(content) {
-        const el = document.createElement('textarea');
-        el.value = content;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        alert('클립보드에 복사되었습니다!');
+        navigator.clipboard.writeText(content).then(function() {
+            alert('클립보드에 복사되었습니다!');
+        }, function(err) {
+            console.error('클립보드 복사 실패:', err);
+        });
     }
     </script>
     """
-    
-    components.html(clipboard_js, height=0)
+    components.html(copy_script, height=0)
 
     for section, content in sections_content.items():
         st.subheader(section)
