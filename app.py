@@ -1741,7 +1741,7 @@ def render_preview_mode():
     sections_content = generate_full_content()
 
     for section, content in sections_content.items():
-    st.subheader(section)
+        st.subheader(section)
         if section == "참고문헌":
             references_content = st.text_area("참고문헌 편집", content, height=300)
             if st.button("참고문헌 저장", key="save_references"):
