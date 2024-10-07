@@ -1,6 +1,5 @@
 import streamlit as st
 import anthropic
-import PyPDF2
 import io
 import requests
 from scholarly import scholarly
@@ -12,6 +11,7 @@ from collections import defaultdict
 from docx import Document
 from io import BytesIO
 from difflib import SequenceMatcher
+from pdfminer.high_level import extract_text
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -371,10 +371,8 @@ def upload_pdf():
 # PDF에서 텍스트 추출 함수
 def extract_text_from_pdf(pdf_file):
     try:
-        reader = PyPDF2.PdfReader(pdf_file)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text()
+        # pdfminer를 사용하여 텍스트 추출
+        text = extract_text(pdf_file)
         return text
     except Exception as e:
         print(f"Error extracting text from {pdf_file.name}: {str(e)}")
