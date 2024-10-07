@@ -4,4 +4,3 @@ pdfminer.six
 scholarly
 requests
 python-docx
-streamlit-copy-to-clipboard==0.1.3
