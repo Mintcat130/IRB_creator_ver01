@@ -1872,12 +1872,13 @@ def fill_docx_template(doc, sections_content):
         try:
             section_para = find_best_match(doc, section)
             if section_para:
+                print(f"Found section: {section}")  # 디버깅 메시지 추가
                 new_para = section_para.insert_paragraph_after()
                 new_para.text = content
                 new_para.style = 'Normal'
-                print(f"Successfully inserted content for section '{section}'")
+                print(f"Successfully inserted content for section '{section}'")  # 성공 메시지
             else:
-                print(f"Warning: Section '{section}' not found in the template.")
+                print(f"Warning: Section '{section}' not found in the template.")  # 섹션이 발견되지 않을 때 경고
         except Exception as e:
             print(f"Error inserting content for section '{section}': {str(e)}")
     return doc
