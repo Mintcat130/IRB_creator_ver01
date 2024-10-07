@@ -1,6 +1,6 @@
 streamlit
 anthropic
-PyPDF2
+pdfminer.six
 scholarly
 requests
 python-docx
