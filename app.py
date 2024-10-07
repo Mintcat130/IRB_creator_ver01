@@ -1767,12 +1767,15 @@ def render_preview_mode():
 
         if st.session_state.get('show_confirm_button', False):
             if st.button("DOCX 파일 생성"):
+                st.text("DOCX 파일 생성 버튼이 클릭되었습니다.")  # 버튼 클릭 확인 메시지
                 try:
                     # 원본 템플릿의 복사본을 만듭니다
                     filled_doc = Document(BytesIO(uploaded_file.getvalue()))
+                    st.text("DOCX 템플릿이 로드되었습니다.")
                     
                     # 복사본에 내용을 채웁니다
                     filled_doc = fill_docx_template(filled_doc, sections_content)
+                    st.text("fill_docx_template 함수가 실행되었습니다.")
                     
                     # 채워진 문서를 메모리에 저장합니다
                     docx_file = BytesIO()
