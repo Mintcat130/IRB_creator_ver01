@@ -12,7 +12,6 @@ from docx import Document
 from io import BytesIO
 from difflib import SequenceMatcher
 from pdfminer.high_level import extract_text
-import streamlit_copy_to_clipboard as clipboard
 
 #연구계획서 ID 생성
 def generate_research_id():
@@ -1740,15 +1739,11 @@ def render_preview_mode():
     st.markdown("## 전체 연구계획서 미리보기")
     
     sections_content = generate_full_content()
-
+    
     for section, content in sections_content.items():
         st.subheader(section)
-        st.markdown(content)  # 코드 블럭 대신 일반 텍스트로 표시
-
-        # 클립보드 복사 버튼 추가
-        clipboard.copy_to_clipboard(content, f"복사하기: {section}")
-
-    # 파일 업로드 및 다운로드 관련 코드 유지
+        st.code(content, language="markdown")
+    
     uploaded_file = st.file_uploader("IRB 연구계획서 DOCX 템플릿을 업로드하세요", type="docx")
     
     if uploaded_file is not None:
