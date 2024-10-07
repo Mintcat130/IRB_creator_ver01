@@ -1742,13 +1742,13 @@ def render_preview_mode():
 
     for section, content in sections_content.items():
     st.subheader(section)
-    if section == "참고문헌":
-        references_content = st.text_area("참고문헌 편집", content, height=300)
-        if st.button("참고문헌 저장", key="save_references"):
-            save_section_content("참고문헌", references_content)
-            st.success("참고문헌 내용이 저장되었습니다.")
-    else:
-        st.code(content, language="markdown")
+        if section == "참고문헌":
+            references_content = st.text_area("참고문헌 편집", content, height=300)
+            if st.button("참고문헌 저장", key="save_references"):
+                save_section_content("참고문헌", references_content)
+                st.success("참고문헌 내용이 저장되었습니다.")
+        else:
+            st.code(content, language="markdown")
     
     uploaded_file = st.file_uploader("IRB 연구계획서 DOCX 템플릿을 업로드하세요", type="docx")
     
