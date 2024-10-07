@@ -1739,9 +1739,15 @@ def render_preview_mode():
     st.markdown("## 전체 연구계획서 미리보기")
     
     sections_content = generate_full_content()
-    
+
     for section, content in sections_content.items():
-        st.subheader(section)
+    st.subheader(section)
+    if section == "참고문헌":
+        references_content = st.text_area("참고문헌 편집", content, height=300)
+        if st.button("참고문헌 저장", key="save_references"):
+            save_section_content("참고문헌", references_content)
+            st.success("참고문헌 내용이 저장되었습니다.")
+    else:
         st.code(content, language="markdown")
     
     uploaded_file = st.file_uploader("IRB 연구계획서 DOCX 템플릿을 업로드하세요", type="docx")
@@ -1811,10 +1817,17 @@ def generate_full_content():
             if section_content:  # 내용이 있는 경우에만 추가
                 sections_content[section] = section_content
     
-    # 참고문헌 추가
-    references = format_references(st.session_state.get('pdf_files', []))
-    sections_content["참고문헌"] = "\n".join(references)
-        
+    # 참고문헌 편집된 내용을 세션 상태에서 로드하여 반영
+    references_content = load_section_content("참고문헌")
+    if references_content:
+        sections_content["참고문헌"] = references_content
+    else:
+        # 기존 PDF 파일에서 참고문헌을 생성하는 로직 유지
+        references = format_references(st.session_state.get('pdf_files', []))
+        sections_content["참고문헌"] = "\n".join(references)
+        # 참고문헌 세션 상태에 저장
+        save_section_content("참고문헌", sections_content["참고문헌"])
+    
     return sections_content
 
 # IRB 템플릿 docx 파일 업로드
