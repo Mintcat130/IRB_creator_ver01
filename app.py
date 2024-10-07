@@ -1878,9 +1878,12 @@ def fill_docx_template(doc, sections_content):
             if section_para:
                 st.text(f"섹션 '{section}'을(를) 찾았습니다.")
                 
-                # 기존 단락의 텍스트를 덮어쓰는 방식으로 내용 추가
-                section_para.text = content
-                st.text(f"섹션 '{section}'의 내용이 수정되었습니다.")
+                # 새로운 단락을 섹션 제목 아래에 삽입
+                new_para = section_para.insert_paragraph_after()
+                new_para.text = content  # 새로운 단락에 내용 삽입
+                new_para.style = 'Normal'
+                
+                st.text(f"'{section}' 섹션 아래에 내용이 추가되었습니다.")
                 
             else:
                 st.warning(f"섹션 '{section}'을(를) 템플릿에서 찾을 수 없습니다.")
