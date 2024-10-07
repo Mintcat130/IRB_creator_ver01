@@ -1874,16 +1874,18 @@ def fill_docx_template(doc, sections_content):
     st.text("fill_docx_template 함수가 호출되었습니다.")  # 함수 호출 확인
     for section, content in sections_content.items():
         try:
-            section_para = find_best_match(doc, section)
+            section_para = find_best_match(doc, section)  # 섹션 제목 단락 찾기
             if section_para:
                 st.text(f"섹션 '{section}'을(를) 찾았습니다.")
                 
-                # 섹션 제목 바로 아래에 새로운 단락을 추가하기 위해 Run을 사용
+                # 섹션 제목 아래에 새로운 내용 추가
                 st.text(f"섹션 '{section}' 아래에 내용 추가 시도 중...")
                 
-                # 기존 섹션 제목의 단락에 새로운 Run(텍스트 블록) 추가
+                # 기존 섹션 제목 단락에 새로운 Run 추가
                 new_run = section_para.add_run("\n" + content)
-                new_run.style = 'Normal'  # 스타일 설정
+                
+                # 스타일 설정 시 오류 방지: Run 객체에는 Paragraph 스타일을 사용하지 않음
+                # new_run.style = 'Normal'  # 이 부분을 제거
                 
                 st.text(f"'{section}' 섹션 아래에 내용이 성공적으로 추가되었습니다.")
             else:
