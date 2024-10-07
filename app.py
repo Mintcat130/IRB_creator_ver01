@@ -1871,19 +1871,21 @@ def insert_content_after_section(doc, section_title, content):
     return None
 
 def fill_docx_template(doc, sections_content):
+    st.text("fill_docx_template 함수가 호출되었습니다.")  # 함수 호출 확인
     for section, content in sections_content.items():
         try:
             section_para = find_best_match(doc, section)
             if section_para:
-                print(f"Found section: {section}")  # 디버깅 메시지 추가
-                new_para = section_para.insert_paragraph_after()
-                new_para.text = content
-                new_para.style = 'Normal'
-                print(f"Successfully inserted content for section '{section}'")  # 성공 메시지
+                st.text(f"섹션 '{section}'을(를) 찾았습니다.")
+                
+                # 기존 단락의 텍스트를 덮어쓰는 방식으로 내용 추가
+                section_para.text = content
+                st.text(f"섹션 '{section}'의 내용이 수정되었습니다.")
+                
             else:
-                print(f"Warning: Section '{section}' not found in the template.")  # 섹션이 발견되지 않을 때 경고
+                st.warning(f"섹션 '{section}'을(를) 템플릿에서 찾을 수 없습니다.")
         except Exception as e:
-            print(f"Error inserting content for section '{section}': {str(e)}")
+            st.error(f"섹션 '{section}'에 내용을 추가하는 중 오류가 발생했습니다: {str(e)}")
     return doc
 
 def download_docx(doc):
