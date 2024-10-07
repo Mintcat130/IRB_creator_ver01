@@ -1739,11 +1739,38 @@ def render_preview_mode():
     st.markdown("## 전체 연구계획서 미리보기")
     
     sections_content = generate_full_content()
+
+    # clipboard.js 연동을 위한 HTML과 JavaScript 코드 삽입
+    clipboard_js = """
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
+    <script>
+    function copyToClipboard(content) {
+        const el = document.createElement('textarea');
+        el.value = content;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert('클립보드에 복사되었습니다!');
+    }
+    </script>
+    """
     
+    components.html(clipboard_js, height=0)
+
     for section, content in sections_content.items():
         st.subheader(section)
-        st.code(content, language="markdown")
-    
+        st.markdown(content)  # 코드 블럭 대신 일반 텍스트로 표시
+        
+        # 복사 버튼 추가
+        copy_button = f"""
+        <button onclick="copyToClipboard(`{content}`)" style="margin: 10px; padding: 8px; border-radius: 5px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+        복사하기
+        </button>
+        """
+        components.html(copy_button, height=50)
+
+    # 파일 업로드 및 다운로드 관련 코드 유지
     uploaded_file = st.file_uploader("IRB 연구계획서 DOCX 템플릿을 업로드하세요", type="docx")
     
     if uploaded_file is not None:
