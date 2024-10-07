@@ -664,23 +664,7 @@ def write_research_background():
             st.session_state.pdf_metadata.append(metadata)
         st.success(f"{len(uploaded_files)}개의 PDF 파일이 성공적으로 업로드되었습니다.")
 
-    # 참고문헌 정보 표시 및 편집
-        reference_list = format_references([], st.session_state.pdf_files)  # PDF 파일의 참고문헌 생성
-        st.markdown("### 추출된 참고문헌 정보 - 편집하세요")
-        for i, ref in enumerate(reference_list):
-            # 각 참고문헌을 텍스트 영역으로 표시하여 사용자가 수정할 수 있도록 함
-            st.session_state[f"reference_{i}"] = st.text_area(f"참고문헌 {i+1}", ref, height=50, key=f"reference_{i}")
 
-        # 사용자가 수정한 내용을 저장하는 버튼
-        if st.button("참고문헌 내용 저장"):
-            for i, updated_ref in enumerate(edited_references):
-                st.session_state[f"reference_{i}"] = updated_ref  # 수정된 참고문헌을 session_state에 저장
-            
-            # 참고문헌 섹션을 '전체 내용 미리보기'에 반영
-            save_section_content("참고문헌", "\n".join(edited_references))
-            st.success("참고문헌 내용이 저장되었습니다.")
-
-    
     # 연구 배경 생성 버튼
     if st.button("연구배경 AI 생성 요청하기"):
         if 'pdf_texts' in st.session_state and st.session_state['pdf_texts']:
