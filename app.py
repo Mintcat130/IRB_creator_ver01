@@ -12,6 +12,12 @@ from docx import Document
 from io import BytesIO
 from difflib import SequenceMatcher
 from pdfminer.high_level import extract_text
+import streamlit.cli as stcli
+import sys
+
+if __name__ == '__main__':
+    sys.argv = ["streamlit", "run", "app.py"]
+    sys.exit(stcli.main())
 
 #연구계획서 ID 생성
 def generate_research_id():
