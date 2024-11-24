@@ -12,10 +12,6 @@ from docx import Document
 from io import BytesIO
 from difflib import SequenceMatcher
 from pdfminer.high_level import extract_text
-import streamlit.main
-
-if __name__ == "__main__":
-    streamlit.main.main()
 
 #연구계획서 ID 생성
 def generate_research_id():
