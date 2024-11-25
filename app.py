@@ -1629,15 +1629,9 @@ def chat_interface():
 
     # API 키 입력 및 확인 로직
     if 'api_key' not in st.session_state or not st.session_state.api_key:
-        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password")
-        
-        if st.button("API 키 확인"):
-            client = initialize_anthropic_client(api_key)
-            if client:
-                st.success("유효한 API 키입니다. 연구계획서 작성하기 버튼을 눌러 시작하세요.")
-                st.session_state.temp_api_key = api_key
-            else:
-                st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
+        api_key = st.text_input("Anthropic API 키를 입력하세요:", type="password", 
+                                key="api_key_input",  # 고유한 키 추가
+                                on_change=validate_api_key)  # 엔터 시 자동 검증 함수 추가
         
         if st.button("연구계획서 작성하기✏️"):
             if 'temp_api_key' in st.session_state:
@@ -1647,7 +1641,18 @@ def chat_interface():
                 st.success("API 키가 설정되었습니다!")
                 st.rerun()
             else:
-                st.warning("먼저 API 키를 입력하고 확인해주세요.")
+                st.warning("먼저 API 키를 입력해주세요.")
+
+# 새로운 API 키 검증 함수 추가
+def validate_api_key():
+    api_key = st.session_state.api_key_input
+    client = initialize_anthropic_client(api_key)
+    if client:
+        st.session_state.temp_api_key = api_key
+        st.success("유효한 API 키입니다. 연구계획서 작성하기 버튼을 눌러 시작하세요.")
+    else:
+        st.error("API 키 설정에 실패했습니다. 키를 다시 확인해 주세요.")
+
 
     # API 키가 설정된 후의 메인 인터페이스
     else:
